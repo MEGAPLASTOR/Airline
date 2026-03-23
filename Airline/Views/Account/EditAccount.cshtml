@@ -1,0 +1,434 @@
+@{
+    ViewData["Title"] = "Edit Account";
+    Layout = "_Layout";
+
+    var firstName  = User?.FindFirst("FirstName")?.Value  ?? "";
+    var lastName   = User?.FindFirst("LastName")?.Value   ?? "";
+    var username   = User?.Identity?.Name ?? "";
+}
+
+@section Styles {
+<style>
+    .page-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+    .page-header-icon {
+        width: 48px; height: 48px; border-radius: var(--radius-md);
+        background: linear-gradient(135deg, var(--ocean-aqua), var(--ocean-teal));
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font-size: 1.15rem;
+        box-shadow: 0 6px 20px rgba(23,170,184,0.35); flex-shrink: 0;
+    }
+    .page-header-text h1 {
+        font-family: 'Playfair Display', serif; font-size: 1.55rem; font-weight: 700;
+        color: var(--ocean-deep); line-height: 1.2;
+    }
+    .page-header-text p { font-size: 0.83rem; color: #6b8394; margin-top: 0.2rem; }
+    .breadcrumb { display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: #8ba5b4; margin-bottom: 1.5rem; }
+    .breadcrumb a { color: var(--ocean-teal); }
+    .breadcrumb i { font-size: 0.6rem; opacity: 0.5; }
+    .card { background: #fff; border-radius: var(--radius-lg); border: 1px solid rgba(10,35,66,0.07); box-shadow: 0 2px 20px rgba(10,35,66,0.05); overflow: hidden; }
+    .card-header { padding: 1.25rem 1.75rem; border-bottom: 1px solid rgba(10,35,66,0.06); display: flex; align-items: center; gap: 0.6rem; }
+    .card-header i { color: var(--ocean-teal); font-size: 0.95rem; }
+    .card-header-title { font-size: 0.88rem; font-weight: 600; color: var(--ocean-deep); }
+    .card-body { padding: 1.75rem; }
+
+    /* Avatar */
+    .avatar-section {
+        display: flex; align-items: center; gap: 1.4rem;
+        padding-bottom: 1.5rem; margin-bottom: 1.5rem;
+        border-bottom: 1px solid #eef4f7;
+    }
+    .avatar-circle {
+        width: 68px; height: 68px; border-radius: 50%;
+        background: linear-gradient(135deg, var(--ocean-aqua), var(--accent-gold));
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700;
+        color: var(--ocean-deep); flex-shrink: 0;
+        box-shadow: 0 4px 16px rgba(23,170,184,0.3);
+    }
+    .avatar-info p:first-child { font-weight: 600; color: var(--ocean-deep); font-size: 0.95rem; }
+    .avatar-info p:last-child { font-size: 0.78rem; color: #7a96a8; margin-top: 0.15rem; }
+    .avatar-badge {
+        display: inline-flex; align-items: center; gap: 0.35rem;
+        padding: 0.22rem 0.7rem; border-radius: 20px;
+        background: rgba(23,170,184,0.1); border: 1px solid rgba(23,170,184,0.2);
+        font-size: 0.68rem; font-weight: 600; color: var(--ocean-teal);
+        text-transform: uppercase; letter-spacing: 0.07em; margin-top: 0.4rem;
+    }
+
+    /* Form grid */
+    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 1.2rem; }
+    .form-grid-1 { display: grid; gap: 1rem; }
+    .span-2 { grid-column: 1 / -1; }
+    .section-divider {
+        font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.1em; color: var(--ocean-teal);
+        display: flex; align-items: center; gap: 0.6rem;
+        margin: 1.25rem 0 0.75rem;
+    }
+    .section-divider::after { content: ''; flex: 1; height: 1px; background: #e4eef3; }
+    .form-field label {
+        display: block; font-size: 0.68rem; font-weight: 700;
+        letter-spacing: 0.07em; text-transform: uppercase;
+        color: #7a96a8; margin-bottom: 0.35rem;
+    }
+    .form-field label .req { color: #ff6b6b; margin-left: 2px; }
+    .inp-wrap { position: relative; display: flex; align-items: center; }
+    .inp-wrap > i:first-child { position: absolute; left: 0.85rem; color: #a8bfcc; font-size: 0.78rem; pointer-events: none; }
+    .form-inp {
+        width: 100%; padding: 0.6rem 1rem 0.6rem 2.25rem;
+        border: 1.5px solid #dce8ef; border-radius: 10px;
+        font-family: 'DM Sans', sans-serif; font-size: 0.875rem;
+        color: var(--text-dark); background: #f7fbfd; outline: none;
+        transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    }
+    .form-inp::placeholder { color: #b5cdd8; }
+    .form-inp:focus { border-color: var(--ocean-aqua); background: #fff; box-shadow: 0 0 0 3px rgba(23,170,184,0.12); }
+    .form-inp:disabled { background: #f0f4f6; color: #9ab5c2; cursor: not-allowed; }
+    .form-inp.err { border-color: #ff6b6b; box-shadow: 0 0 0 3px rgba(255,107,107,0.1); }
+    select.form-inp { appearance: none; -webkit-appearance: none; padding-right: 2rem; }
+    .select-arrow { position: absolute; right: 0.8rem; color: #a8bfcc; font-size: 0.72rem; pointer-events: none; }
+
+    .form-alert { display: none; align-items: center; gap: 0.5rem; padding: 0.6rem 0.9rem; border-radius: 9px; font-size: 0.81rem; margin-bottom: 1rem; }
+    .form-alert.show { display: flex; }
+    .form-alert-err { background: rgba(255,107,107,0.08); border: 1px solid rgba(255,107,107,0.22); color: #e05555; }
+    .form-alert-ok { background: rgba(46,204,142,0.08); border: 1px solid rgba(46,204,142,0.22); color: #1faa6e; }
+    .form-help { font-size: 0.72rem; color: #9ab4c0; margin-top: 0.3rem; }
+
+    .form-actions { display: flex; gap: 0.75rem; align-items: center; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid #eef4f7; flex-wrap: wrap; }
+    .btn-primary {
+        display: inline-flex; align-items: center; gap: 0.45rem;
+        padding: 0.62rem 1.5rem; border-radius: 10px; border: none;
+        background: linear-gradient(135deg, var(--ocean-aqua), var(--ocean-teal));
+        color: #fff; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 600;
+        cursor: pointer; box-shadow: 0 4px 16px rgba(23,170,184,0.32);
+        transition: opacity 0.2s, transform 0.2s;
+    }
+    .btn-primary:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-ghost {
+        display: inline-flex; align-items: center; gap: 0.45rem;
+        padding: 0.62rem 1.2rem; border-radius: 10px;
+        border: 1.5px solid #dce8ef; background: #fff; color: #6b8394;
+        font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 500;
+        cursor: pointer; text-decoration: none;
+        transition: border-color 0.2s, color 0.2s, background 0.2s;
+    }
+    .btn-ghost:hover { border-color: var(--ocean-aqua); color: var(--ocean-teal); background: #f0f8fa; }
+    .btn-danger-ghost {
+        display: inline-flex; align-items: center; gap: 0.45rem;
+        padding: 0.62rem 1.2rem; border-radius: 10px;
+        border: 1.5px solid rgba(255,107,107,0.3); background: #fff; color: #c85555;
+        font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 500;
+        cursor: pointer; text-decoration: none; margin-left: auto;
+        transition: border-color 0.2s, color 0.2s, background 0.2s;
+    }
+    .btn-danger-ghost:hover { border-color: #ff6b6b; color: #ff4444; background: rgba(255,107,107,0.05); }
+
+    /* Side info card */
+    .info-card { padding: 1.4rem; }
+    .info-row { display: flex; align-items: center; gap: 0.65rem; padding: 0.6rem 0; border-bottom: 1px solid #eef4f7; }
+    .info-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .info-row-icon { width: 32px; height: 32px; border-radius: 8px; background: #f0f8fa; display: flex; align-items: center; justify-content: center; color: var(--ocean-teal); font-size: 0.78rem; flex-shrink: 0; }
+    .info-row-text p:first-child { font-size: 0.7rem; color: #8ba5b4; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+    .info-row-text p:last-child { font-size: 0.83rem; color: var(--ocean-deep); font-weight: 500; margin-top: 1px; }
+
+    .two-col { display: grid; grid-template-columns: 1fr 300px; gap: 1.5rem; align-items: start; max-width: 980px; }
+    @@media (max-width: 860px) {
+        .two-col { grid-template-columns: 1fr; }
+        .form-grid-2 { grid-template-columns: 1fr; }
+    }
+</style>
+}
+
+<div class="breadcrumb">
+    <a href="/">Home</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <span>Account</span>
+    <i class="fa-solid fa-chevron-right"></i>
+    <span>Edit Account</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-icon"><i class="fa-solid fa-user-pen"></i></div>
+    <div class="page-header-text">
+        <h1>Edit Account</h1>
+        <p>Update your personal information and preferences</p>
+    </div>
+</div>
+
+<div class="two-col">
+
+    <!-- Main form card -->
+    <div class="card">
+        <div class="card-header">
+            <i class="fa-solid fa-circle-user"></i>
+            <span class="card-header-title">Personal Information</span>
+        </div>
+        <div class="card-body">
+
+            <!-- Avatar row -->
+            <div class="avatar-section">
+                <div class="avatar-circle" id="avatarCircle">
+                    @{
+                        var initials2 = ((firstName.Length > 0 ? firstName[0].ToString() : "") +
+                                        (lastName.Length > 0 ? lastName[0].ToString() : "U")).ToUpper();
+                    }
+                    @initials2
+                </div>
+                <div class="avatar-info">
+                    <p>@firstName @lastName</p>
+                    <p>@@@username</p>
+                    <span class="avatar-badge"><i class="fa-solid fa-star"></i> The Airline Member</span>
+                </div>
+            </div>
+
+            <!-- Alert -->
+            <div class="form-alert form-alert-err" id="editErr"></div>
+            <div class="form-alert form-alert-ok" id="editOk"></div>
+
+            <!-- Section: Name -->
+            <div class="section-divider"><i class="fa-solid fa-id-card"></i> Basic Info</div>
+
+            <div class="form-grid-2">
+                <div class="form-field">
+                    <label>First Name <span class="req">*</span></label>
+                    <div class="inp-wrap">
+                        <i class="fa-solid fa-user"></i>
+                        <input type="text" id="eFirst" class="form-inp" placeholder="First name" value="@firstName" />
+                    </div>
+                </div>
+                <div class="form-field">
+                    <label>Last Name <span class="req">*</span></label>
+                    <div class="inp-wrap">
+                        <i class="fa-solid fa-user"></i>
+                        <input type="text" id="eLast" class="form-inp" placeholder="Last name" value="@lastName" />
+                    </div>
+                </div>
+
+                <div class="form-field">
+                    <label>Username</label>
+                    <div class="inp-wrap">
+                        <i class="fa-solid fa-at"></i>
+                        <input type="text" class="form-inp" value="@username" disabled />
+                    </div>
+                    <p class="form-help">Username cannot be changed.</p>
+                </div>
+                <div class="form-field">
+                    <label>Gender</label>
+                    <div class="inp-wrap">
+                        <i class="fa-solid fa-venus-mars"></i>
+                        <select id="eGender" class="form-inp">
+                            <option value="">Select gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down select-arrow"></i>
+                    </div>
+                </div>
+
+                <div class="form-field">
+                    <label>Age</label>
+                    <div class="inp-wrap">
+                        <i class="fa-solid fa-cake-candles"></i>
+                        <input type="number" id="eAge" class="form-inp" placeholder="Your age" min="1" max="120" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Contact -->
+            <div class="section-divider"><i class="fa-solid fa-address-book"></i> Contact</div>
+
+            <div class="form-grid-2">
+                <div class="form-field">
+                    <label>Email <span class="req">*</span></label>
+                    <div class="inp-wrap">
+                        <i class="fa-solid fa-envelope"></i>
+                        <input type="email" id="eEmail" class="form-inp" placeholder="your@email.com" autocomplete="email" />
+                    </div>
+                </div>
+                <div class="form-field">
+                    <label>Phone</label>
+                    <div class="inp-wrap">
+                        <i class="fa-solid fa-phone"></i>
+                        <input type="tel" id="ePhone" class="form-inp" placeholder="+84..." />
+                    </div>
+                </div>
+                <div class="form-field span-2">
+                    <label>Address</label>
+                    <div class="inp-wrap">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <input type="text" id="eAddress" class="form-inp" placeholder="Your address" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Identity -->
+            <div class="section-divider"><i class="fa-solid fa-id-badge"></i> Identity</div>
+
+            <div class="form-grid-2">
+                <div class="form-field span-2">
+                    <label>CCCD / National ID</label>
+                    <div class="inp-wrap">
+                        <i class="fa-solid fa-id-card"></i>
+                        <input type="text" id="eCccd" class="form-inp" placeholder="12-digit CCCD" maxlength="12" />
+                    </div>
+                    <p class="form-help">Enter your Citizen ID number (CCCD). Must be unique across accounts.</p>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="form-actions">
+                <button class="btn-primary" id="editBtn" onclick="doEditAccount()">
+                    <i class="fa-solid fa-floppy-disk"></i> Save Changes
+                </button>
+                <a href="/" class="btn-ghost"><i class="fa-solid fa-xmark"></i> Cancel</a>
+                <a href="/Account/ChangePassword" class="btn-danger-ghost" style="margin-left:auto;">
+                    <i class="fa-solid fa-key"></i> Change Password
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Side panel -->
+    <div style="display:flex;flex-direction:column;gap:1rem;">
+
+        <!-- Quick info -->
+        <div class="card info-card">
+            <div style="font-size:0.75rem;font-weight:700;color:#7a96a8;text-transform:uppercase;letter-spacing:0.09em;margin-bottom:0.9rem;">
+                <i class="fa-solid fa-circle-info" style="color:var(--ocean-aqua);margin-right:5px;"></i>Account Summary
+            </div>
+            <div class="info-row">
+                <div class="info-row-icon"><i class="fa-solid fa-star"></i></div>
+                <div class="info-row-text">
+                    <p>Member Status</p>
+                    <p>The Airline Member</p>
+                </div>
+            </div>
+            <div class="info-row">
+                <div class="info-row-icon"><i class="fa-solid fa-calendar"></i></div>
+                <div class="info-row-text">
+                    <p>Member Since</p>
+                    <p id="memberSince">—</p>
+                </div>
+            </div>
+            <div class="info-row">
+                <div class="info-row-icon"><i class="fa-solid fa-plane"></i></div>
+                <div class="info-row-text">
+                    <p>Total Flights</p>
+                    <p>—</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Privacy note -->
+        <div class="card" style="padding:1.2rem;background:linear-gradient(135deg,#f0f8fa,#e8f4f8);border-color:#cde8ef;">
+            <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.6rem;">
+                <i class="fa-solid fa-shield-check" style="color:var(--ocean-teal);"></i>
+                <span style="font-size:0.78rem;font-weight:700;color:var(--ocean-deep);">Privacy & Security</span>
+            </div>
+            <p style="font-size:0.78rem;color:#5a8295;line-height:1.6;">
+                Your personal data is encrypted and never shared with third parties without your consent.
+                You can request account deletion at any time.
+            </p>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Load current user data on page load
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            const res = await fetch('/Account/GetProfile');
+            const json = await res.json().catch(() => null);
+            if (json && json.success) {
+                const u = json.user;
+                if (u.email)   document.getElementById('eEmail').value   = u.email;
+                if (u.phone)   document.getElementById('ePhone').value   = u.phone;
+                if (u.cccd)    document.getElementById('eCccd').value    = u.cccd;
+                if (u.address) document.getElementById('eAddress').value = u.address;
+                if (u.gender)  document.getElementById('eGender').value  = u.gender;
+                if (u.age)     document.getElementById('eAge').value     = u.age;
+                if (u.createdAt) {
+                    document.getElementById('memberSince').textContent =
+                        new Date(u.createdAt).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+                }
+                // Update avatar when name changes
+                updateAvatar();
+            }
+        } catch { /* silent */ }
+    });
+
+    function updateAvatar() {
+        const f = document.getElementById('eFirst').value.trim();
+        const l = document.getElementById('eLast').value.trim();
+        const initials = ((f[0] || '') + (l[0] || 'U')).toUpperCase();
+        document.getElementById('avatarCircle').textContent = initials;
+    }
+
+    document.getElementById('eFirst').addEventListener('input', updateAvatar);
+    document.getElementById('eLast').addEventListener('input', updateAvatar);
+
+    function showEditAlert(id, msg, type) {
+        ['editErr', 'editOk'].forEach(i => document.getElementById(i).classList.remove('show'));
+        const el = document.getElementById(id);
+        el.className = 'form-alert ' + (type === 'ok' ? 'form-alert-ok' : 'form-alert-err') + ' show';
+        el.innerHTML = `<i class="fa-solid fa-${type === 'ok' ? 'circle-check' : 'circle-exclamation'}"></i> ${msg}`;
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function setEditBtn(loading) {
+        const btn = document.getElementById('editBtn');
+        btn.disabled = loading;
+        btn.innerHTML = loading
+            ? `<i class="fa-solid fa-spinner fa-spin"></i> Saving...`
+            : `<i class="fa-solid fa-floppy-disk"></i> Save Changes`;
+    }
+
+    async function doEditAccount() {
+        const firstName = document.getElementById('eFirst').value.trim();
+        const lastName  = document.getElementById('eLast').value.trim();
+        const email     = document.getElementById('eEmail').value.trim();
+        const phone     = document.getElementById('ePhone').value.trim();
+        const cccd      = document.getElementById('eCccd').value.trim();
+        const address   = document.getElementById('eAddress').value.trim();
+        const gender    = document.getElementById('eGender').value;
+        const ageVal    = document.getElementById('eAge').value;
+        const age       = ageVal ? parseInt(ageVal) : null;
+
+        if (!firstName || !lastName) {
+            showEditAlert('editErr', 'First name and last name are required.');
+            return;
+        }
+        if (!email) {
+            showEditAlert('editErr', 'Email is required.');
+            return;
+        }
+
+        setEditBtn(true);
+        try {
+            const res = await fetch('/Account/EditAccount', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                },
+                body: JSON.stringify({ first_name: firstName, last_name: lastName, email, phone, cccd, address, gender, age })
+            });
+            const json = await res.json().catch(() => null);
+            if (json && json.success) {
+                showEditAlert('editOk', 'Account updated successfully!', 'ok');
+                setTimeout(() => window.location.reload(), 1200);
+            } else {
+                showEditAlert('editErr', json?.message || 'Failed to save changes. Please try again.');
+                setEditBtn(false);
+            }
+        } catch {
+            showEditAlert('editErr', 'Network error. Please try again.');
+            setEditBtn(false);
+        }
+    }
+</script>
+}

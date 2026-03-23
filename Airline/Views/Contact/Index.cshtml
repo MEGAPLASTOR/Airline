@@ -1,0 +1,473 @@
+@{
+    ViewData["Title"] = "Contact Us";
+    Layout = "_Layout";
+}
+
+@section Styles {
+<style>
+    /* ── Breadcrumb ── */
+    .breadcrumb { display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: #8ba5b4; margin-bottom: 1.5rem; }
+    .breadcrumb a { color: var(--ocean-teal); text-decoration: none; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb i { font-size: 0.6rem; opacity: 0.5; }
+
+    /* ── Page header ── */
+    .page-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+    .page-header-icon {
+        width: 48px; height: 48px; border-radius: var(--radius-md);
+        background: linear-gradient(135deg, var(--ocean-aqua), var(--ocean-teal));
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font-size: 1.15rem;
+        box-shadow: 0 6px 20px rgba(23,170,184,0.35); flex-shrink: 0;
+    }
+    .page-header-text h1 {
+        font-family: 'Playfair Display', serif; font-size: 1.55rem; font-weight: 700;
+        color: var(--ocean-deep); line-height: 1.2;
+    }
+    .page-header-text p { font-size: 0.83rem; color: #6b8394; margin-top: 0.2rem; }
+
+    /* ── Card ── */
+    .card {
+        background: #fff; border-radius: var(--radius-lg);
+        border: 1px solid rgba(10,35,66,0.07);
+        box-shadow: 0 2px 20px rgba(10,35,66,0.05); overflow: hidden;
+    }
+    .card-header {
+        padding: 1.25rem 1.75rem; border-bottom: 1px solid rgba(10,35,66,0.06);
+        display: flex; align-items: center; gap: 0.6rem;
+    }
+    .card-header i { color: var(--ocean-teal); font-size: 0.95rem; }
+    .card-header-title { font-size: 0.88rem; font-weight: 600; color: var(--ocean-deep); }
+    .card-body { padding: 1.75rem; }
+
+    /* ── Contact info cards ── */
+    .contact-info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+    .info-tile {
+        border-radius: 14px; padding: 1.4rem; text-align: center;
+        border: 1px solid rgba(10,35,66,0.07);
+        box-shadow: 0 2px 12px rgba(10,35,66,0.04);
+        background: #fff; transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .info-tile:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(10,35,66,0.08); }
+    .info-tile-icon {
+        width: 48px; height: 48px; border-radius: 14px; margin: 0 auto 0.9rem;
+        background: linear-gradient(135deg, var(--ocean-aqua), var(--ocean-teal));
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font-size: 1.1rem;
+        box-shadow: 0 4px 14px rgba(23,170,184,0.3);
+    }
+    .info-tile-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #8ba5b4; margin-bottom: 0.3rem; }
+    .info-tile-value { font-size: 0.88rem; font-weight: 600; color: var(--ocean-deep); }
+    .info-tile-sub   { font-size: 0.75rem; color: #7a96a8; margin-top: 0.15rem; }
+
+    /* ── Form ── */
+    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 1.2rem; }
+    .span-2 { grid-column: 1 / -1; }
+    .form-field label {
+        display: block; font-size: 0.68rem; font-weight: 700;
+        letter-spacing: 0.07em; text-transform: uppercase;
+        color: #7a96a8; margin-bottom: 0.35rem;
+    }
+    .form-field label .req { color: #ff6b6b; margin-left: 2px; }
+    .inp-wrap { position: relative; display: flex; align-items: center; }
+    .inp-wrap > i:first-child { position: absolute; left: 0.85rem; color: #a8bfcc; font-size: 0.78rem; pointer-events: none; }
+    .form-inp {
+        width: 100%; padding: 0.6rem 1rem 0.6rem 2.25rem;
+        border: 1.5px solid #dce8ef; border-radius: 10px;
+        font-family: 'DM Sans', sans-serif; font-size: 0.875rem;
+        color: var(--text-dark); background: #f7fbfd; outline: none;
+        transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    }
+    .form-inp::placeholder { color: #b5cdd8; }
+    .form-inp:focus { border-color: var(--ocean-aqua); background: #fff; box-shadow: 0 0 0 3px rgba(23,170,184,0.12); }
+    textarea.form-inp { padding-top: 0.7rem; padding-bottom: 0.7rem; resize: vertical; min-height: 120px; }
+    select.form-inp  { appearance: none; -webkit-appearance: none; padding-right: 2rem; }
+    .select-arrow { position: absolute; right: 0.8rem; color: #a8bfcc; font-size: 0.72rem; pointer-events: none; }
+
+    .form-alert { display: none; align-items: center; gap: 0.5rem; padding: 0.6rem 0.9rem; border-radius: 9px; font-size: 0.81rem; margin-bottom: 1rem; }
+    .form-alert.show { display: flex; }
+    .form-alert-err { background: rgba(255,107,107,0.08); border: 1px solid rgba(255,107,107,0.22); color: #e05555; }
+    .form-alert-ok  { background: rgba(46,204,142,0.08); border: 1px solid rgba(46,204,142,0.22); color: #1faa6e; }
+
+    .form-actions { display: flex; gap: 0.75rem; align-items: center; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid #eef4f7; }
+    .btn-primary {
+        display: inline-flex; align-items: center; gap: 0.45rem;
+        padding: 0.62rem 1.5rem; border-radius: 10px; border: none;
+        background: linear-gradient(135deg, var(--ocean-aqua), var(--ocean-teal));
+        color: #fff; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 600;
+        cursor: pointer; box-shadow: 0 4px 16px rgba(23,170,184,0.32);
+        transition: opacity 0.2s, transform 0.2s;
+    }
+    .btn-primary:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-ghost {
+        display: inline-flex; align-items: center; gap: 0.45rem;
+        padding: 0.62rem 1.2rem; border-radius: 10px;
+        border: 1.5px solid #dce8ef; background: #fff; color: #6b8394;
+        font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 500;
+        cursor: pointer; text-decoration: none;
+        transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-ghost:hover { border-color: var(--ocean-aqua); color: var(--ocean-teal); }
+
+    /* ── FAQ ── */
+    .faq-item { border-bottom: 1px solid #eef4f7; }
+    .faq-item:last-child { border-bottom: none; }
+    .faq-q {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 1rem 0; cursor: pointer; gap: 0.75rem;
+        font-size: 0.86rem; font-weight: 600; color: var(--ocean-deep);
+        user-select: none;
+    }
+    .faq-q i.toggle { font-size: 0.72rem; color: #a8bfcc; transition: transform 0.2s; flex-shrink: 0; }
+    .faq-item.open .faq-q i.toggle { transform: rotate(180deg); color: var(--ocean-teal); }
+    .faq-a { display: none; font-size: 0.82rem; color: #5a7585; line-height: 1.75; padding-bottom: 1rem; }
+    .faq-item.open .faq-a { display: block; }
+
+    /* ── Hours table ── */
+    .hours-row { display: flex; justify-content: space-between; align-items: center; padding: 0.55rem 0; border-bottom: 1px solid #eef4f7; font-size: 0.82rem; }
+    .hours-row:last-child { border-bottom: none; }
+    .hours-day   { color: #7a96a8; font-weight: 500; }
+    .hours-time  { color: var(--ocean-deep); font-weight: 600; }
+    .hours-badge {
+        display: inline-flex; align-items: center; gap: 0.25rem;
+        padding: 0.15rem 0.5rem; border-radius: 6px; font-size: 0.68rem; font-weight: 700;
+    }
+    .hours-badge.open   { background: rgba(46,204,142,0.1);  color: #1faa6e; }
+    .hours-badge.closed { background: rgba(255,107,107,0.1); color: #e05555; }
+
+    /* ── Layout ── */
+    .two-col  { display: grid; grid-template-columns: 1fr 300px; gap: 1.5rem; align-items: start; max-width: 1020px; }
+    .main-col { display: flex; flex-direction: column; gap: 1.5rem; }
+    .side-col { display: flex; flex-direction: column; gap: 1.2rem; }
+
+    @@media (max-width: 860px) {
+        .two-col { grid-template-columns: 1fr; }
+        .contact-info-grid { grid-template-columns: 1fr; }
+        .form-grid-2 { grid-template-columns: 1fr; }
+    }
+    @@media (min-width: 541px) and (max-width: 860px) {
+        .contact-info-grid { grid-template-columns: 1fr 1fr 1fr; }
+    }
+</style>
+}
+
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+    <a href="/"><i class="fa-solid fa-house"></i> Home</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <span>Contact Us</span>
+</div>
+
+<!-- Page header -->
+<div class="page-header">
+    <div class="page-header-icon"><i class="fa-solid fa-headset"></i></div>
+    <div class="page-header-text">
+        <h1>Contact Us</h1>
+        <p>We're here to help — reach out anytime and we'll get back to you promptly</p>
+    </div>
+</div>
+
+<!-- Contact info tiles -->
+<div class="contact-info-grid">
+    <div class="info-tile">
+        <div class="info-tile-icon"><i class="fa-solid fa-phone"></i></div>
+        <div class="info-tile-label">Hotline</div>
+        <div class="info-tile-value">1900 6789</div>
+        <div class="info-tile-sub">24/7 Customer Support</div>
+    </div>
+    <div class="info-tile">
+        <div class="info-tile-icon"><i class="fa-solid fa-envelope"></i></div>
+        <div class="info-tile-label">Email</div>
+        <div class="info-tile-value">support@theairline.vn</div>
+        <div class="info-tile-sub">Reply within 24 hours</div>
+    </div>
+    <div class="info-tile">
+        <div class="info-tile-icon"><i class="fa-solid fa-location-dot"></i></div>
+        <div class="info-tile-label">Head Office</div>
+        <div class="info-tile-value">268 Ly Thuong Kiet</div>
+        <div class="info-tile-sub">Ho Chi Minh City, Vietnam</div>
+    </div>
+</div>
+
+<div class="two-col">
+
+    <!-- Main column -->
+    <div class="main-col">
+
+        <!-- Contact form -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fa-solid fa-paper-plane"></i>
+                <span class="card-header-title">Send Us a Message</span>
+            </div>
+            <div class="card-body">
+
+                <div id="formErr" class="form-alert form-alert-err"><i class="fa-solid fa-circle-exclamation"></i> <span></span></div>
+                <div id="formOk"  class="form-alert form-alert-ok"><i class="fa-solid fa-circle-check"></i> Your message has been sent! We'll get back to you within 24 hours.</div>
+
+                <div class="form-grid-2">
+
+                    <div class="form-field">
+                        <label>Full Name <span class="req">*</span></label>
+                        <div class="inp-wrap">
+                            <i class="fa-solid fa-user"></i>
+                            <input id="cName" class="form-inp" type="text" placeholder="Your full name">
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label>Email Address <span class="req">*</span></label>
+                        <div class="inp-wrap">
+                            <i class="fa-solid fa-envelope"></i>
+                            <input id="cEmail" class="form-inp" type="email" placeholder="you@example.com">
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label>Phone Number</label>
+                        <div class="inp-wrap">
+                            <i class="fa-solid fa-phone"></i>
+                            <input id="cPhone" class="form-inp" type="tel" placeholder="0909 xxx xxx">
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label>Topic <span class="req">*</span></label>
+                        <div class="inp-wrap">
+                            <i class="fa-solid fa-tag"></i>
+                            <select id="cTopic" class="form-inp">
+                                <option value="">— Select a topic —</option>
+                                <option>Booking & Reservation</option>
+                                <option>Flight Status & Changes</option>
+                                <option>Baggage & Check-in</option>
+                                <option>SkyMiles Rewards</option>
+                                <option>Refund & Cancellation</option>
+                                <option>Special Assistance</option>
+                                <option>Other</option>
+                            </select>
+                            <i class="fa-solid fa-chevron-down select-arrow"></i>
+                        </div>
+                    </div>
+
+                    <div class="form-field span-2">
+                        <label>Booking Reference <span style="color:#b5cdd8;font-weight:400;">(optional)</span></label>
+                        <div class="inp-wrap">
+                            <i class="fa-solid fa-ticket"></i>
+                            <input id="cRef" class="form-inp" type="text" placeholder="e.g. SW-2024-00123">
+                        </div>
+                    </div>
+
+                    <div class="form-field span-2">
+                        <label>Message <span class="req">*</span></label>
+                        <div class="inp-wrap">
+                            <i class="fa-solid fa-comment" style="top:0.75rem;position:absolute;"></i>
+                            <textarea id="cMessage" class="form-inp" placeholder="Describe your question or issue in detail..."></textarea>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="form-actions">
+                    <button class="btn-primary" id="sendBtn" onclick="doSend()">
+                        <i class="fa-solid fa-paper-plane"></i> Send Message
+                    </button>
+                    <button class="btn-ghost" onclick="doReset()">
+                        <i class="fa-solid fa-rotate-left"></i> Clear
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- FAQ -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fa-solid fa-circle-question"></i>
+                <span class="card-header-title">Frequently Asked Questions</span>
+            </div>
+            <div class="card-body" style="padding-top:0.5rem;padding-bottom:0.5rem;">
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">
+                        How do I change or cancel my booking?
+                        <i class="fa-solid fa-chevron-down toggle"></i>
+                    </div>
+                    <div class="faq-a">You can manage your booking directly from your account dashboard. Go to <strong>My Bookings</strong>, select the flight, and choose to modify or cancel. Cancellation fees may apply depending on your fare type.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">
+                        What is the baggage allowance?
+                        <i class="fa-solid fa-chevron-down toggle"></i>
+                    </div>
+                    <div class="faq-a">Economy class includes 7kg carry-on and 20kg checked baggage. Business class allows 10kg carry-on and 30kg checked. Additional baggage can be purchased during booking or at check-in.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">
+                        How do I earn and redeem SkyMiles?
+                        <i class="fa-solid fa-chevron-down toggle"></i>
+                    </div>
+                    <div class="faq-a">SkyMiles are earned on every eligible flight. You can redeem miles for flights, upgrades, and partner rewards. Visit the SkyMiles section in your account to see your balance and available redemptions.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">
+                        What documents do I need for check-in?
+                        <i class="fa-solid fa-chevron-down toggle"></i>
+                    </div>
+                    <div class="faq-a">For domestic flights: a valid national ID or passport. For international flights: a valid passport and any required visas for your destination. Ensure documents are not expired before travel.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">
+                        How do I request a refund?
+                        <i class="fa-solid fa-chevron-down toggle"></i>
+                    </div>
+                    <div class="faq-a">Refund requests can be submitted through your booking management page or by contacting our support team. Refunds are processed within 7–14 business days depending on your payment method.</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Side column -->
+    <div class="side-col">
+
+        <!-- Support hours -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fa-solid fa-clock"></i>
+                <span class="card-header-title">Support Hours</span>
+            </div>
+            <div class="card-body" style="padding-top:1rem;padding-bottom:1rem;">
+                <div class="hours-row">
+                    <span class="hours-day">Monday – Friday</span>
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                        <span class="hours-time">07:00 – 22:00</span>
+                        <span class="hours-badge open"><i class="fa-solid fa-circle" style="font-size:0.45rem;"></i> Open</span>
+                    </div>
+                </div>
+                <div class="hours-row">
+                    <span class="hours-day">Saturday</span>
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                        <span class="hours-time">08:00 – 20:00</span>
+                        <span class="hours-badge open"><i class="fa-solid fa-circle" style="font-size:0.45rem;"></i> Open</span>
+                    </div>
+                </div>
+                <div class="hours-row">
+                    <span class="hours-day">Sunday</span>
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                        <span class="hours-time">09:00 – 17:00</span>
+                        <span class="hours-badge open"><i class="fa-solid fa-circle" style="font-size:0.45rem;"></i> Open</span>
+                    </div>
+                </div>
+                <div class="hours-row">
+                    <span class="hours-day">Public Holidays</span>
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                        <span class="hours-time">Hotline only</span>
+                        <span class="hours-badge closed">Limited</span>
+                    </div>
+                </div>
+                <p style="font-size:0.73rem;color:#9ab4c0;margin-top:0.85rem;line-height:1.6;">
+                    <i class="fa-solid fa-circle-info" style="color:var(--ocean-aqua);margin-right:3px;"></i>
+                    Hotline 1900 6789 is available 24/7 for urgent flight-related matters.
+                </p>
+            </div>
+        </div>
+
+        <!-- Social / channels -->
+        <div class="card" style="padding:1.4rem;">
+            <div style="font-size:0.75rem;font-weight:700;color:#7a96a8;text-transform:uppercase;letter-spacing:0.09em;margin-bottom:0.9rem;">
+                <i class="fa-solid fa-share-nodes" style="color:var(--ocean-aqua);margin-right:5px;"></i>Follow Us
+            </div>
+            <div style="display:flex;flex-direction:column;gap:0.6rem;">
+                <a href="#" style="display:flex;align-items:center;gap:0.6rem;padding:0.55rem 0.8rem;border-radius:9px;background:#f0f8fa;border:1px solid #dce8ef;text-decoration:none;transition:background 0.2s;" onmouseover="this.style.background='#e2f0f5'" onmouseout="this.style.background='#f0f8fa'">
+                    <i class="fa-brands fa-facebook" style="color:#1877f2;width:18px;text-align:center;"></i>
+                    <span style="font-size:0.82rem;font-weight:500;color:var(--ocean-deep);">The Airlinespan>
+                </a>
+                <a href="#" style="display:flex;align-items:center;gap:0.6rem;padding:0.55rem 0.8rem;border-radius:9px;background:#f0f8fa;border:1px solid #dce8ef;text-decoration:none;transition:background 0.2s;" onmouseover="this.style.background='#e2f0f5'" onmouseout="this.style.background='#f0f8fa'">
+                    <i class="fa-brands fa-instagram" style="color:#e1306c;width:18px;text-align:center;"></i>
+                    <span style="font-size:0.82rem;font-weight:500;color:var(--ocean-deep);">@@theairline.vn</span>
+                </a>
+                <a href="#" style="display:flex;align-items:center;gap:0.6rem;padding:0.55rem 0.8rem;border-radius:9px;background:#f0f8fa;border:1px solid #dce8ef;text-decoration:none;transition:background 0.2s;" onmouseover="this.style.background='#e2f0f5'" onmouseout="this.style.background='#f0f8fa'">
+                    <i class="fa-brands fa-tiktok" style="color:#010101;width:18px;text-align:center;"></i>
+                    <span style="font-size:0.82rem;font-weight:500;color:var(--ocean-deep);">@@theairline_official</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- About link -->
+        <div class="card" style="padding:1.2rem;background:linear-gradient(135deg,#f0f8fa,#e8f4f8);border-color:#cde8ef;">
+            <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.6rem;">
+                <i class="fa-solid fa-plane-circle-check" style="color:var(--ocean-teal);"></i>
+                <span style="font-size:0.78rem;font-weight:700;color:var(--ocean-deep);">Learn About The Airline</span>
+            </div>
+            <p style="font-size:0.78rem;color:#5a8295;line-height:1.6;margin-bottom:1rem;">
+                Discover our story, mission, and the team dedicated to making your journey exceptional.
+            </p>
+            <a href="/About" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.55rem 1.1rem;border-radius:9px;background:linear-gradient(135deg,var(--ocean-aqua),var(--ocean-teal));color:#fff;font-size:0.8rem;font-weight:600;text-decoration:none;box-shadow:0 3px 12px rgba(23,170,184,0.3);">
+                <i class="fa-solid fa-arrow-right"></i> About Us
+            </a>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function toggleFaq(el) {
+        const item = el.closest('.faq-item');
+        const isOpen = item.classList.contains('open');
+        document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+        if (!isOpen) item.classList.add('open');
+    }
+
+    function showAlert(id, msg, type) {
+        ['formErr','formOk'].forEach(i => {
+            const el = document.getElementById(i);
+            el.classList.remove('show');
+        });
+        const el = document.getElementById(id);
+        if (msg) el.querySelector('span') && (el.querySelector('span').textContent = msg);
+        el.classList.add('show');
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function setSendBtn(loading) {
+        const btn = document.getElementById('sendBtn');
+        btn.disabled = loading;
+        btn.innerHTML = loading
+            ? `<i class="fa-solid fa-spinner fa-spin"></i> Sending...`
+            : `<i class="fa-solid fa-paper-plane"></i> Send Message`;
+    }
+
+    function doReset() {
+        ['cName','cEmail','cPhone','cTopic','cRef','cMessage'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+        ['formErr','formOk'].forEach(i => document.getElementById(i).classList.remove('show'));
+    }
+
+    async function doSend() {
+        const name    = document.getElementById('cName').value.trim();
+        const email   = document.getElementById('cEmail').value.trim();
+        const topic   = document.getElementById('cTopic').value;
+        const message = document.getElementById('cMessage').value.trim();
+
+        if (!name)    { showAlert('formErr', 'Please enter your full name.');       return; }
+        if (!email)   { showAlert('formErr', 'Please enter your email address.');   return; }
+        if (!topic)   { showAlert('formErr', 'Please select a topic.');             return; }
+        if (!message) { showAlert('formErr', 'Please enter your message.');         return; }
+        if (!/^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/.test(email)) {
+            showAlert('formErr', 'Please enter a valid email address.'); return;
+        }
+
+        setSendBtn(true);
+
+        // Simulate send (replace with real API call if needed)
+        await new Promise(r => setTimeout(r, 1000));
+
+        showAlert('formOk', '');
+        doReset();
+        setSendBtn(false);
+    }
+</script>
+}

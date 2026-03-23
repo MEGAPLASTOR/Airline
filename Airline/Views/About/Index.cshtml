@@ -1,0 +1,399 @@
+@{
+    ViewData["Title"] = "About Us";
+    Layout = "_Layout";
+}
+
+@section Styles {
+<style>
+    /* ── Breadcrumb ── */
+    .breadcrumb { display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: #8ba5b4; margin-bottom: 1.5rem; }
+    .breadcrumb a { color: var(--ocean-teal); text-decoration: none; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb i { font-size: 0.6rem; opacity: 0.5; }
+
+    /* ── Page header ── */
+    .page-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+    .page-header-icon {
+        width: 48px; height: 48px; border-radius: var(--radius-md);
+        background: linear-gradient(135deg, var(--ocean-aqua), var(--ocean-teal));
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font-size: 1.15rem;
+        box-shadow: 0 6px 20px rgba(23,170,184,0.35); flex-shrink: 0;
+    }
+    .page-header-text h1 {
+        font-family: 'Playfair Display', serif; font-size: 1.55rem; font-weight: 700;
+        color: var(--ocean-deep); line-height: 1.2;
+    }
+    .page-header-text p { font-size: 0.83rem; color: #6b8394; margin-top: 0.2rem; }
+
+    /* ── Card base ── */
+    .card {
+        background: #fff; border-radius: var(--radius-lg);
+        border: 1px solid rgba(10,35,66,0.07);
+        box-shadow: 0 2px 20px rgba(10,35,66,0.05); overflow: hidden;
+    }
+    .card-header {
+        padding: 1.25rem 1.75rem; border-bottom: 1px solid rgba(10,35,66,0.06);
+        display: flex; align-items: center; gap: 0.6rem;
+    }
+    .card-header i { color: var(--ocean-teal); font-size: 0.95rem; }
+    .card-header-title { font-size: 0.88rem; font-weight: 600; color: var(--ocean-deep); }
+    .card-body { padding: 1.75rem; }
+
+    /* ── Hero banner ── */
+    .hero-banner {
+        border-radius: var(--radius-lg);
+        background: linear-gradient(135deg, var(--ocean-deep) 0%, #0e4272 50%, #175c8a 100%);
+        padding: 3rem 2.5rem;
+        position: relative; overflow: hidden;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 8px 40px rgba(10,35,66,0.18);
+    }
+    .hero-banner::before {
+        content: '';
+        position: absolute; inset: 0;
+        background: radial-gradient(ellipse at 80% 50%, rgba(23,170,184,0.18) 0%, transparent 65%);
+    }
+    .hero-banner::after {
+        content: '\f072';
+        font-family: 'Font Awesome 6 Free'; font-weight: 900;
+        position: absolute; right: 2.5rem; top: 50%; transform: translateY(-50%) rotate(-30deg);
+        font-size: 7rem; color: rgba(255,255,255,0.04); pointer-events: none;
+    }
+    .hero-tag {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        padding: 0.25rem 0.8rem; border-radius: 20px;
+        background: rgba(23,170,184,0.2); border: 1px solid rgba(23,170,184,0.35);
+        font-size: 0.7rem; font-weight: 700; color: var(--ocean-aqua);
+        text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1rem;
+    }
+    .hero-title {
+        font-family: 'Playfair Display', serif; font-size: 2.2rem; font-weight: 700;
+        color: #fff; line-height: 1.25; margin-bottom: 0.8rem;
+    }
+    .hero-title span { color: var(--ocean-aqua); }
+    .hero-subtitle { font-size: 0.92rem; color: rgba(255,255,255,0.65); max-width: 520px; line-height: 1.7; }
+    .hero-stats {
+        display: flex; gap: 2.5rem; margin-top: 2rem;
+        flex-wrap: wrap;
+    }
+    .hero-stat-num {
+        font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 700;
+        color: #fff; line-height: 1;
+    }
+    .hero-stat-label { font-size: 0.72rem; color: rgba(255,255,255,0.5); margin-top: 0.2rem; text-transform: uppercase; letter-spacing: 0.07em; }
+
+    /* ── Mission / Vision cards ── */
+    .mv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 1.5rem; }
+    .mv-card {
+        border-radius: var(--radius-lg); padding: 1.75rem;
+        border: 1px solid rgba(10,35,66,0.07);
+        box-shadow: 0 2px 16px rgba(10,35,66,0.04);
+        position: relative; overflow: hidden;
+    }
+    .mv-card.mission { background: linear-gradient(135deg, #f0fbfd, #e4f6f9); border-color: #c8eaf0; }
+    .mv-card.vision  { background: linear-gradient(135deg, #f4f0fb, #ece4f9); border-color: #d0c8f0; }
+    .mv-icon {
+        width: 44px; height: 44px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.1rem; color: #fff; margin-bottom: 1rem;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+    }
+    .mv-card.mission .mv-icon { background: linear-gradient(135deg, var(--ocean-aqua), var(--ocean-teal)); }
+    .mv-card.vision  .mv-icon { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+    .mv-title { font-family: 'Playfair Display', serif; font-size: 1.05rem; font-weight: 700; color: var(--ocean-deep); margin-bottom: 0.6rem; }
+    .mv-text  { font-size: 0.84rem; color: #5a7585; line-height: 1.75; }
+
+    /* ── Values ── */
+    .values-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    .value-item {
+        padding: 1.4rem; border-radius: 14px;
+        background: #f7fbfd; border: 1px solid #e2eff5;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .value-item:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(10,35,66,0.08); }
+    .value-icon {
+        width: 38px; height: 38px; border-radius: 10px;
+        background: linear-gradient(135deg, var(--ocean-aqua), var(--ocean-teal));
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font-size: 0.9rem; margin-bottom: 0.9rem;
+    }
+    .value-title { font-size: 0.85rem; font-weight: 700; color: var(--ocean-deep); margin-bottom: 0.35rem; }
+    .value-text  { font-size: 0.78rem; color: #7a96a8; line-height: 1.65; }
+
+    /* ── Team ── */
+    .team-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; }
+    .team-card {
+        border-radius: 16px; overflow: hidden;
+        border: 1px solid rgba(10,35,66,0.07);
+        box-shadow: 0 2px 16px rgba(10,35,66,0.05);
+        background: #fff; text-align: center;
+        transition: transform 0.22s, box-shadow 0.22s;
+    }
+    .team-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(10,35,66,0.1); }
+    .team-avatar {
+        height: 80px;
+        background: linear-gradient(135deg, var(--ocean-deep), #0e4272);
+        display: flex; align-items: flex-end; justify-content: center; padding-bottom: 0;
+        position: relative;
+    }
+    .team-avatar-circle {
+        width: 64px; height: 64px; border-radius: 50%;
+        background: linear-gradient(135deg, var(--ocean-aqua), var(--accent-gold, #f0c040));
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 700;
+        color: var(--ocean-deep); border: 3px solid #fff;
+        position: absolute; bottom: -32px; left: 50%; transform: translateX(-50%);
+        box-shadow: 0 4px 16px rgba(23,170,184,0.3);
+    }
+    .team-info { padding: 2.5rem 1.25rem 1.5rem; }
+    .team-name { font-family: 'Playfair Display', serif; font-size: 0.95rem; font-weight: 700; color: var(--ocean-deep); }
+    .team-role { font-size: 0.72rem; color: var(--ocean-teal); font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; margin-top: 0.25rem; }
+    .team-bio  { font-size: 0.78rem; color: #7a96a8; line-height: 1.6; margin-top: 0.6rem; }
+
+    /* ── Timeline (milestones) ── */
+    .timeline { position: relative; padding-left: 1.75rem; }
+    .timeline::before {
+        content: ''; position: absolute; left: 7px; top: 4px; bottom: 4px;
+        width: 2px; background: linear-gradient(to bottom, var(--ocean-aqua), rgba(23,170,184,0.1));
+        border-radius: 2px;
+    }
+    .tl-item { position: relative; padding-bottom: 1.5rem; }
+    .tl-item:last-child { padding-bottom: 0; }
+    .tl-dot {
+        position: absolute; left: -1.75rem; top: 3px;
+        width: 16px; height: 16px; border-radius: 50%;
+        background: linear-gradient(135deg, var(--ocean-aqua), var(--ocean-teal));
+        border: 2px solid #fff; box-shadow: 0 0 0 3px rgba(23,170,184,0.2);
+    }
+    .tl-year { font-size: 0.7rem; font-weight: 700; color: var(--ocean-teal); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.2rem; }
+    .tl-title { font-size: 0.88rem; font-weight: 600; color: var(--ocean-deep); }
+    .tl-desc  { font-size: 0.78rem; color: #7a96a8; margin-top: 0.2rem; line-height: 1.6; }
+
+    /* ── Layout ── */
+    .main-col   { display: flex; flex-direction: column; gap: 1.5rem; }
+    .side-col   { display: flex; flex-direction: column; gap: 1.2rem; }
+    .two-col    { display: grid; grid-template-columns: 1fr 280px; gap: 1.5rem; align-items: start; max-width: 1020px; }
+
+    @@media (max-width: 860px) {
+        .two-col        { grid-template-columns: 1fr; }
+        .mv-grid        { grid-template-columns: 1fr; }
+        .values-grid    { grid-template-columns: 1fr 1fr; }
+        .team-grid      { grid-template-columns: 1fr 1fr; }
+        .hero-stats     { gap: 1.5rem; }
+        .hero-title     { font-size: 1.6rem; }
+    }
+    @@media (max-width: 540px) {
+        .values-grid { grid-template-columns: 1fr; }
+        .team-grid   { grid-template-columns: 1fr; }
+    }
+</style>
+}
+
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+    <a href="/"><i class="fa-solid fa-house"></i> Home</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <span>About Us</span>
+</div>
+
+<!-- Page header -->
+<div class="page-header">
+    <div class="page-header-icon"><i class="fa-solid fa-plane-circle-check"></i></div>
+    <div class="page-header-text">
+        <h1>About The Airline</h1>
+        <p>Our story, our mission, and the team behind your journey</p>
+    </div>
+</div>
+
+<!-- Hero banner -->
+<div class="hero-banner">
+    <div class="hero-tag"><i class="fa-solid fa-star"></i> Est. 2018</div>
+    <div class="hero-title">Flying you closer to<br>what <span>matters most</span></div>
+    <div class="hero-subtitle">The Airlines was founded with a simple belief: that air travel should be comfortable, affordable, and truly memorable for every passenger.</div>
+    <div class="hero-stats">
+        <div>
+            <div class="hero-stat-num">2.4M+</div>
+            <div class="hero-stat-label">Passengers Served</div>
+        </div>
+        <div>
+            <div class="hero-stat-num">85+</div>
+            <div class="hero-stat-label">Destinations</div>
+        </div>
+        <div>
+            <div class="hero-stat-num">98.2%</div>
+            <div class="hero-stat-label">On-time Rate</div>
+        </div>
+        <div>
+            <div class="hero-stat-num">4.8★</div>
+            <div class="hero-stat-label">Avg. Rating</div>
+        </div>
+    </div>
+</div>
+
+<div class="two-col">
+
+    <!-- Main column -->
+    <div class="main-col">
+
+        <!-- Mission & Vision -->
+        <div class="mv-grid">
+            <div class="mv-card mission">
+                <div class="mv-icon"><i class="fa-solid fa-bullseye"></i></div>
+                <div class="mv-title">Our Mission</div>
+                <div class="mv-text">To deliver world-class air travel experiences that connect people, cultures, and opportunities — safely, sustainably, and with genuine care for every passenger on board.</div>
+            </div>
+            <div class="mv-card vision">
+                <div class="mv-icon"><i class="fa-solid fa-eye"></i></div>
+                <div class="mv-title">Our Vision</div>
+                <div class="mv-text">To become Southeast Asia's most trusted and innovative airline, setting new benchmarks for customer satisfaction, environmental responsibility, and operational excellence.</div>
+            </div>
+        </div>
+
+        <!-- Core values -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fa-solid fa-gem"></i>
+                <span class="card-header-title">Core Values</span>
+            </div>
+            <div class="card-body">
+                <div class="values-grid">
+                    <div class="value-item">
+                        <div class="value-icon"><i class="fa-solid fa-shield-check"></i></div>
+                        <div class="value-title">Safety First</div>
+                        <div class="value-text">Every decision we make is guided by an unwavering commitment to the safety of our passengers and crew.</div>
+                    </div>
+                    <div class="value-item">
+                        <div class="value-icon"><i class="fa-solid fa-heart"></i></div>
+                        <div class="value-title">Genuine Care</div>
+                        <div class="value-text">We treat every traveller as family — attentive, warm service at every touchpoint of the journey.</div>
+                    </div>
+                    <div class="value-item">
+                        <div class="value-icon"><i class="fa-solid fa-bolt"></i></div>
+                        <div class="value-title">Innovation</div>
+                        <div class="value-text">We continuously invest in technology and ideas that make flying smarter, smoother, and more enjoyable.</div>
+                    </div>
+                    <div class="value-item">
+                        <div class="value-icon"><i class="fa-solid fa-leaf"></i></div>
+                        <div class="value-title">Sustainability</div>
+                        <div class="value-text">We are committed to reducing our carbon footprint and building a greener future for aviation.</div>
+                    </div>
+                    <div class="value-item">
+                        <div class="value-icon"><i class="fa-solid fa-handshake"></i></div>
+                        <div class="value-title">Integrity</div>
+                        <div class="value-text">Transparent pricing, honest communication, and doing the right thing — even when no one is watching.</div>
+                    </div>
+                    <div class="value-item">
+                        <div class="value-icon"><i class="fa-solid fa-globe"></i></div>
+                        <div class="value-title">Inclusivity</div>
+                        <div class="value-text">Connecting people from all walks of life, celebrating the diversity that makes every journey unique.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Team -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fa-solid fa-users"></i>
+                <span class="card-header-title">Leadership Team</span>
+            </div>
+            <div class="card-body">
+                <div class="team-grid">
+                    <div class="team-card">
+                        <div class="team-avatar">
+                            <div class="team-avatar-circle">NK</div>
+                        </div>
+                        <div class="team-info">
+                            <div class="team-name">Nguyen Kim</div>
+                            <div class="team-role">Chief Executive Officer</div>
+                            <div class="team-bio">20+ years in aviation. Passionate about building airline experiences that genuinely delight passengers.</div>
+                        </div>
+                    </div>
+                    <div class="team-card">
+                        <div class="team-avatar">
+                            <div class="team-avatar-circle">TH</div>
+                        </div>
+                        <div class="team-info">
+                            <div class="team-name">Tran Hoa</div>
+                            <div class="team-role">Chief Operations Officer</div>
+                            <div class="team-bio">Expert in route planning and fleet management. Ensures every flight departs and arrives on time.</div>
+                        </div>
+                    </div>
+                    <div class="team-card">
+                        <div class="team-avatar">
+                            <div class="team-avatar-circle">LM</div>
+                        </div>
+                        <div class="team-info">
+                            <div class="team-name">Le Minh</div>
+                            <div class="team-role">Head of Customer Experience</div>
+                            <div class="team-bio">Dedicated to crafting seamless, memorable journeys from booking to landing.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Side column -->
+    <div class="side-col">
+
+        <!-- Milestones -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fa-solid fa-flag-checkered"></i>
+                <span class="card-header-title">Our Milestones</span>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    <div class="tl-item">
+                        <div class="tl-dot"></div>
+                        <div class="tl-year">2018</div>
+                        <div class="tl-title">The Founded</div>
+                        <div class="tl-desc">Launched with 3 aircraft and 8 domestic routes across Vietnam.</div>
+                    </div>
+                    <div class="tl-item">
+                        <div class="tl-dot"></div>
+                        <div class="tl-year">2019</div>
+                        <div class="tl-title">First International Route</div>
+                        <div class="tl-desc">Expanded to Bangkok and Singapore, welcoming 500K passengers.</div>
+                    </div>
+                    <div class="tl-item">
+                        <div class="tl-dot"></div>
+                        <div class="tl-year">2021</div>
+                        <div class="tl-title">SkyMiles Program</div>
+                        <div class="tl-desc">Launched our loyalty program, now with over 800,000 members.</div>
+                    </div>
+                    <div class="tl-item">
+                        <div class="tl-dot"></div>
+                        <div class="tl-year">2023</div>
+                        <div class="tl-title">Green Initiative</div>
+                        <div class="tl-desc">Committed to 30% carbon reduction by 2030 with new fuel-efficient fleet.</div>
+                    </div>
+                    <div class="tl-item">
+                        <div class="tl-dot"></div>
+                        <div class="tl-year">2024</div>
+                        <div class="tl-title">Best Regional Airline</div>
+                        <div class="tl-desc">Awarded Best Regional Airline in Southeast Asia by TravelAwards.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick link to contact -->
+        <div class="card" style="padding:1.4rem; background:linear-gradient(135deg,#f0f8fa,#e8f4f8); border-color:#cde8ef;">
+            <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.6rem;">
+                <i class="fa-solid fa-envelope" style="color:var(--ocean-teal);"></i>
+                <span style="font-size:0.78rem;font-weight:700;color:var(--ocean-deep);">Get In Touch</span>
+            </div>
+            <p style="font-size:0.78rem;color:#5a8295;line-height:1.6;margin-bottom:1rem;">
+                Have questions about The Airline? Our team is always happy to hear from you.
+            </p>
+            <a href="/Contact" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.55rem 1.1rem;border-radius:9px;background:linear-gradient(135deg,var(--ocean-aqua),var(--ocean-teal));color:#fff;font-size:0.8rem;font-weight:600;text-decoration:none;box-shadow:0 3px 12px rgba(23,170,184,0.3);">
+                <i class="fa-solid fa-paper-plane"></i> Contact Us
+            </a>
+        </div>
+
+    </div>
+</div>
