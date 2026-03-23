@@ -1,0 +1,625 @@
+﻿@{
+    Layout = "~/Views/Admin/_AdminLayout.cshtml";
+    ViewData["Title"] = "Dashboard";
+
+    var firstName = User?.FindFirst("FirstName")?.Value ?? "Admin";
+}
+
+@section Styles {
+    <style>
+        /* ══════════════ KPI CARDS ══════════════ */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.15rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .kpi-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-lg);
+            padding: 1.2rem 1.35rem 1rem;
+            position: relative;
+            overflow: hidden;
+            transition: border-color var(--tr), transform var(--tr);
+            cursor: default;
+        }
+
+            .kpi-card:hover {
+                border-color: rgba(23,170,184,0.3);
+                transform: translateY(-2px);
+            }
+
+            .kpi-card::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: var(--kpi-accent, var(--ocean-aqua));
+                border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            }
+
+        .kpi-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+
+        .kpi-icon-wrap {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            background: rgba(255,255,255,0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: var(--kpi-accent, var(--ocean-aqua));
+        }
+
+        .kpi-trend {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 0.18rem 0.5rem;
+            border-radius: 20px;
+        }
+
+            .kpi-trend.up {
+                background: rgba(93,232,168,0.12);
+                color: var(--accent-green);
+            }
+
+            .kpi-trend.down {
+                background: rgba(255,107,107,0.12);
+                color: var(--accent-coral);
+            }
+
+        .kpi-value {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1;
+            margin-bottom: 0.25rem;
+        }
+
+        .kpi-label {
+            font-size: 0.78rem;
+            color: rgba(255,255,255,0.42);
+        }
+
+        .kpi-sparkline {
+            margin-top: 0.75rem;
+            height: 36px;
+        }
+
+            .kpi-sparkline canvas {
+                width: 100% !important;
+                height: 36px !important;
+            }
+
+        /* ══════════════ CHART CARDS ══════════════ */
+        .charts-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.15rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .charts-row-3 {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.15rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .bottom-row {
+            display: grid;
+            grid-template-columns: 1.6fr 1fr;
+            gap: 1.15rem;
+        }
+
+        .chart-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-lg);
+            padding: 1.35rem 1.5rem;
+        }
+
+        .card-tag {
+            font-size: 0.68rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            background: rgba(23,170,184,0.1);
+            color: var(--ocean-aqua);
+            border: 1px solid rgba(23,170,184,0.2);
+        }
+
+        .chart-wrap {
+            position: relative;
+            height: 220px;
+        }
+
+            .chart-wrap canvas {
+                width: 100% !important;
+                height: 220px !important;
+            }
+
+        .chart-wrap-sm {
+            position: relative;
+            height: 180px;
+        }
+
+            .chart-wrap-sm canvas {
+                width: 100% !important;
+                height: 180px !important;
+            }
+
+        /* Donut legend */
+        .donut-legend {
+            margin-top: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+        }
+
+        .donut-legend-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.78rem;
+        }
+
+        .donut-legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .donut-legend-left {
+            display: flex;
+            align-items: center;
+            color: rgba(255,255,255,0.55);
+        }
+
+        .donut-legend-val {
+            font-weight: 600;
+            color: rgba(255,255,255,0.82);
+        }
+
+        /* Table inside chart area */
+        .table-card .card-header {
+            padding: 1.15rem 1.5rem 0.75rem;
+        }
+
+        /* System health */
+        .health-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-lg);
+            padding: 1.35rem 1.5rem;
+        }
+
+        .health-item {
+            margin-bottom: 1rem;
+        }
+
+            .health-item:last-child {
+                margin-bottom: 0;
+            }
+
+        .health-top {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.38rem;
+        }
+
+        .health-name {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.65);
+        }
+
+        .health-val {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .health-bar {
+            height: 6px;
+            background: rgba(255,255,255,0.07);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .health-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--ocean-aqua), var(--ocean-teal));
+            transition: width 1s ease;
+        }
+
+            .health-fill.warn {
+                background: linear-gradient(90deg, var(--accent-gold), #e0901a);
+            }
+
+            .health-fill.crit {
+                background: linear-gradient(90deg, var(--accent-coral), #d94f4f);
+            }
+
+        /* Quick actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.6rem;
+            margin-top: 1rem;
+        }
+
+        .qa-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 0.75rem;
+            border-radius: var(--radius-md);
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.07);
+            color: rgba(255,255,255,0.6);
+            font-size: 0.78rem;
+            transition: background var(--tr), color var(--tr), border-color var(--tr);
+        }
+
+            .qa-btn i {
+                color: var(--ocean-aqua);
+                font-size: 0.8rem;
+            }
+
+            .qa-btn:hover {
+                background: rgba(23,170,184,0.1);
+                border-color: rgba(23,170,184,0.25);
+                color: #fff;
+            }
+
+        @@media (max-width: 1280px) {
+            .kpi-grid {
+                grid-template-columns: repeat(2,1fr);
+            }
+        }
+
+        @@media (max-width: 1024px) {
+            .charts-row, .charts-row-3, .bottom-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @@media (max-width: 640px) {
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+}
+
+<!-- Page Header -->
+<div class="page-header">
+    <div class="page-title-block">
+        <div class="page-greeting">Admin Dashboard</div>
+        <h1 class="page-title">Welcome back, <span>@firstName</span></h1>
+        <p class="page-subtitle" id="dashDate"></p>
+    </div>
+    <div class="page-actions">
+        <button class="btn-ghost"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+        <button class="btn-primary"><i class="fa-solid fa-file-export"></i> Export Report</button>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="kpi-grid">
+    <div class="kpi-card" style="--kpi-accent:#17aab8">
+        <div class="kpi-top">
+            <div class="kpi-icon-wrap"><i class="fa-solid fa-users"></i></div>
+            <span class="kpi-trend up"><i class="fa-solid fa-arrow-trend-up"></i> +8.3%</span>
+        </div>
+        <div class="kpi-value">124,500</div>
+        <div class="kpi-label">Total Users</div>
+        <div class="kpi-sparkline"><canvas id="spark1"></canvas></div>
+    </div>
+    <div class="kpi-card" style="--kpi-accent:#f0b429">
+        <div class="kpi-top">
+            <div class="kpi-icon-wrap"><i class="fa-solid fa-sack-dollar"></i></div>
+            <span class="kpi-trend up"><i class="fa-solid fa-arrow-trend-up"></i> +12.5%</span>
+        </div>
+        <div class="kpi-value">$1.25M</div>
+        <div class="kpi-label">Revenue (This Month)</div>
+        <div class="kpi-sparkline"><canvas id="spark2"></canvas></div>
+    </div>
+    <div class="kpi-card" style="--kpi-accent:#5de8a8">
+        <div class="kpi-top">
+            <div class="kpi-icon-wrap"><i class="fa-solid fa-ticket"></i></div>
+            <span class="kpi-trend up"><i class="fa-solid fa-arrow-trend-up"></i> +5.1%</span>
+        </div>
+        <div class="kpi-value">8,750</div>
+        <div class="kpi-label">Active Bookings</div>
+        <div class="kpi-sparkline"><canvas id="spark3"></canvas></div>
+    </div>
+    <div class="kpi-card" style="--kpi-accent:#ff6b6b">
+        <div class="kpi-top">
+            <div class="kpi-icon-wrap"><i class="fa-solid fa-plane-departure"></i></div>
+            <span class="kpi-trend down"><i class="fa-solid fa-arrow-trend-down"></i> -2.0%</span>
+        </div>
+        <div class="kpi-value">342</div>
+        <div class="kpi-label">Flights Today</div>
+        <div class="kpi-sparkline"><canvas id="spark4"></canvas></div>
+    </div>
+</div>
+
+<!-- Charts Row 1: Booking growth + Ticket classes -->
+<div class="charts-row-3">
+    <div class="chart-card">
+        <div class="card-header">
+            <div>
+                <div class="card-title">Monthly Booking Growth</div>
+                <div class="card-subtitle">New bookings vs cancellations</div>
+            </div>
+            <span class="card-tag">2024</span>
+        </div>
+        <div class="chart-wrap"><canvas id="bookingChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+        <div class="card-header">
+            <div>
+                <div class="card-title">Ticket Classes</div>
+                <div class="card-subtitle">Distribution by class</div>
+            </div>
+        </div>
+        <div class="chart-wrap-sm"><canvas id="classChart"></canvas></div>
+        <div class="donut-legend" id="classLegend"></div>
+    </div>
+</div>
+
+<!-- Charts Row 2: Revenue + Top routes -->
+<div class="charts-row">
+    <div class="chart-card">
+        <div class="card-header">
+            <div>
+                <div class="card-title">Revenue Overview</div>
+                <div class="card-subtitle">Monthly revenue in USD</div>
+            </div>
+            <span class="card-tag">This Year</span>
+        </div>
+        <div class="chart-wrap"><canvas id="revenueChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+        <div class="card-header">
+            <div>
+                <div class="card-title">Top Routes</div>
+                <div class="card-subtitle">By passenger volume</div>
+            </div>
+        </div>
+        <div class="chart-wrap"><canvas id="routeChart"></canvas></div>
+    </div>
+</div>
+
+<!-- Bottom row: Recent tickets + System health -->
+<div class="bottom-row">
+    <div class="table-card">
+        <div class="card-header">
+            <div>
+                <div class="card-title">Recent Ticket Activity</div>
+                <div class="card-subtitle">Latest bookings requiring attention</div>
+            </div>
+            <button class="btn-ghost" style="font-size:0.75rem;padding:0.32rem 0.85rem">View All</button>
+        </div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Ticket ID</th>
+                    <th>Passenger</th>
+                    <th>Route</th>
+                    <th>Class</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="td-mono">#SKY-00421</td>
+                    <td class="td-bold">Nguyen Van A</td>
+                    <td>HAN → SGN</td>
+                    <td>Business</td>
+                    <td><span class="status-pill pill-green">Confirmed</span></td>
+                </tr>
+                <tr>
+                    <td class="td-mono">#SKY-00420</td>
+                    <td class="td-bold">Tran Thi B</td>
+                    <td>SGN → DAD</td>
+                    <td>Economy</td>
+                    <td><span class="status-pill pill-yellow">Pending</span></td>
+                </tr>
+                <tr>
+                    <td class="td-mono">#SKY-00419</td>
+                    <td class="td-bold">Le Minh C</td>
+                    <td>DAD → HAN</td>
+                    <td>First</td>
+                    <td><span class="status-pill pill-green">Confirmed</span></td>
+                </tr>
+                <tr>
+                    <td class="td-mono">#SKY-00418</td>
+                    <td class="td-bold">Pham Duc D</td>
+                    <td>HAN → CXR</td>
+                    <td>Economy</td>
+                    <td><span class="status-pill pill-red">Cancelled</span></td>
+                </tr>
+                <tr>
+                    <td class="td-mono">#SKY-00417</td>
+                    <td class="td-bold">Hoang Thi E</td>
+                    <td>SGN → PQC</td>
+                    <td>Business</td>
+                    <td><span class="status-pill pill-blue">Rescheduled</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:1.15rem">
+        <div class="health-card">
+            <div class="card-header">
+                <div class="card-title">System Health</div>
+                <span style="font-size:0.72rem;color:var(--accent-green);display:flex;align-items:center;gap:0.35rem">
+                    <i class="fa-solid fa-circle-check"></i> Excellent
+                </span>
+            </div>
+            <div class="health-item">
+                <div class="health-top"><span class="health-name">Database</span><span class="health-val">92%</span></div>
+                <div class="health-bar"><div class="health-fill" style="width:92%"></div></div>
+            </div>
+            <div class="health-item">
+                <div class="health-top"><span class="health-name">Server CPU</span><span class="health-val">68%</span></div>
+                <div class="health-bar"><div class="health-fill warn" style="width:68%"></div></div>
+            </div>
+            <div class="health-item">
+                <div class="health-top"><span class="health-name">Memory</span><span class="health-val">54%</span></div>
+                <div class="health-bar"><div class="health-fill" style="width:54%"></div></div>
+            </div>
+            <div class="health-item">
+                <div class="health-top"><span class="health-name">API Response</span><span class="health-val">99.8%</span></div>
+                <div class="health-bar"><div class="health-fill" style="width:99.8%"></div></div>
+            </div>
+            <div class="health-item">
+                <div class="health-top"><span class="health-name">Network</span><span class="health-val">100%</span></div>
+                <div class="health-bar"><div class="health-fill" style="width:100%"></div></div>
+            </div>
+        </div>
+
+        <div class="chart-card" style="padding:1.15rem 1.35rem">
+            <div class="card-title" style="margin-bottom:0.9rem">Quick Actions</div>
+            <div class="quick-actions">
+                <button class="qa-btn"><i class="fa-solid fa-user-plus"></i> New User</button>
+                <button class="qa-btn"><i class="fa-solid fa-plane-circle-check"></i> Add Flight</button>
+                <button class="qa-btn"><i class="fa-solid fa-ticket"></i> Confirm Ticket</button>
+                <button class="qa-btn"><i class="fa-solid fa-tags"></i> Add Promo</button>
+                <button class="qa-btn"><i class="fa-solid fa-route"></i> New Route</button>
+                <button class="qa-btn"><i class="fa-solid fa-file-export"></i> Export CSV</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        /* ── Date display ── */
+        document.getElementById('dashDate').textContent =
+            new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+        /* ── Chart defaults ── */
+        const AQUA='#17aab8', TEAL='#0d7f8f', GOLD='#f0b429', GREEN='#5de8a8', CORAL='#ff6b6b';
+        const gridColor='rgba(255,255,255,0.06)', labelColor='rgba(255,255,255,0.35)';
+        Chart.defaults.color = labelColor;
+        Chart.defaults.borderColor = gridColor;
+        Chart.defaults.font.family = "'DM Sans', sans-serif";
+
+        /* Sparklines */
+        function spark(id, data, color) {
+            new Chart(document.getElementById(id), {
+                type: 'line',
+                data: { labels: data.map((_,i)=>i),
+                    datasets: [{ data, borderColor: color, borderWidth: 2,
+                        pointRadius: 0, tension: 0.4, fill: true,
+                        backgroundColor: color + '22' }] },
+                options: { responsive:true, maintainAspectRatio:false,
+                    plugins:{ legend:{display:false}, tooltip:{enabled:false} },
+                    scales:{ x:{display:false}, y:{display:false} } }
+            });
+        }
+        spark('spark1', [40,55,48,65,72,60,80,75,88,92,100,110], AQUA);
+        spark('spark2', [80,95,88,105,115,100,125,130,120,145,155,165], GOLD);
+        spark('spark3', [30,45,38,55,60,52,70,65,80,74,85,92], GREEN);
+        spark('spark4', [55,60,50,65,58,70,62,55,68,60,52,58], CORAL);
+
+        /* Monthly bookings bar */
+        new Chart(document.getElementById('bookingChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+                datasets: [
+                    { label:'New Bookings', data:[520,680,740,820,900,860,980,1050,1000,1120,1080,1200],
+                      backgroundColor: AQUA+'99', borderColor:AQUA, borderWidth:1, borderRadius:5 },
+                    { label:'Cancellations', data:[80,95,70,110,90,120,85,100,95,130,110,90],
+                      backgroundColor: CORAL+'77', borderColor:CORAL, borderWidth:1, borderRadius:5 }
+                ]
+            },
+            options: { responsive:true, maintainAspectRatio:false,
+                plugins:{ legend:{ position:'top', labels:{ boxWidth:10, padding:16, font:{size:11} } } },
+                scales:{ x:{ grid:{display:false} }, y:{ grid:{color:gridColor} } }
+            }
+        });
+
+        /* Ticket classes donut */
+        const cd = { labels:['Economy','Business','First Class','Premium Eco'],
+                     values:[55,25,10,10], colors:[AQUA,GOLD,GREEN,CORAL] };
+        new Chart(document.getElementById('classChart'), {
+            type: 'doughnut',
+            data: { labels:cd.labels,
+                datasets:[{ data:cd.values, backgroundColor:cd.colors,
+                    borderColor:'#071829', borderWidth:3, hoverOffset:6 }] },
+            options: { responsive:true, maintainAspectRatio:false, cutout:'68%',
+                plugins:{ legend:{display:false} } }
+        });
+        const leg = document.getElementById('classLegend');
+        cd.labels.forEach((l,i) => {
+            leg.innerHTML += `<div class="donut-legend-item">
+                <span class="donut-legend-left">
+                    <span class="donut-legend-dot" style="background:${cd.colors[i]}"></span>${l}
+                </span>
+                <span class="donut-legend-val">${cd.values[i]}%</span>
+            </div>`;
+        });
+
+        /* Revenue line */
+        new Chart(document.getElementById('revenueChart'), {
+            type: 'line',
+            data: {
+                labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+                datasets:[{ label:'Revenue ($)',
+                    data:[820000,950000,880000,1050000,1150000,1000000,1250000,1320000,1200000,1450000,1380000,1550000],
+                    borderColor:GOLD, borderWidth:2.5, pointRadius:4, pointBackgroundColor:GOLD,
+                    tension:0.4, fill:true,
+                    backgroundColor: ctx => {
+                        const g = ctx.chart.ctx.createLinearGradient(0,0,0,220);
+                        g.addColorStop(0, GOLD+'44'); g.addColorStop(1, GOLD+'00'); return g;
+                    }
+                }]
+            },
+            options: { responsive:true, maintainAspectRatio:false,
+                plugins:{ legend:{display:false},
+                    tooltip:{ callbacks:{ label: ctx => ` $${(ctx.parsed.y/1000).toFixed(0)}K` } } },
+                scales:{ x:{ grid:{display:false} },
+                    y:{ grid:{color:gridColor}, ticks:{ callback: v => `$${(v/1000).toFixed(0)}K` } } }
+            }
+        });
+
+        /* Top routes horizontal bar */
+        new Chart(document.getElementById('routeChart'), {
+            type: 'bar',
+            data: {
+                labels: ['HAN-SGN','SGN-DAD','HAN-DAD','SGN-PQC','HAN-CXR','DAD-PQC'],
+                datasets:[{ label:'Passengers',
+                    data:[4820,3650,3120,2900,2450,1980],
+                    backgroundColor:[AQUA,TEAL,AQUA+'bb',TEAL+'bb',AQUA+'88',TEAL+'88'],
+                    borderRadius:6 }]
+            },
+            options: { indexAxis:'y', responsive:true, maintainAspectRatio:false,
+                plugins:{ legend:{display:false} },
+                scales:{ x:{ grid:{color:gridColor} }, y:{ grid:{display:false} } }
+            }
+        });
+    </script>
+}
