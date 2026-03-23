@@ -1,0 +1,22 @@
+﻿@* @using Airline.Data *@
+@inject DataContext _context
+
+@{
+    ViewData["Title"] = "Home Page";
+    var isConnected = _context.Database.CanConnect();
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+
+    <h3 style="color:@(isConnected ? "green" : "red")">
+        @(isConnected ? "✅ Đã kết nối CSDL" : "❌ Chưa kết nối CSDL")
+    </h3>
+
+    <p>
+        Learn about
+        <a href="https://learn.microsoft.com/aspnet/core">
+            building Web apps with ASP.NET Core
+        </a>.
+    </p>
+</div>
