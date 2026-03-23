@@ -18,7 +18,6 @@ D:\Eproject\Airline\Airline\obj\Debug\net8.0\Airline.RazorAssemblyInfo.cs
 D:\Eproject\Airline\Airline\obj\Debug\net8.0\rjimswa.dswa.cache.json
 D:\Eproject\Airline\Airline\obj\Debug\net8.0\rjsmrazor.dswa.cache.json
 D:\Eproject\Airline\Airline\obj\Debug\net8.0\rjsmcshtml.dswa.cache.json
-D:\Eproject\Airline\Airline\obj\Debug\net8.0\scopedcss\Views\Shared\_Layout.cshtml.rz.scp.css
 D:\Eproject\Airline\Airline\obj\Debug\net8.0\scopedcss\bundle\Airline.styles.css
 D:\Eproject\Airline\Airline\obj\Debug\net8.0\scopedcss\projectbundle\Airline.bundle.scp.css
 D:\Eproject\Airline\Airline\obj\Debug\net8.0\staticwebassets.build.json
@@ -159,3 +158,5 @@ D:\Eproject\Airline\Airline\obj\Debug\net8.0\Airline.csproj.AssemblyReference.ca
 D:\Eproject\Airline\Airline\obj\Debug\net8.0\Airline.MvcApplicationPartsAssemblyInfo.cs
 D:\Eproject\Airline\Airline\obj\Debug\net8.0\Airline.csproj.Up2Date
 D:\Eproject\Airline\Airline\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
+D:\Eproject\Airline\Airline\obj\Debug\net8.0\Airline.sourcelink.json
+D:\Eproject\Airline\Airline\obj\Debug\net8.0\scopedcss\Views\Shared\_Layout.cshtml.rz.scp.css

@@ -1,49 +1,1950 @@
-﻿<!DOCTYPE html>
+﻿@{
+    Layout = null;
+
+    /*
+     * isLoggedIn đọc từ Cookie Authentication
+     * Sau khi tích hợp AccountController + cookie auth thì tự động đúng
+     */
+    bool isLoggedIn = User?.Identity?.IsAuthenticated == true;
+
+    var firstName = User?.FindFirst("FirstName")?.Value ?? "";
+    var lastName = User?.FindFirst("LastName")?.Value ?? "";
+    var initials = (firstName.Length > 0 ? firstName[0].ToString() : "")
+                  + (lastName.Length > 0 ? lastName[0].ToString() : "U");
+    var skyMilesStr = User?.FindFirst("SkyMiles")?.Value ?? "0";
+    int skyMiles = int.TryParse(skyMilesStr, out var m) ? m : 0;
+    var displayName = string.IsNullOrWhiteSpace(firstName + lastName) ? "User" : $"{firstName} {lastName}".Trim();
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Airline</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <title>@ViewData["Title"] - SkyWave Airlines</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/Airline.styles.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --ocean-deep: #0a2342;
+            --ocean-mid: #0e3a6e;
+            --ocean-teal: #0d7f8f;
+            --ocean-aqua: #17aab8;
+            --ocean-foam: #a8e6ef;
+            --ocean-pearl: #f0f8fa;
+            --accent-gold: #f0b429;
+            --accent-coral: #ff6b6b;
+            --text-dark: #0d1f2d;
+            --sidebar-w: 260px;
+            --header-h: 64px;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 18px;
+            --transition: 0.2s ease;
+        }
+
+        html {
+            font-size: 16px;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--ocean-pearl);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        button {
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        small {
+            font-size: 0.78em;
+        }
+
+        /* ══ SIDEBAR ══ */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: var(--sidebar-w);
+            background: linear-gradient(175deg, var(--ocean-deep) 0%, #0b2f58 55%, var(--ocean-mid) 100%);
+            z-index: 400;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+            .sidebar::after {
+                content: '';
+                position: absolute;
+                bottom: -40px;
+                left: -30px;
+                width: 320px;
+                height: 200px;
+                background: radial-gradient(ellipse, rgba(23,170,184,0.14) 0%, transparent 70%);
+                pointer-events: none;
+            }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1.15rem 1.4rem;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            text-decoration: none;
+            flex-shrink: 0;
+        }
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, var(--ocean-aqua), var(--ocean-teal));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 14px rgba(23,170,184,0.4);
+            flex-shrink: 0;
+        }
+
+            .brand-icon i {
+                color: #fff;
+                font-size: 1.1rem;
+            }
+
+        .brand-text {
+            line-height: 1.2;
+        }
+
+        .brand-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #fff;
+            display: block;
+        }
+
+        .brand-sub {
+            font-size: 0.63rem;
+            letter-spacing: 0.13em;
+            text-transform: uppercase;
+            color: var(--ocean-foam);
+            opacity: 0.65;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.9rem 0 1rem;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.08) transparent;
+        }
+
+            .sidebar-nav::-webkit-scrollbar {
+                width: 4px;
+            }
+
+            .sidebar-nav::-webkit-scrollbar-thumb {
+                background: rgba(255,255,255,0.1);
+                border-radius: 4px;
+            }
+
+        .nav-label {
+            padding: 0.65rem 1.4rem 0.2rem;
+            font-size: 0.6rem;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.28);
+            font-weight: 700;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            padding: 0.6rem 1.4rem;
+            color: rgba(255,255,255,0.65);
+            font-size: 0.845rem;
+            font-weight: 500;
+            transition: color var(--transition), background var(--transition);
+        }
+
+            .nav-link:hover {
+                color: #fff;
+                background: rgba(255,255,255,0.06);
+            }
+
+            .nav-link.active {
+                color: var(--ocean-aqua);
+                background: rgba(23,170,184,0.1);
+            }
+
+            .nav-link .nav-icon {
+                width: 30px;
+                height: 30px;
+                border-radius: var(--radius-sm);
+                background: rgba(255,255,255,0.07);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.8rem;
+                flex-shrink: 0;
+                transition: background var(--transition), color var(--transition);
+            }
+
+            .nav-link:hover .nav-icon, .nav-link.active .nav-icon {
+                background: rgba(23,170,184,0.22);
+                color: var(--ocean-aqua);
+            }
+
+        .nav-group-trigger {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            padding: 0.6rem 1.4rem;
+            color: rgba(255,255,255,0.65);
+            font-size: 0.845rem;
+            font-weight: 500;
+            cursor: pointer;
+            user-select: none;
+            transition: color var(--transition), background var(--transition);
+        }
+
+            .nav-group-trigger:hover {
+                color: #fff;
+                background: rgba(255,255,255,0.06);
+            }
+
+            .nav-group-trigger.is-open {
+                color: var(--ocean-aqua);
+            }
+
+            .nav-group-trigger .nav-icon {
+                width: 30px;
+                height: 30px;
+                border-radius: var(--radius-sm);
+                background: rgba(255,255,255,0.07);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.8rem;
+                flex-shrink: 0;
+                transition: background var(--transition), color var(--transition);
+            }
+
+            .nav-group-trigger:hover .nav-icon, .nav-group-trigger.is-open .nav-icon {
+                background: rgba(23,170,184,0.22);
+                color: var(--ocean-aqua);
+            }
+
+            .nav-group-trigger .arrow {
+                margin-left: auto;
+                font-size: 0.62rem;
+                opacity: 0.45;
+                transition: transform 0.25s ease;
+            }
+
+            .nav-group-trigger.is-open .arrow {
+                transform: rotate(180deg);
+            }
+
+        .nav-group-items {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.28s ease;
+        }
+
+            .nav-group-items.is-open {
+                max-height: 360px;
+            }
+
+            .nav-group-items a {
+                display: flex;
+                align-items: center;
+                gap: 0.45rem;
+                padding: 0.48rem 1.4rem 0.48rem 3.2rem;
+                font-size: 0.81rem;
+                color: rgba(255,255,255,0.52);
+                transition: color var(--transition), background var(--transition);
+                border-left: 2px solid transparent;
+            }
+
+                .nav-group-items a::before {
+                    content: '';
+                    width: 4px;
+                    height: 4px;
+                    border-radius: 50%;
+                    background: currentColor;
+                    opacity: 0.5;
+                    flex-shrink: 0;
+                }
+
+                .nav-group-items a:hover {
+                    color: rgba(255,255,255,0.88);
+                    background: rgba(255,255,255,0.04);
+                }
+
+                .nav-group-items a.active {
+                    color: var(--ocean-aqua);
+                    border-left-color: var(--ocean-aqua);
+                    background: rgba(23,170,184,0.07);
+                }
+
+        /* ── Sidebar Footer ── */
+        .sidebar-footer {
+            padding: 0.9rem 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .miles-card {
+            background: linear-gradient(135deg, var(--ocean-teal) 0%, var(--ocean-aqua) 100%);
+            border-radius: var(--radius-lg);
+            padding: 0.85rem 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .miles-card::after {
+                content: '';
+                position: absolute;
+                top: -25px;
+                right: -25px;
+                width: 90px;
+                height: 90px;
+                border-radius: 50%;
+                background: rgba(255,255,255,0.1);
+            }
+
+        .miles-label {
+            font-size: 0.6rem;
+            letter-spacing: 0.13em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.7);
+            font-weight: 700;
+        }
+
+        .miles-value {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.45rem;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.25;
+        }
+
+            .miles-value span {
+                font-family: 'DM Sans', sans-serif;
+                font-size: 0.72rem;
+                font-weight: 400;
+                opacity: 0.75;
+            }
+
+        .auth-sidebar-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: var(--radius-lg);
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.55rem;
+        }
+
+        .auth-sidebar-hint {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.38);
+            text-align: center;
+            letter-spacing: 0.04em;
+        }
+
+        .btn-sidebar-login {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            padding: 0.55rem 0;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, var(--ocean-aqua), var(--ocean-teal));
+            color: #fff;
+            font-size: 0.82rem;
+            font-weight: 600;
+            border: none;
+            text-decoration: none;
+            box-shadow: 0 3px 12px rgba(23,170,184,0.35);
+            cursor: pointer;
+            transition: opacity var(--transition), transform var(--transition);
+        }
+
+            .btn-sidebar-login:hover {
+                opacity: 0.88;
+                transform: translateY(-1px);
+            }
+
+        .btn-sidebar-register {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            padding: 0.5rem 0;
+            border-radius: var(--radius-md);
+            background: transparent;
+            color: rgba(255,255,255,0.6);
+            font-size: 0.82rem;
+            font-weight: 500;
+            border: 1px solid rgba(255,255,255,0.15);
+            text-decoration: none;
+            cursor: pointer;
+            transition: color var(--transition), border-color var(--transition), background var(--transition);
+        }
+
+            .btn-sidebar-register:hover {
+                color: #fff;
+                border-color: rgba(255,255,255,0.35);
+                background: rgba(255,255,255,0.06);
+            }
+
+        /* ══ TOPBAR ══ */
+        .topbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--header-h);
+            background: var(--ocean-deep);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem 0 calc(var(--sidebar-w) + 1.5rem);
+            z-index: 300;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+            box-shadow: 0 2px 24px rgba(0,0,0,0.28);
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .topbar-search {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.11);
+            border-radius: 24px;
+            padding: 0.33rem 1rem;
+            transition: background var(--transition);
+        }
+
+            .topbar-search:focus-within {
+                background: rgba(255,255,255,0.12);
+            }
+
+            .topbar-search i {
+                color: rgba(255,255,255,0.4);
+                font-size: 0.78rem;
+            }
+
+            .topbar-search input {
+                background: none;
+                border: none;
+                outline: none;
+                color: #fff;
+                font-family: 'DM Sans', sans-serif;
+                font-size: 0.84rem;
+                width: 210px;
+            }
+
+                .topbar-search input::placeholder {
+                    color: rgba(255,255,255,0.38);
+                }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .topbar-btn {
+            position: relative;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255,255,255,0.7);
+            font-size: 0.84rem;
+            text-decoration: none;
+            transition: background var(--transition), color var(--transition);
+        }
+
+            .topbar-btn:hover {
+                background: var(--ocean-teal);
+                color: #fff;
+            }
+
+        .badge {
+            position: absolute;
+            top: -3px;
+            right: -3px;
+            min-width: 16px;
+            height: 16px;
+            padding: 0 3px;
+            border-radius: 8px;
+            background: var(--accent-coral);
+            font-size: 0.58rem;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--ocean-deep);
+        }
+
+        .topbar-auth {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+        }
+
+        .btn-topbar-login {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.38rem 1.05rem;
+            border-radius: 22px;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.22);
+            color: rgba(255,255,255,0.78);
+            font-size: 0.82rem;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background var(--transition), color var(--transition), border-color var(--transition);
+        }
+
+            .btn-topbar-login:hover {
+                background: rgba(255,255,255,0.1);
+                color: #fff;
+                border-color: rgba(255,255,255,0.4);
+            }
+
+        .btn-topbar-register {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.38rem 1.1rem;
+            border-radius: 22px;
+            background: linear-gradient(135deg, var(--ocean-aqua), var(--ocean-teal));
+            border: none;
+            color: #fff;
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            box-shadow: 0 3px 12px rgba(23,170,184,0.35);
+            transition: opacity var(--transition), transform var(--transition);
+        }
+
+            .btn-topbar-register:hover {
+                opacity: 0.88;
+                transform: translateY(-1px);
+            }
+
+        /* User menu */
+        .topbar-user-wrap {
+            position: relative;
+        }
+
+        .topbar-user {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            padding: 0.28rem 0.8rem;
+            border-radius: 24px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+            transition: background var(--transition);
+        }
+
+            .topbar-user:hover {
+                background: rgba(255,255,255,0.12);
+            }
+
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--ocean-aqua), var(--accent-gold));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--ocean-deep);
+        }
+
+        .user-name {
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: rgba(255,255,255,0.82);
+        }
+
+        .user-chevron {
+            font-size: 0.58rem;
+            color: rgba(255,255,255,0.35);
+        }
+
+        /* User dropdown */
+        .user-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: var(--ocean-deep);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: var(--radius-md);
+            min-width: 190px;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.45);
+            overflow: hidden;
+            display: none;
+            z-index: 500;
+        }
+
+            .user-dropdown.open {
+                display: block;
+            }
+
+            .user-dropdown a, .user-dropdown button {
+                display: flex;
+                align-items: center;
+                gap: 0.6rem;
+                padding: 0.65rem 1rem;
+                font-size: 0.82rem;
+                color: rgba(255,255,255,0.7);
+                width: 100%;
+                background: none;
+                border: none;
+                text-align: left;
+                transition: background var(--transition), color var(--transition);
+            }
+
+                .user-dropdown a:hover, .user-dropdown button:hover {
+                    background: rgba(255,255,255,0.07);
+                    color: #fff;
+                }
+
+        .user-dropdown-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.07);
+            margin: 0.25rem 0;
+        }
+
+        .user-dropdown .logout-btn {
+            color: rgba(255,107,107,0.8);
+        }
+
+            .user-dropdown .logout-btn:hover {
+                color: #ff6b6b;
+                background: rgba(255,107,107,0.08);
+            }
+
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.8);
+            font-size: 1.15rem;
+            padding: 0.2rem 0.4rem;
+        }
+
+        /* ══ MAIN ══ */
+        .main-wrapper {
+            margin-left: var(--sidebar-w);
+            margin-top: var(--header-h);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: calc(100vh - var(--header-h));
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 2rem 2.25rem;
+        }
+
+        /* ══ FOOTER ══ */
+        .site-footer {
+            background: var(--ocean-deep);
+            color: rgba(255,255,255,0.6);
+        }
+
+        .footer-top {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1.2fr;
+            gap: 3rem;
+            padding: 3.5rem 2.5rem 2.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .footer-brand .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-bottom: 0.85rem;
+        }
+
+            .footer-brand .footer-logo i {
+                color: var(--ocean-aqua);
+                font-size: 1.2rem;
+            }
+
+            .footer-brand .footer-logo strong {
+                font-family: 'Playfair Display', serif;
+                font-size: 1.35rem;
+                color: #fff;
+            }
+
+        .footer-desc {
+            font-size: 0.82rem;
+            line-height: 1.75;
+            color: rgba(255,255,255,0.45);
+            margin-bottom: 1.2rem;
+            max-width: 300px;
+        }
+
+        .footer-socials {
+            display: flex;
+            gap: 0.55rem;
+        }
+
+        .social-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: var(--radius-sm);
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.09);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255,255,255,0.55);
+            font-size: 0.8rem;
+            transition: background var(--transition), color var(--transition), border-color var(--transition);
+        }
+
+            .social-btn:hover {
+                background: var(--ocean-teal);
+                color: #fff;
+                border-color: var(--ocean-teal);
+            }
+
+        .footer-col-title {
+            font-size: 0.68rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--ocean-aqua);
+            margin-bottom: 1rem;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-links a {
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.48);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: color var(--transition);
+        }
+
+            .footer-links a::before {
+                content: '';
+                width: 3px;
+                height: 3px;
+                border-radius: 50%;
+                background: var(--ocean-aqua);
+                opacity: 0.55;
+                flex-shrink: 0;
+            }
+
+            .footer-links a:hover {
+                color: rgba(255,255,255,0.88);
+            }
+
+        .footer-contact-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.65rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.81rem;
+            color: rgba(255,255,255,0.48);
+        }
+
+            .footer-contact-row i {
+                color: var(--ocean-aqua);
+                font-size: 0.82rem;
+                margin-top: 2px;
+                flex-shrink: 0;
+            }
+
+        .footer-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            padding: 1.1rem 2.5rem;
+            font-size: 0.76rem;
+            color: rgba(255,255,255,0.28);
+        }
+
+        .footer-bottom-links {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+            .footer-bottom-links a {
+                color: rgba(255,255,255,0.28);
+                transition: color var(--transition);
+            }
+
+                .footer-bottom-links a:hover {
+                    color: rgba(255,255,255,0.7);
+                }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 350;
+            backdrop-filter: blur(2px);
+        }
+
+        /* ══════════════════════════════════════════════════
+                           AUTH MODAL
+                        ══════════════════════════════════════════════════ */
+        .auth-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(5,18,36,0.82);
+            backdrop-filter: blur(7px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+            .auth-overlay.open {
+                display: flex;
+                animation: overlayFadeIn 0.22s ease;
+            }
+
+        @@keyframes overlayFadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .auth-modal {
+            position: relative;
+            background: linear-gradient(160deg, #0b2240 0%, #0d2e50 60%, #0a2a46 100%);
+            border: 1px solid rgba(23,170,184,0.2);
+            border-radius: 22px;
+            width: 100%;
+            max-width: 470px;
+            max-height: 92vh;
+            overflow-y: auto;
+            padding: 2rem 2.25rem 2.25rem;
+            box-shadow: 0 32px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04) inset;
+            animation: modalPop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.08) transparent;
+        }
+
+        @@keyframes modalPop {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(28px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        /* Close */
+        .auth-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.5);
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+
+            .auth-close:hover {
+                background: rgba(255,100,100,0.2);
+                color: #ff6b6b;
+            }
+
+        /* Tabs */
+        .auth-tabs {
+            display: flex;
+            gap: 4px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 13px;
+            padding: 4px;
+            margin-bottom: 1.75rem;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 0.5rem 0;
+            border-radius: 10px;
+            border: none;
+            background: transparent;
+            color: rgba(255,255,255,0.4);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.83rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+            .auth-tab.active {
+                background: linear-gradient(135deg, var(--ocean-aqua), var(--ocean-teal));
+                color: #fff;
+                box-shadow: 0 3px 12px rgba(23,170,184,0.35);
+            }
+
+        /* Header */
+        .auth-head {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .auth-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, var(--ocean-aqua), var(--ocean-teal));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.85rem;
+            font-size: 1.15rem;
+            color: #fff;
+            box-shadow: 0 6px 20px rgba(23,170,184,0.4);
+        }
+
+        .auth-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.45rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.25rem;
+        }
+
+        .auth-sub {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.4);
+        }
+
+        /* Alerts */
+        .auth-alert {
+            border-radius: 9px;
+            padding: 0.58rem 0.9rem;
+            font-size: 0.81rem;
+            margin-bottom: 1rem;
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+            .auth-alert.show {
+                display: flex;
+            }
+
+        .auth-alert-err {
+            background: rgba(255,107,107,0.12);
+            border: 1px solid rgba(255,107,107,0.28);
+            color: #ff8f8f;
+        }
+
+        .auth-alert-ok {
+            background: rgba(23,184,120,0.12);
+            border: 1px solid rgba(23,184,120,0.28);
+            color: #5de8a8;
+        }
+
+        /* Field */
+        .auth-field {
+            margin-bottom: 0.95rem;
+        }
+
+        .auth-lbl {
+            display: block;
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: rgba(255,255,255,0.45);
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            margin-bottom: 0.32rem;
+        }
+
+        .auth-inp-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+            .auth-inp-wrap > i:first-child {
+                position: absolute;
+                left: 0.85rem;
+                color: rgba(255,255,255,0.3);
+                font-size: 0.77rem;
+                pointer-events: none;
+            }
+
+        .auth-inp {
+            width: 100%;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 0.58rem 2.5rem 0.58rem 2.25rem;
+            color: #fff;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.875rem;
+            outline: none;
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+            .auth-inp::placeholder {
+                color: rgba(255,255,255,0.24);
+            }
+
+            .auth-inp:focus {
+                border-color: var(--ocean-aqua);
+                background: rgba(23,170,184,0.06);
+            }
+
+            .auth-inp.err {
+                border-color: #ff6b6b;
+            }
+
+        .auth-inp-wrap select.auth-inp {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+        }
+
+        .auth-eye {
+            position: absolute;
+            right: 0.75rem;
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.3);
+            font-size: 0.77rem;
+            cursor: pointer;
+            padding: 0.2rem;
+            transition: color 0.2s;
+        }
+
+            .auth-eye:hover {
+                color: rgba(255,255,255,0.7);
+            }
+
+        .auth-row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.7rem;
+        }
+
+        .auth-row-mid {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.1rem;
+        }
+
+        .auth-check {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.79rem;
+            color: rgba(255,255,255,0.48);
+            cursor: pointer;
+        }
+
+            .auth-check input {
+                accent-color: var(--ocean-aqua);
+            }
+
+        .auth-forgot {
+            font-size: 0.79rem;
+            color: var(--ocean-aqua);
+        }
+
+            .auth-forgot:hover {
+                opacity: 0.75;
+            }
+
+        /* Strength */
+        .strength-bar {
+            height: 3px;
+            background: rgba(255,255,255,0.07);
+            border-radius: 2px;
+            margin-top: 0.42rem;
+            overflow: hidden;
+        }
+
+        .strength-fill {
+            height: 100%;
+            width: 0;
+            border-radius: 2px;
+            transition: width 0.32s, background 0.32s;
+        }
+
+        .strength-lbl {
+            font-size: 0.67rem;
+            color: rgba(255,255,255,0.32);
+            margin-top: 0.2rem;
+            display: block;
+        }
+
+        /* Submit */
+        .auth-submit {
+            width: 100%;
+            margin-top: 0.4rem;
+            padding: 0.72rem;
+            border-radius: 10px;
+            border: none;
+            background: linear-gradient(135deg, var(--ocean-aqua), var(--ocean-teal));
+            color: #fff;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 18px rgba(23,170,184,0.38);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+
+            .auth-submit:hover:not(:disabled) {
+                opacity: 0.88;
+                transform: translateY(-1px);
+            }
+
+            .auth-submit:disabled {
+                opacity: 0.55;
+                cursor: not-allowed;
+            }
+
+        .auth-switch {
+            text-align: center;
+            margin-top: 1.2rem;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.36);
+        }
+
+            .auth-switch a {
+                color: var(--ocean-aqua);
+                font-weight: 500;
+            }
+
+        /* ══ RESPONSIVE ══ */
+        @@media (max-width: 1024px) {
+            .menu-toggle {
+                display: block;
+            }
+
+            .topbar {
+                padding-left: 1.25rem;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+            }
+
+                .sidebar.open {
+                    transform: translateX(0);
+                }
+
+            .sidebar-overlay.open {
+                display: block;
+            }
+
+            .main-wrapper {
+                margin-left: 0;
+            }
+
+            .footer-top {
+                grid-template-columns: 1fr 1fr;
+                gap: 2rem;
+                padding: 2.5rem 1.5rem;
+            }
+
+            .footer-brand {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @@media (max-width: 600px) {
+            .topbar-search {
+                display: none;
+            }
+
+            .btn-topbar-login span {
+                display: none;
+            }
+
+            .main-content {
+                padding: 1.25rem;
+            }
+
+            .footer-top {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-brand {
+                grid-column: auto;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .auth-row-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .auth-modal {
+                padding: 1.5rem 1.25rem;
+            }
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Airline</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
+
+    <!-- Anti-forgery token (dùng cho AJAX) -->
+    @Html.AntiForgeryToken()
+
+    <!-- ════════════════════ SIDEBAR ════════════════════ -->
+    <aside class="sidebar" id="sidebar">
+        <a class="sidebar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+            <div class="brand-icon"><i class="fa-solid fa-plane-departure"></i></div>
+            <div class="brand-text">
+                <span class="brand-name">The Airline</span>
+                <span class="brand-sub">Reservation System</span>
+            </div>
+        </a>
+
+        <nav class="sidebar-nav">
+            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">
+                <span class="nav-icon"><i class="fa-solid fa-house"></i></span> Home
+            </a>
+
+            <div class="nav-label">Services</div>
+
+            <div class="nav-group">
+                <div class="nav-group-trigger" onclick="toggleGroup(this)">
+                    <span class="nav-icon"><i class="fa-solid fa-ticket"></i></span>
+                    Booking <i class="fa-solid fa-chevron-down arrow"></i>
+                </div>
+                <div class="nav-group-items">
+                    <a asp-area="" asp-controller="Booking" asp-action="BookFlight">Book Flight Ticket</a>
+                    <a asp-area="" asp-controller="Booking" asp-action="SeatReservation">Seat Reservation</a>
+                    <a asp-area="" asp-controller="Booking" asp-action="ApplyPromotion">Apply Promotion</a>
                 </div>
             </div>
+
+            <div class="nav-group">
+                <div class="nav-group-trigger" onclick="toggleGroup(this)">
+                    <span class="nav-icon"><i class="fa-solid fa-suitcase-rolling"></i></span>
+                    Baggage & Check-in <i class="fa-solid fa-chevron-down arrow"></i>
+                </div>
+                <div class="nav-group-items">
+                    <a asp-area="" asp-controller="Baggage" asp-action="Register">Register Baggage</a>
+                </div>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-trigger" onclick="toggleGroup(this)">
+                    <span class="nav-icon"><i class="fa-solid fa-clipboard-list"></i></span>
+                    My Tickets <i class="fa-solid fa-chevron-down arrow"></i>
+                </div>
+                <div class="nav-group-items">
+                    <a asp-area="" asp-controller="Ticket" asp-action="ViewConfirmation">View Ticket Confirmation</a>
+                    <a asp-area="" asp-controller="Ticket" asp-action="Rescheduled">View Rescheduled Flight</a>
+                    <a asp-area="" asp-controller="Ticket" asp-action="Refund">Refund</a>
+                </div>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-trigger" onclick="toggleGroup(this)">
+                    <span class="nav-icon"><i class="fa-solid fa-bell"></i></span>
+                    Notifications & Miles <i class="fa-solid fa-chevron-down arrow"></i>
+                </div>
+                <div class="nav-group-items">
+                    <a asp-area="" asp-controller="Notification" asp-action="FlightNotification">Flight Notification</a>
+                    <a asp-area="" asp-controller="Miles" asp-action="Index">Sky Miles</a>
+                </div>
+            </div>
+
+            <div class="nav-label">Company</div>
+            <a class="nav-link" asp-area="" asp-controller="About" asp-action="Index">
+                <span class="nav-icon"><i class="fa-solid fa-circle-info"></i></span> About Us
+            </a>
+            <a class="nav-link" asp-area="" asp-controller="Contact" asp-action="Index">
+                <span class="nav-icon"><i class="fa-solid fa-headset"></i></span> Contact
+            </a>
         </nav>
+
+        <div class="sidebar-footer">
+            @if (isLoggedIn)
+            {
+                <div class="miles-card">
+                    <div class="miles-label">Sky Miles Balance</div>
+                    <div class="miles-value">@skyMiles.ToString("N0") <span>miles</span></div>
+                </div>
+            }
+            else
+            {
+                <div class="auth-sidebar-card">
+                    <span class="auth-sidebar-hint">Sign in to access Sky Miles &amp; your bookings</span>
+                    <button class="btn-sidebar-login" onclick="openModal('login')">
+                        <i class="fa-solid fa-right-to-bracket"></i> Sign In
+                    </button>
+                    <button class="btn-sidebar-register" onclick="openModal('register')">
+                        <i class="fa-solid fa-user-plus"></i> Create Account
+                    </button>
+                </div>
+            }
+        </div>
+    </aside>
+
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <!-- ════════════════════ TOPBAR ════════════════════ -->
+    <header class="topbar">
+        <div class="topbar-left">
+            <button class="menu-toggle" onclick="openSidebar()" aria-label="Open menu">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <div class="topbar-search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" placeholder="Search flights, bookings..." />
+            </div>
+        </div>
+
+        <div class="topbar-right">
+            @if (isLoggedIn)
+            {
+                <a class="topbar-btn" href="#" title="Notifications">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="badge">3</span>
+                </a>
+                <a class="topbar-btn" href="#" title="Messages">
+                    <i class="fa-solid fa-envelope"></i>
+                </a>
+                <div class="topbar-user-wrap">
+                    <div class="topbar-user" onclick="toggleUserDropdown()">
+                        <div class="user-avatar">@initials</div>
+                        <span class="user-name">@displayName</span>
+                        <i class="fa-solid fa-chevron-down user-chevron"></i>
+                    </div>
+                    <div class="user-dropdown" id="userDropdown">
+                        <a asp-controller="Account" asp-action="ChangePassword">
+                            <i class="fa-solid fa-key"></i> Change Password
+                        </a>
+                        <a asp-controller="Account" asp-action="EditAccount">
+                            <i class="fa-solid fa-user-pen"></i> Edit Account
+                        </a>
+                        <div class="user-dropdown-divider"></div>
+                        <a href="/Auth/Logout" class="logout-btn">
+                            <i class="fa-solid fa-right-from-bracket"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="topbar-auth">
+                    <button class="btn-topbar-login" onclick="openModal('login')">
+                        <i class="fa-solid fa-right-to-bracket"></i>
+                        <span>Sign In</span>
+                    </button>
+                    <button class="btn-topbar-register" onclick="openModal('register')">
+                        <i class="fa-solid fa-user-plus"></i> Register
+                    </button>
+                </div>
+            }
+        </div>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
+
+    <!-- ════════════════════ MAIN ════════════════════ -->
+    <div class="main-wrapper">
+        <main class="main-content" role="main">
             @RenderBody()
         </main>
+
+        <footer class="site-footer">
+            <div class="footer-top">
+                <div class="footer-brand">
+                    <div class="footer-logo">
+                        <i class="fa-solid fa-plane-departure"></i>
+                        <strong>The Airline Reservation System</strong>
+                    </div>
+                    <p class="footer-desc">
+                        Your trusted partner in the skies. We connect people and places across
+                        the globe with comfort, safety, and an unforgettable ocean of experiences.
+                    </p>
+                    <div class="footer-socials">
+                        <a href="#" class="social-btn" title="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                        <a href="#" class="social-btn" title="X / Twitter"><i class="fa-brands fa-x-twitter"></i></a>
+                        <a href="#" class="social-btn" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                        <a href="#" class="social-btn" title="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+                        <a href="#" class="social-btn" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                    </div>
+                </div>
+                <div>
+                    <div class="footer-col-title">Quick Links</div>
+                    <ul class="footer-links">
+                        <li><a asp-controller="Booking" asp-action="BookFlight">Book Flight</a></li>
+                        <li><a asp-controller="Ticket" asp-action="ViewConfirmation">My Tickets</a></li>
+                        <li><a asp-controller="Baggage" asp-action="Register">Register Baggage</a></li>
+                        <li><a asp-controller="Ticket" asp-action="Refund">Refund Policy</a></li>
+                        <li><a asp-controller="Miles" asp-action="Index">Sky Miles</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <div class="footer-col-title">Company</div>
+                    <ul class="footer-links">
+                        <li><a asp-controller="About" asp-action="Index">About Us</a></li>
+                        <li><a asp-controller="About" asp-action="Team">Our Team</a></li>
+                        <li><a asp-controller="About" asp-action="Fleet">Our Fleet</a></li>
+                        <li><a asp-controller="Contact" asp-action="Index">Contact</a></li>
+                        <li><a asp-controller="Home" asp-action="Privacy">Privacy Policy</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <div class="footer-col-title">Get In Touch</div>
+                    <div class="footer-contact-row">
+                        <i class="fa-solid fa-phone"></i>
+                        <span>+1 (800) SKYWAVE<br><small>24/7 Customer Support</small></span>
+                    </div>
+                    <div class="footer-contact-row">
+                        <i class="fa-solid fa-envelope"></i>
+                        <span>support@@skywave.aero</span>
+                    </div>
+                    <div class="footer-contact-row">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <span>Terminal 2, SkyWave Hub<br>International Airport</span>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>&copy; @DateTime.Now.Year SkyWave Airlines. All rights reserved.</span>
+                <div class="footer-bottom-links">
+                    <a asp-controller="Home" asp-action="Privacy">Privacy</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="#">Cookie Policy</a>
+                    <a href="#">Sitemap</a>
+                </div>
+            </div>
+        </footer>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - Airline - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <!-- ════════════════════════════════════════════════════
+         AUTH MODAL  (nhúng thẳng vào layout)
+    ════════════════════════════════════════════════════ -->
+    <div class="auth-overlay" id="authOverlay" onclick="overlayClick(event)">
+        <div class="auth-modal" id="authModal">
+
+            <!-- Close btn -->
+            <button class="auth-close" onclick="closeModal()" aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <!-- Tabs -->
+            <div class="auth-tabs">
+                <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">
+                    <i class="fa-solid fa-right-to-bracket"></i> Sign In
+                </button>
+                <button class="auth-tab" id="tabReg" onclick="switchTab('register')">
+                    <i class="fa-solid fa-user-plus"></i> Register
+                </button>
+            </div>
+
+            <!-- Brand header -->
+            <div class="auth-head">
+                <div class="auth-icon"><i class="fa-solid fa-plane-departure"></i></div>
+                <h2 class="auth-title" id="modalTitle">Welcome back</h2>
+                <p class="auth-sub" id="modalSub">Sign in to manage your flights &amp; miles</p>
+            </div>
+
+            <!-- ── LOGIN PANEL ── -->
+            <div id="panelLogin">
+                <div class="auth-alert auth-alert-err" id="loginErr"></div>
+
+                <div class="auth-field">
+                    <label class="auth-lbl">Username</label>
+                    <div class="auth-inp-wrap">
+                        <i class="fa-solid fa-user"></i>
+                        <input type="text" id="lUser" class="auth-inp" placeholder="Enter your username" autocomplete="username" />
+                    </div>
+                </div>
+
+                <div class="auth-field">
+                    <label class="auth-lbl">Password</label>
+                    <div class="auth-inp-wrap">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="lPass" class="auth-inp" placeholder="Enter your password" autocomplete="current-password" />
+                        <button type="button" class="auth-eye" onclick="toggleEye('lPass',this)"><i class="fa-solid fa-eye"></i></button>
+                    </div>
+                </div>
+
+                <div class="auth-row-mid">
+                    <label class="auth-check">
+                        <input type="checkbox" id="lRemember" /> <span>Remember me</span>
+                    </label>
+                    <a href="#" class="auth-forgot">Forgot password?</a>
+                </div>
+
+                <button class="auth-submit" id="loginBtn" onclick="doLogin()">
+                    <i class="fa-solid fa-right-to-bracket"></i> Sign In
+                </button>
+
+                <p class="auth-switch">
+                    Don't have an account? <a href="#" onclick="switchTab('register')">Create one free</a>
+                </p>
+            </div>
+
+            <!-- ── REGISTER PANEL ── -->
+            <div id="panelReg" style="display:none">
+                <div class="auth-alert auth-alert-err" id="regErr"></div>
+                <div class="auth-alert auth-alert-ok" id="regOk"></div>
+
+                <div class="auth-row-2">
+                    <div class="auth-field">
+                        <label class="auth-lbl">First Name</label>
+                        <div class="auth-inp-wrap">
+                            <i class="fa-solid fa-id-card"></i>
+                            <input type="text" id="rFirst" class="auth-inp" placeholder="First name" />
+                        </div>
+                    </div>
+                    <div class="auth-field">
+                        <label class="auth-lbl">Last Name</label>
+                        <div class="auth-inp-wrap">
+                            <i class="fa-solid fa-id-card"></i>
+                            <input type="text" id="rLast" class="auth-inp" placeholder="Last name" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="auth-field">
+                    <label class="auth-lbl">Username</label>
+                    <div class="auth-inp-wrap">
+                        <i class="fa-solid fa-user"></i>
+                        <input type="text" id="rUser" class="auth-inp" placeholder="Choose a username" autocomplete="username" />
+                    </div>
+                </div>
+
+                <div class="auth-field">
+                    <label class="auth-lbl">Email</label>
+                    <div class="auth-inp-wrap">
+                        <i class="fa-solid fa-envelope"></i>
+                        <input type="email" id="rEmail" class="auth-inp" placeholder="your@email.com" autocomplete="email" />
+                    </div>
+                </div>
+
+                <div class="auth-field">
+                    <label class="auth-lbl">Phone</label>
+                    <div class="auth-inp-wrap">
+                        <i class="fa-solid fa-phone"></i>
+                        <input type="tel" id="rPhone" class="auth-inp" placeholder="+84..." />
+                    </div>
+                </div>
+
+                <div class="auth-field">
+                    <label class="auth-lbl">CCCD</label>
+                    <div class="auth-inp-wrap">
+                        <i class="fa-solid fa-id-card"></i>
+                        <input type="text" id="rCccd" class="auth-inp" placeholder="Enter CCCD (12 digits)" />
+                    </div>
+                </div>
+
+                <div class="auth-field">
+                    <label class="auth-lbl">Address</label>
+                    <div class="auth-inp-wrap">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <input type="text" id="rAddress" class="auth-inp" placeholder="Your address" />
+                    </div>
+                </div>
+
+                <div class="auth-field">
+                    <label class="auth-lbl">Gender</label>
+                    <div class="auth-inp-wrap">
+                        <i class="fa-solid fa-venus-mars"></i>
+                        <select id="rGender" class="auth-inp">
+                            <option value="">Select gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="auth-field">
+                    <label class="auth-lbl">Age</label>
+                    <div class="auth-inp-wrap">
+                        <i class="fa-solid fa-cake-candles"></i>
+                        <input type="number" id="rAge" class="auth-inp" placeholder="Your age" />
+                    </div>
+                </div>
+
+                <div class="auth-field">
+                    <label class="auth-lbl">Password</label>
+                    <div class="auth-inp-wrap">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="rPass" class="auth-inp" placeholder="Min 6 characters" autocomplete="new-password" oninput="checkStrength(this.value)" />
+                        <button type="button" class="auth-eye" onclick="toggleEye('rPass',this)"><i class="fa-solid fa-eye"></i></button>
+                    </div>
+                    <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+                    <small class="strength-lbl" id="strengthLbl"></small>
+                </div>
+
+                <div class="auth-field">
+                    <label class="auth-lbl">Confirm Password</label>
+                    <div class="auth-inp-wrap">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="rConfirm" class="auth-inp" placeholder="Repeat password" autocomplete="new-password" />
+                        <button type="button" class="auth-eye" onclick="toggleEye('rConfirm',this)"><i class="fa-solid fa-eye"></i></button>
+                    </div>
+                </div>
+
+                <button class="auth-submit" id="regBtn" onclick="doRegister()">
+                    <i class="fa-solid fa-user-plus"></i> Create Account
+                </button>
+
+                <p class="auth-switch">
+                    Already have an account? <a href="#" onclick="switchTab('login')">Sign in</a>
+                </p>
+            </div>
+
         </div>
-    </footer>
+    </div>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+        /* ── Sidebar ── */
+        function toggleGroup(trigger) {
+            const items = trigger.nextElementSibling;
+            const isOpen = items.classList.contains('is-open');
+            document.querySelectorAll('.nav-group-items.is-open').forEach(el => el.classList.remove('is-open'));
+            document.querySelectorAll('.nav-group-trigger.is-open').forEach(el => el.classList.remove('is-open'));
+            if (!isOpen) { items.classList.add('is-open'); trigger.classList.add('is-open'); }
+        }
+        function openSidebar() {
+            document.getElementById('sidebar').classList.add('open');
+            document.getElementById('sidebarOverlay').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        /* ── Active nav link ── */
+        document.addEventListener('DOMContentLoaded', () => {
+            const path = window.location.pathname.toLowerCase();
+            document.querySelectorAll('.nav-link, .nav-group-items a').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && path.includes(href.toLowerCase()) && href !== '/') {
+                    link.classList.add('active');
+                    const items = link.closest('.nav-group-items');
+                    if (items) { items.classList.add('is-open'); items.previousElementSibling?.classList.add('is-open'); }
+                }
+            });
+        });
+
+        /* ── User dropdown ── */
+        function toggleUserDropdown() {
+            document.getElementById('userDropdown')?.classList.toggle('open');
+        }
+        document.addEventListener('click', e => {
+            const wrap = document.querySelector('.topbar-user-wrap');
+            if (wrap && !wrap.contains(e.target)) {
+                document.getElementById('userDropdown')?.classList.remove('open');
+            }
+        });
+
+        /* ══════════════════════════════════════════════
+           AUTH MODAL
+        ══════════════════════════════════════════════ */
+        function openModal(tab) {
+            switchTab(tab || 'login');
+            document.getElementById('authOverlay').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeModal() {
+            document.getElementById('authOverlay').classList.remove('open');
+            document.body.style.overflow = '';
+            clearAlerts();
+        }
+        function overlayClick(e) {
+            if (e.target === document.getElementById('authOverlay')) closeModal();
+        }
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+        function switchTab(tab) {
+            const isLogin = tab === 'login';
+            document.getElementById('tabLogin').classList.toggle('active', isLogin);
+            document.getElementById('tabReg').classList.toggle('active', !isLogin);
+            document.getElementById('panelLogin').style.display = isLogin ? '' : 'none';
+            document.getElementById('panelReg').style.display = isLogin ? 'none' : '';
+            document.getElementById('modalTitle').textContent = isLogin ? 'Welcome back' : 'Join SkyWave';
+            document.getElementById('modalSub').textContent = isLogin
+                ? 'Sign in to manage your flights & miles'
+                : 'Create your account and start earning miles';
+            clearAlerts();
+        }
+
+        function clearAlerts() {
+            ['loginErr', 'regErr', 'regOk'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) { el.classList.remove('show'); el.textContent = ''; }
+            });
+        }
+
+        function showAlert(id, msg, type) {
+            const el = document.getElementById(id);
+            el.className = 'auth-alert ' + (type === 'ok' ? 'auth-alert-ok' : 'auth-alert-err') + ' show';
+            el.innerHTML = `<i class="fa-solid fa-${type === 'ok' ? 'circle-check' : 'circle-exclamation'}"></i> ${msg}`;
+        }
+
+        function setBtn(id, loading, text, icon) {
+            const btn = document.getElementById(id);
+            btn.disabled = loading;
+            btn.innerHTML = loading
+                ? `<i class="fa-solid fa-spinner fa-spin"></i> ${text}...`
+                : `<i class="fa-solid fa-${icon}"></i> ${text}`;
+        }
+
+        /* ── Eye toggle ── */
+        function toggleEye(inputId, btn) {
+            const inp = document.getElementById(inputId);
+            const show = inp.type === 'password';
+            inp.type = show ? 'text' : 'password';
+            btn.querySelector('i').className = show ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+        }
+
+        /* ── Password strength ── */
+        function checkStrength(v) {
+            let s = 0;
+            if (v.length >= 6) s++; if (v.length >= 10) s++;
+            if (/[A-Z]/.test(v)) s++; if (/[0-9]/.test(v)) s++; if (/[^A-Za-z0-9]/.test(v)) s++;
+            const lv = [
+                { w:'20%', c:'#ff6b6b', t:'Weak' },
+                { w:'40%', c:'#ff9f43', t:'Fair' },
+                { w:'60%', c:'#feca57', t:'Good' },
+                { w:'80%', c:'#48dbfb', t:'Strong' },
+                { w:'100%', c:'#5de8a8', t:'Very Strong' },
+            ];
+            const l = lv[Math.min(s - 1, 4)] || { w:'0%', c:'', t:'' };
+            const fill = document.getElementById('strengthFill');
+            fill.style.width = v ? l.w : '0%';
+            fill.style.background = l.c;
+            document.getElementById('strengthLbl').textContent = v ? l.t : '';
+        }
+
+        /* ── Anti-forgery token ── */
+        function getToken() {
+            return document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+        }
+
+        /* ── LOGIN ── */
+        async function doLogin() {
+            const username = document.getElementById('lUser').value.trim();
+            const password = document.getElementById('lPass').value;
+            const remember = document.getElementById('lRemember').checked;
+
+            if (!username || !password) {
+                showAlert('loginErr', 'Please fill in all fields.');
+                return;
+            }
+
+            setBtn('loginBtn', true, 'Signing in', 'spinner');
+            document.getElementById('loginErr').classList.remove('show');
+
+            try {
+                const res = await fetch('/Auth/Login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': getToken()
+                    },
+                    body: JSON.stringify({ username, password, rememberMe: remember })
+                });
+
+                const json = await res.json().catch(() => null);
+
+                if (json && json.success) {
+                    window.location.reload();
+                } else if (res.ok && !json) {
+                    window.location.reload();
+                } else {
+                    showAlert('loginErr', json?.message || 'Invalid username or password.');
+                    setBtn('loginBtn', false, 'Sign In', 'right-to-bracket');
+                }
+            } catch {
+                showAlert('loginErr', 'Network error. Please try again.');
+                setBtn('loginBtn', false, 'Sign In', 'right-to-bracket');
+            }
+        }
+
+        /* ── REGISTER ── */
+        async function doRegister() {
+            const firstName = document.getElementById('rFirst').value.trim();
+            const lastName = document.getElementById('rLast').value.trim();
+            const username = document.getElementById('rUser').value.trim();
+            const email = document.getElementById('rEmail').value.trim();
+            const phone = document.getElementById('rPhone').value.trim();
+            const cccd = document.getElementById('rCccd').value.trim();
+            const address = document.getElementById('rAddress').value.trim();
+            const gender = document.getElementById('rGender').value;
+            const age = document.getElementById('rAge').value ? parseInt(document.getElementById('rAge').value) : null;
+            const password = document.getElementById('rPass').value;
+            const confirm = document.getElementById('rConfirm').value;
+
+            document.getElementById('regErr').classList.remove('show');
+            document.getElementById('regOk').classList.remove('show');
+
+            if (!firstName || !lastName || !username || !email || !password) {
+                showAlert('regErr', 'Please fill in all required fields.');
+                return;
+            }
+            if (password.length < 6) {
+                showAlert('regErr', 'Password must be at least 6 characters.');
+                return;
+            }
+            if (password !== confirm) {
+                showAlert('regErr', 'Passwords do not match.');
+                return;
+            }
+
+            setBtn('regBtn', true, 'Creating account', 'spinner');
+
+            try {
+                const res = await fetch('/Auth/Register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': getToken()
+                    },
+                    body: JSON.stringify({
+                        first_name: firstName,
+                        last_name: lastName,
+                        username,
+                        email,
+                        phone,
+                        cccd,
+                        address,
+                        gender,
+                        age,
+                        password
+                    })
+                });
+
+                const json = await res.json().catch(() => null);
+
+                if (json && json.success) {
+                    showAlert('regOk', 'Account created! Signing you in...', 'ok');
+                    setTimeout(() => window.location.reload(), 1200);
+                } else if (res.ok && !json) {
+                    window.location.reload();
+                } else {
+                    showAlert('regErr', json?.message || 'Registration failed. Please try again.');
+                    setBtn('regBtn', false, 'Create Account', 'user-plus');
+                }
+            } catch {
+                showAlert('regErr', 'Network error. Please try again.');
+                setBtn('regBtn', false, 'Create Account', 'user-plus');
+            }
+        }
+
+        /* ── Enter key support ── */
+        document.addEventListener('keydown', e => {
+            if (e.key !== 'Enter') return;
+            if (document.getElementById('panelLogin').style.display !== 'none' &&
+                document.getElementById('authOverlay').classList.contains('open')) {
+                doLogin();
+            }
+            else if (document.getElementById('panelReg').style.display !== 'none' &&
+                document.getElementById('authOverlay').classList.contains('open')) {
+                doRegister();
+            }
+        });
+    </script>
+
 </body>
 </html>
