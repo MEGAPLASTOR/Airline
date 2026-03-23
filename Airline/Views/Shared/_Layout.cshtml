@@ -53,6 +53,10 @@
             --transition: 0.2s ease;
         }
 
+        html, body {
+            min-height: 100%;
+        }
+
         html {
             font-size: 16px;
         }
@@ -64,6 +68,7 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
         }
 
@@ -216,7 +221,8 @@
                 transition: background var(--transition), color var(--transition);
             }
 
-            .nav-link:hover .nav-icon, .nav-link.active .nav-icon {
+            .nav-link:hover .nav-icon,
+            .nav-link.active .nav-icon {
                 background: rgba(23,170,184,0.22);
                 color: var(--ocean-aqua);
             }
@@ -256,7 +262,8 @@
                 transition: background var(--transition), color var(--transition);
             }
 
-            .nav-group-trigger:hover .nav-icon, .nav-group-trigger.is-open .nav-icon {
+            .nav-group-trigger:hover .nav-icon,
+            .nav-group-trigger.is-open .nav-icon {
                 background: rgba(23,170,184,0.22);
                 color: var(--ocean-aqua);
             }
@@ -641,7 +648,8 @@
                 display: block;
             }
 
-            .user-dropdown a, .user-dropdown button {
+            .user-dropdown a,
+            .user-dropdown button {
                 display: flex;
                 align-items: center;
                 gap: 0.6rem;
@@ -655,7 +663,8 @@
                 transition: background var(--transition), color var(--transition);
             }
 
-                .user-dropdown a:hover, .user-dropdown button:hover {
+                .user-dropdown a:hover,
+                .user-dropdown button:hover {
                     background: rgba(255,255,255,0.07);
                     color: #fff;
                 }
@@ -688,48 +697,73 @@
         .main-wrapper {
             margin-left: var(--sidebar-w);
             margin-top: var(--header-h);
-            flex: 1;
+            width: calc(100% - var(--sidebar-w));
+            max-width: 100%;
+            min-height: calc(100vh - var(--header-h));
             display: flex;
             flex-direction: column;
-            min-height: calc(100vh - var(--header-h));
         }
 
         .main-content {
-            flex: 1;
+            flex: 1 0 auto;
+            width: 100%;
+            min-width: 0;
             padding: 2rem 2.25rem;
         }
 
+            .main-content > * {
+                min-width: 0;
+            }
+
         /* ══ FOOTER ══ */
         .site-footer {
+            margin-top: auto;
+            flex: 0 0 auto;
+            width: 100%;
+            display: block;
+            position: relative;
+            z-index: 2;
+            clear: both;
             background: var(--ocean-deep);
             color: rgba(255,255,255,0.6);
         }
 
         .footer-top {
+            width: 100%;
             display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1.2fr;
+            grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr);
             gap: 3rem;
-            padding: 3.5rem 2.5rem 2.5rem;
+            align-items: start;
+            padding: 3.25rem 2.5rem 2.5rem;
             border-bottom: 1px solid rgba(255,255,255,0.06);
         }
 
-        .footer-brand .footer-logo {
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            margin-bottom: 0.85rem;
-        }
-
-            .footer-brand .footer-logo i {
-                color: var(--ocean-aqua);
-                font-size: 1.2rem;
+            .footer-top > div,
+            .footer-brand,
+            .footer-links,
+            .footer-contact-row,
+            .footer-bottom,
+            .footer-bottom-links {
+                min-width: 0;
             }
 
-            .footer-brand .footer-logo strong {
-                font-family: 'Playfair Display', serif;
-                font-size: 1.35rem;
-                color: #fff;
-            }
+                .footer-brand .footer-logo {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.6rem;
+                    margin-bottom: 0.85rem;
+                }
+
+                    .footer-brand .footer-logo i {
+                        color: var(--ocean-aqua);
+                        font-size: 1.2rem;
+                    }
+
+                    .footer-brand .footer-logo strong {
+                        font-family: 'Playfair Display', serif;
+                        font-size: 1.35rem;
+                        color: #fff;
+                    }
 
         .footer-desc {
             font-size: 0.82rem;
@@ -817,6 +851,7 @@
             }
 
         .footer-bottom {
+            width: 100%;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -852,8 +887,8 @@
         }
 
         /* ══════════════════════════════════════════════════
-                           AUTH MODAL
-                        ══════════════════════════════════════════════════ */
+                               AUTH MODAL
+            ══════════════════════════════════════════════════ */
         .auth-overlay {
             display: none;
             position: fixed;
@@ -1231,6 +1266,7 @@
 
             .main-wrapper {
                 margin-left: 0;
+                width: 100%;
             }
 
             .footer-top {

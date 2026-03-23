@@ -1,22 +1,204 @@
-﻿@* @using Airline.Data *@
-@inject DataContext _context
-
-@{
-    ViewData["Title"] = "Home Page";
-    var isConnected = _context.Database.CanConnect();
+﻿@{
+    ViewData["Title"] = "Home";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
+@section Styles {
+    <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
+}
 
-    <h3 style="color:@(isConnected ? "green" : "red")">
-        @(isConnected ? "✅ Đã kết nối CSDL" : "❌ Chưa kết nối CSDL")
-    </h3>
+<div class="home-page">
+    <section class="home-hero">
+        <div class="home-hero-content">
+            <span class="home-badge">SkyWave Airlines</span>
+            <h1>Premium airline booking with a modern digital experience.</h1>
+            <p>
+                Manage reservations, passengers, tickets, and baggage services through
+                a clean and professional airline platform built for speed and clarity.
+            </p>
 
-    <p>
-        Learn about
-        <a href="https://learn.microsoft.com/aspnet/core">
-            building Web apps with ASP.NET Core
-        </a>.
-    </p>
+            <div class="home-actions">
+                <a asp-controller="Booking" asp-action="BookFlight" class="home-btn primary">
+                    <i class="fa-solid fa-ticket"></i>
+                    Book a Flight
+                </a>
+
+                <a asp-controller="Ticket" asp-action="ViewConfirmation" class="home-btn secondary">
+                    <i class="fa-solid fa-receipt"></i>
+                    View Tickets
+                </a>
+            </div>
+
+            <div class="home-hero-stats">
+                <div class="hero-stat">
+                    <strong>120+</strong>
+                    <span>Routes</span>
+                </div>
+                <div class="hero-stat">
+                    <strong>24/7</strong>
+                    <span>Support</span>
+                </div>
+                <div class="hero-stat">
+                    <strong>Fast</strong>
+                    <span>Booking Flow</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="home-hero-side">
+            <div class="home-hero-card">
+                <h3>Platform Overview</h3>
+
+                <div class="hero-info-item">
+                    <span class="hero-info-label">Reservation</span>
+                    <strong>Simple and streamlined booking process</strong>
+                </div>
+
+                <div class="hero-info-item">
+                    <span class="hero-info-label">Management</span>
+                    <strong>Passenger, baggage, and ticket services in one place</strong>
+                </div>
+
+                <div class="hero-info-item">
+                    <span class="hero-info-label">Experience</span>
+                    <strong>Consistent interface with modern airline branding</strong>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="home-quick-actions">
+        <a asp-controller="Booking" asp-action="BookFlight" class="quick-card">
+            <div class="quick-icon"><i class="fa-solid fa-plane-departure"></i></div>
+            <div>
+                <h3>Book Flights</h3>
+                <p>Search and reserve flights with a faster booking flow.</p>
+            </div>
+        </a>
+
+        <a asp-controller="Ticket" asp-action="ViewConfirmation" class="quick-card">
+            <div class="quick-icon"><i class="fa-solid fa-ticket"></i></div>
+            <div>
+                <h3>Manage Tickets</h3>
+                <p>Review confirmations and access reservation details.</p>
+            </div>
+        </a>
+
+        <a asp-controller="Passenger" asp-action="Index" class="quick-card">
+            <div class="quick-icon"><i class="fa-solid fa-users"></i></div>
+            <div>
+                <h3>Passengers</h3>
+                <p>Keep passenger records organized and easy to manage.</p>
+            </div>
+        </a>
+
+        <a asp-controller="Baggage" asp-action="Register" class="quick-card">
+            <div class="quick-icon"><i class="fa-solid fa-suitcase-rolling"></i></div>
+            <div>
+                <h3>Baggage Services</h3>
+                <p>Register baggage and access pre-flight support services.</p>
+            </div>
+        </a>
+    </section>
+
+    <section class="home-section">
+        <div class="section-heading">
+            <span class="section-kicker">Why Choose Us</span>
+            <h2>A cleaner, smarter reservation experience</h2>
+            <p>
+                Designed for convenience and professionalism, the platform helps users
+                access all major airline services through one consistent interface.
+            </p>
+        </div>
+
+        <div class="home-feature-grid">
+            <article class="feature-card">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+                <h3>Fast Navigation</h3>
+                <p>
+                    Reach booking, tickets, and baggage services quickly with an interface
+                    built around clear actions and logical structure.
+                </p>
+            </article>
+
+            <article class="feature-card">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-shield-heart"></i>
+                </div>
+                <h3>Reliable Experience</h3>
+                <p>
+                    A polished design language and better content hierarchy make daily usage
+                    easier for both customers and internal operations.
+                </p>
+            </article>
+
+            <article class="feature-card">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-layer-group"></i>
+                </div>
+                <h3>Unified Services</h3>
+                <p>
+                    Booking, passengers, tickets, and baggage are presented as one connected
+                    system instead of separate disconnected screens.
+                </p>
+            </article>
+        </div>
+    </section>
+
+    <section class="home-section">
+        <div class="section-heading">
+            <span class="section-kicker">Popular Routes</span>
+            <h2>Explore top travel destinations</h2>
+            <p>
+                Highlight important destinations and create a more engaging first impression
+                for the homepage.
+            </p>
+        </div>
+
+        <div class="home-routes">
+            <article class="route-card">
+                <div class="route-top">
+                    <span class="route-badge">Domestic</span>
+                    <h3>Ho Chi Minh City → Hanoi</h3>
+                </div>
+                <p>Frequent daily flights with flexible travel schedules.</p>
+                <a asp-controller="Booking" asp-action="BookFlight" class="route-link">Book this route</a>
+            </article>
+
+            <article class="route-card">
+                <div class="route-top">
+                    <span class="route-badge">Regional</span>
+                    <h3>Da Nang → Singapore</h3>
+                </div>
+                <p>Modern route selection for short international journeys.</p>
+                <a asp-controller="Booking" asp-action="BookFlight" class="route-link">Book this route</a>
+            </article>
+
+            <article class="route-card">
+                <div class="route-top">
+                    <span class="route-badge">International</span>
+                    <h3>Hanoi → Seoul</h3>
+                </div>
+                <p>Comfortable travel options for premium customer experience.</p>
+                <a asp-controller="Booking" asp-action="BookFlight" class="route-link">Book this route</a>
+            </article>
+        </div>
+    </section>
+
+    <section class="home-banner">
+        <div class="home-banner-content">
+            <span class="section-kicker">Professional Reservation System</span>
+            <h2>Built for a more premium airline front end</h2>
+            <p>
+                A stronger homepage presentation with better hierarchy, clearer actions,
+                and a more modern airline brand experience.
+            </p>
+        </div>
+
+        <a asp-controller="Booking" asp-action="BookFlight" class="home-btn light">
+            <i class="fa-solid fa-arrow-right"></i>
+            Start Booking
+        </a>
+    </section>
 </div>
