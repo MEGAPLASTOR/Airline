@@ -18,11 +18,10 @@ namespace Airline.Controllers
         // Authentication Helper
         private bool IsAdmin()
         {
-            var userJson = HttpContext.Session.GetString("User");
-            if (string.IsNullOrEmpty(userJson)) return false;
+            var isAuth = User?.Identity?.IsAuthenticated == true;
+            var role = User?.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
 
-            var user = JsonSerializer.Deserialize<Users>(userJson);
-            return user?.Role == "ADMIN";
+            return isAuth && string.Equals(role, "ADMIN", StringComparison.OrdinalIgnoreCase);
         }
 
         // ==========================================
@@ -30,7 +29,7 @@ namespace Airline.Controllers
         // ==========================================
         public IActionResult Dashboard()
         {
-            if (!IsAdmin()) return RedirectToAction("Login", "Account");
+            if (!IsAdmin()) return RedirectToAction("Index", "Home");
 
             return View("AdminDashboard");
         }
@@ -40,7 +39,7 @@ namespace Airline.Controllers
         // ==========================================
         public IActionResult ManageCity(string search)
         {
-            if (!IsAdmin()) return RedirectToAction("Login", "Account");
+            if (!IsAdmin()) return RedirectToAction("Index", "Home");
 
             var query = _context.Cities
                 .Include(c => c.RouteDepartureCityNavigations)
@@ -147,9 +146,9 @@ namespace Airline.Controllers
         // ==========================================
         public IActionResult ManageRoutes(string search)
         {
-            if (!IsAdmin()) return RedirectToAction("Login", "Account");
+            if (!IsAdmin()) return RedirectToAction("Index", "Home");
 
-            var query = _context.Route
+            var query = _context.Routes
                 .Include(r => r.DepartureCityNavigation)
                 .Include(r => r.ArrivalCityNavigation)
                 .Include(r => r.Flights)
@@ -171,7 +170,7 @@ namespace Airline.Controllers
         public IActionResult GetRoute(int id)
         {
             if (!IsAdmin()) return Unauthorized();
-            var r = _context.Route.Find(id);
+            var r = _context.Routes.Find(id);
             if (r == null) return NotFound();
             return Json(new { routeId = r.RouteId, departureCity = r.DepartureCity, arrivalCity = r.ArrivalCity });
         }
@@ -186,12 +185,12 @@ namespace Airline.Controllers
                 return Json(new { success = false, message = "Departure and arrival cities cannot be the same." });
 
             // Check if route already exists
-            if (_context.Route.Any(r => r.DepartureCity == departureCity && r.ArrivalCity == arrivalCity))
+            if (_context.Routes.Any(r => r.DepartureCity == departureCity && r.ArrivalCity == arrivalCity))
                 return Json(new { success = false, message = "This route already exists." });
 
             try
             {
-                _context.Route.Add(new Models.Route { DepartureCity = departureCity, ArrivalCity = arrivalCity });
+                _context.Routes.Add(new Models.Route { DepartureCity = departureCity, ArrivalCity = arrivalCity });
                 _context.SaveChanges();
                 return Json(new { success = true, message = "Route added successfully." });
             }
@@ -207,14 +206,14 @@ namespace Airline.Controllers
         {
             if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized access." });
 
-            var route = _context.Route.Find(id);
+            var route = _context.Routes.Find(id);
             if (route == null) return Json(new { success = false, message = "Route not found." });
 
             if (departureCity == arrivalCity)
                 return Json(new { success = false, message = "Departure and arrival cities cannot be the same." });
 
             // Check duplicate
-            if (_context.Route.Any(r => r.RouteId != id && r.DepartureCity == departureCity && r.ArrivalCity == arrivalCity))
+            if (_context.Routes.Any(r => r.RouteId != id && r.DepartureCity == departureCity && r.ArrivalCity == arrivalCity))
                 return Json(new { success = false, message = "This route already exists." });
 
             try
@@ -236,7 +235,7 @@ namespace Airline.Controllers
         {
             if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized access." });
 
-            var route = _context.Route
+            var route = _context.Routes
                 .Include(r => r.Flights)
                 .FirstOrDefault(r => r.RouteId == id);
 
@@ -247,7 +246,7 @@ namespace Airline.Controllers
 
             try
             {
-                _context.Route.Remove(route);
+                _context.Routes.Remove(route);
                 _context.SaveChanges();
                 return Json(new { success = true, message = "Route deleted successfully." });
             }
@@ -262,7 +261,7 @@ namespace Airline.Controllers
         // ==========================================
         public IActionResult ManageFlights(string search)
         {
-            if (!IsAdmin()) return RedirectToAction("Login", "Account");
+            if (!IsAdmin()) return RedirectToAction("Index", "Home");
 
             var query = _context.Flights
                 .Include(f => f.Route)
@@ -279,7 +278,7 @@ namespace Airline.Controllers
                                          (f.Route.DepartureCityNavigation.CityName + " " + f.Route.ArrivalCityNavigation.CityName).ToLower().Contains(lowerSearch));
             }
 
-            ViewBag.Routes = _context.Route
+            ViewBag.Routes = _context.Routes
                 .Include(r => r.DepartureCityNavigation)
                 .Include(r => r.ArrivalCityNavigation)
                 .ToList();
@@ -385,7 +384,7 @@ namespace Airline.Controllers
         // ==========================================
         public IActionResult FlightSchedules(string search, string status, string dateFrom, string dateTo)
         {
-            if (!IsAdmin()) return RedirectToAction("Login", "Account");
+            if (!IsAdmin()) return RedirectToAction("Index", "Home");
 
             var query = _context.FlightSchedules
                 .Include(s => s.Flight)
@@ -551,7 +550,7 @@ namespace Airline.Controllers
         // ==========================================
         public IActionResult FlightReschedule(string search, string status, string filterDate)
         {
-            if (!IsAdmin()) return RedirectToAction("Login", "Account");
+            if (!IsAdmin()) return RedirectToAction("Index", "Home");
 
             var query = _context.FlightSchedules
                 .Include(s => s.Flight)
