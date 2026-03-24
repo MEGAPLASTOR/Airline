@@ -136,7 +136,7 @@ namespace Airline.Controllers
         }
 
         [HttpGet("AdminDashboard")]
-        public IActionResult AdminDashboard()
+        public async Task<IActionResult> AdminDashboard()
         {
             var isAuth = User?.Identity?.IsAuthenticated == true;
             var role = User?.FindFirst(ClaimTypes.Role)?.Value;
@@ -146,7 +146,103 @@ namespace Airline.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
-            return View("~/Views/Admin/AdminDashboard.cshtml");
+            var now = DateTime.Now;
+            var monthStart = new DateTime(now.Year, now.Month, 1);
+            var monthEnd = monthStart.AddMonths(1);
+            var today = now.Date;
+            var tomorrow = today.AddDays(1);
+
+            var firstName = User?.FindFirst("FirstName")?.Value ?? "Admin";
+
+            var totalUsers = await _context.Users.CountAsync();
+
+            var totalFlights = await _context.Flights.CountAsync();
+
+            var activeBookings = await _context.Bookings
+                .CountAsync(x => x.Status != null && x.Status.ToUpper() == "ACTIVE");
+
+            var revenueThisMonth = await _context.Payments
+                .Where(x =>
+                    x.PaymentDate != null &&
+                    x.PaymentDate >= monthStart &&
+                    x.PaymentDate < monthEnd &&
+                    x.Amount != null &&
+                    (x.PaymentStatus == null || x.PaymentStatus.ToUpper() == "PAID"))
+                .SumAsync(x => (decimal?)x.Amount) ?? 0m;
+
+            var scheduledFlightsToday = await _context.FlightSchedules
+                .CountAsync(x => x.DepartureTime >= today && x.DepartureTime < tomorrow);
+
+            var availableSeatsToday = await _context.FlightSchedules
+                .Where(x => x.DepartureTime >= today && x.DepartureTime < tomorrow)
+                .SumAsync(x => (int?)x.AvailableSeats) ?? 0;
+
+            var ticketClassDistribution = await
+                (from t in _context.Tickets
+                 join tc in _context.TicketClasses on t.ClassId equals tc.ClassId
+                 group t by tc.ClassName into g
+                 orderby g.Count() descending
+                 select new TicketClassChartItem
+                 {
+                     ClassName = g.Key,
+                     Count = g.Count()
+                 }).ToListAsync();
+
+            var topRoutes = await
+                (from t in _context.Tickets
+                 join b in _context.Bookings on t.BookingId equals b.BookingId
+                 join fs in _context.FlightSchedules on b.ScheduleId equals fs.ScheduleId
+                 join f in _context.Flights on fs.FlightId equals f.FlightId
+                 join r in _context.Routes on f.RouteId equals r.RouteId
+                 join dep in _context.Cities on r.DepartureCity equals dep.CityId
+                 join arr in _context.Cities on r.ArrivalCity equals arr.CityId
+                 group t by new { dep.CityName, arr.CityName } into g
+                 orderby g.Count() descending
+                 select new TopRouteItem
+                 {
+                     RouteName = g.Key.CityName + " → " + g.Key.CityName1,
+                     PassengerCount = g.Count()
+                 })
+                .Take(5)
+                .ToListAsync();
+
+            var recentTickets = await
+                (from t in _context.Tickets
+                 join p in _context.Passengers on t.PassengerId equals p.PassengerId
+                 join tc in _context.TicketClasses on t.ClassId equals tc.ClassId
+                 join b in _context.Bookings on t.BookingId equals b.BookingId
+                 join fs in _context.FlightSchedules on b.ScheduleId equals fs.ScheduleId
+                 join f in _context.Flights on fs.FlightId equals f.FlightId
+                 join r in _context.Routes on f.RouteId equals r.RouteId
+                 join dep in _context.Cities on r.DepartureCity equals dep.CityId
+                 join arr in _context.Cities on r.ArrivalCity equals arr.CityId
+                 orderby t.TicketId descending
+                 select new RecentTicketActivityItem
+                 {
+                     TicketId = t.TicketId,
+                     PassengerName = p.FullName,
+                     RouteName = dep.CityName + " → " + arr.CityName,
+                     ClassName = tc.ClassName,
+                     Status = t.Status ?? "UNKNOWN"
+                 })
+                .Take(10)
+                .ToListAsync();
+
+            var vm = new AdminDashboardViewModel
+            {
+                FirstName = firstName,
+                TotalUsers = totalUsers,
+                TotalFlights = totalFlights,
+                ActiveBookings = activeBookings,
+                RevenueThisMonth = revenueThisMonth,
+                ScheduledFlightsToday = scheduledFlightsToday,
+                AvailableSeatsToday = availableSeatsToday,
+                TicketClassDistribution = ticketClassDistribution,
+                TopRoutes = topRoutes,
+                RecentTickets = recentTickets
+            };
+
+            return View(vm);
         }
 
         [HttpGet("Logout")]
