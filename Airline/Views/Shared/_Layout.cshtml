@@ -1336,6 +1336,14 @@
                 <span class="nav-icon"><i class="fa-solid fa-house"></i></span> Home
             </a>
 
+            @if (User?.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value == "ADMIN")
+            {
+                <div class="nav-label">Admin</div>
+                <a class="nav-link" href="/Admin/Dashboard">
+                    <span class="nav-icon"><i class="fa-solid fa-gauge-high"></i></span> Admin Dashboard
+                </a>
+            }
+
             <div class="nav-label">Services</div>
 
             <div class="nav-group">
@@ -1953,11 +1961,10 @@
 
                 const json = await res.json().catch(() => null);
 
-                if (json && json.success) {
-                    showAlert('regOk', 'Account created! Signing you in...', 'ok');
-                    setTimeout(() => window.location.reload(), 1200);
-                } else if (res.ok && !json) {
-                    window.location.reload();
+          if (json && json.success) {
+            window.location.reload();
+        } else if (res.ok && !json) {
+            window.location.reload();
                 } else {
                     showAlert('regErr', json?.message || 'Registration failed. Please try again.');
                     setBtn('regBtn', false, 'Create Account', 'user-plus');
@@ -1977,7 +1984,7 @@
             }
             else if (document.getElementById('panelReg').style.display !== 'none' &&
                 document.getElementById('authOverlay').classList.contains('open')) {
-                doRegister();
+                doRegister();ff
             }
         });
     </script>
