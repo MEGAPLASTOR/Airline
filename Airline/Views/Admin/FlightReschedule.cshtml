@@ -1,0 +1,759 @@
+@model IEnumerable<Airline.Models.FlightSchedule>
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Flight Reschedule Management";
+    var flights = ViewBag.Flights as IEnumerable<Airline.Models.Flight>;
+    var search = ViewBag.Search as string ?? "";
+    var statusFilter = ViewBag.StatusFilter as string ?? "";
+    var filterDate = ViewBag.FilterDate as string ?? "";
+}
+
+<!-- Premium Dark Base Styling for Admin Elements -->
+<style>
+    .schedule-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 1.5rem;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .page-title-block {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+    }
+
+    .page-greeting {
+        color: var(--accent-gold);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #fff;
+        margin: 0;
+    }
+
+    .page-subtitle {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.95rem;
+        margin: 0;
+    }
+
+    .filter-bar {
+        background: var(--surface-light);
+        padding: 1.2rem;
+        border-radius: 12px;
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        flex-wrap: wrap;
+        align-items: flex-end;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+
+        .filter-group label {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding: 0.7rem 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            min-width: 180px;
+        }
+
+            .filter-group input:focus,
+            .filter-group select:focus {
+                outline: none;
+                border-color: var(--accent-gold);
+            }
+
+    .filter-btn {
+        background: rgba(255, 255, 255, 0.05);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 0.7rem 1.5rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s;
+        height: max-content;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .filter-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+    .schedule-table-card {
+        background: var(--surface-light);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        overflow-x: auto;
+    }
+
+    .schedule-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 1000px;
+    }
+
+        .schedule-table th {
+            text-align: left;
+            padding: 1.2rem 1rem;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255, 255, 255, 0.4);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-weight: 600;
+        }
+
+        .schedule-table td {
+            padding: 1.2rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            vertical-align: middle;
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .schedule-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+    .status-pill {
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        display: inline-block;
+        text-align: center;
+        min-width: 90px;
+    }
+
+    .pill-scheduled {
+        background: rgba(46, 204, 113, 0.15);
+        color: #2ecc71;
+    }
+
+    .pill-delayed {
+        background: rgba(241, 196, 15, 0.15);
+        color: #f1c40f;
+    }
+
+    .pill-cancelled {
+        background: rgba(231, 76, 60, 0.15);
+        color: #e74c3c;
+    }
+
+    .pill-completed {
+        background: rgba(52, 152, 219, 0.15);
+        color: #3498db;
+    }
+
+    .route-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+    }
+
+    .route-cities {
+        font-weight: 600;
+        color: #fff;
+    }
+
+    .flight-num {
+        font-size: 0.85rem;
+        color: var(--accent-gold);
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    .time-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(0, 0, 0, 0.2);
+        padding: 0.4rem 0.6rem;
+        border-radius: 6px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.85rem;
+    }
+
+        .time-badge.delay-badge {
+            border: 1px solid rgba(241, 196, 15, 0.3);
+            color: #f1c40f;
+        }
+
+    .action-btns {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .act-btn {
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+        font-weight: 500;
+    }
+
+    .act-reschedule {
+        background: linear-gradient(135deg, var(--accent-gold), #e5a93d);
+        color: #000;
+    }
+
+        .act-reschedule:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
+        }
+
+    .act-cancel-flight {
+        background: rgba(231, 76, 60, 0.1);
+        color: #e74c3c;
+        border: 1px solid rgba(231, 76, 60, 0.2);
+    }
+
+        .act-cancel-flight:hover {
+            background: rgba(231, 76, 60, 0.2);
+        }
+
+    .act-disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        background: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+        .act-disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+    .empty-state {
+        padding: 4rem 1rem;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.3);
+    }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: rgba(255, 255, 255, 0.1);
+        }
+
+    /* Modals */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(5px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s;
+    }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+    .modal-box {
+        background: var(--surface-dark);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        width: min(600px, 95vw);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        transform: translateY(20px);
+        transition: all 0.3s;
+    }
+
+    .modal-overlay.active .modal-box {
+        transform: translateY(0);
+    }
+
+    .modal-header {
+        padding: 1.2rem 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+        color: #fff;
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        color: rgba(255, 255, 255, 0.5);
+        cursor: pointer;
+        font-size: 1.2rem;
+        transition: color 0.2s;
+    }
+
+        .modal-close:hover {
+            color: #fff;
+        }
+
+    .modal-body {
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.2rem;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .form-label {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.6);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .form-control {
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 0.8rem 1rem;
+        border-radius: 6px;
+        color: #fff;
+        font-size: 0.95rem;
+        transition: border-color 0.2s;
+    }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+        }
+
+    ::-webkit-calendar-picker-indicator {
+        filter: invert(1);
+        cursor: pointer;
+    }
+
+    .modal-footer {
+        padding: 1.2rem 1.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+    }
+
+    .btn-cancel {
+        background: none;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #fff;
+        padding: 0.6rem 1.2rem;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+        .btn-cancel:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+    .btn-submit {
+        background: var(--accent-gold);
+        color: #000;
+        border: none;
+        padding: 0.6rem 1.2rem;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: filter 0.2s;
+    }
+
+        .btn-submit:hover {
+            filter: brightness(1.1);
+        }
+
+    .btn-danger {
+        background: var(--accent-coral);
+        color: #fff;
+        border: none;
+        padding: 0.6rem 1.2rem;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+        .btn-danger:hover {
+            filter: brightness(1.1);
+        }
+
+    .info-box {
+        background: rgba(212, 175, 55, 0.05);
+        border: 1px solid rgba(212, 175, 55, 0.2);
+        padding: 1rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+        .info-box span {
+            color: var(--accent-gold);
+            font-weight: 600;
+        }
+
+    .toast {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        background: #333;
+        color: #fff;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        transform: translateY(100px);
+        opacity: 0;
+        transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        z-index: 2000;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-left: 4px solid var(--accent-gold);
+    }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+</style>
+
+<!-- Page Header -->
+<div class="schedule-header">
+    <div class="page-title-block">
+        <div class="page-greeting"><i class="fa-solid fa-clock-rotate-left"></i> Operations Control</div>
+        <h1 class="page-title">Flight Reschedule</h1>
+        <p class="page-subtitle">Manage delays, time adjustments, and flight cancellations</p>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<form method="get" class="filter-bar" asp-controller="Admin" asp-action="FlightReschedule">
+    <div class="filter-group">
+        <label>Flight / Route Keyword</label>
+        <input type="text" name="search" placeholder="e.g., VN123" value="@search" />
+    </div>
+    <div class="filter-group">
+        <label>Status</label>
+        <select name="status">
+            <option value="ALL" selected="@(statusFilter == "ALL" || string.IsNullOrEmpty(statusFilter))">All Statuses</option>
+            <option value="SCHEDULED" selected="@(statusFilter == "SCHEDULED")">Scheduled</option>
+            <option value="DELAYED" selected="@(statusFilter == "DELAYED")">Delayed</option>
+        </select>
+    </div>
+    <div class="filter-group">
+        <label>Departure Date</label>
+        <input type="date" name="filterDate" value="@filterDate" />
+    </div>
+    <button type="submit" class="filter-btn"><i class="fa-solid fa-filter"></i> Apply Filters</button>
+</form>
+
+<!-- Data Table -->
+<div class="schedule-table-card">
+    <table class="schedule-table">
+        <thead>
+            <tr>
+                <th>Flight Info</th>
+                <th>Current Departure</th>
+                <th>Current Arrival</th>
+                <th>Status</th>
+                <th>Quick Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                foreach (var s in Model)
+                {
+                    var depCity = s.Flight?.Route?.DepartureCityNavigation?.CityName ?? "—";
+                    var arrCity = s.Flight?.Route?.ArrivalCityNavigation?.CityName ?? "—";
+                    var flightNum = s.Flight?.FlightNumber ?? "—";
+
+                    var isEditable = (s.Status == "SCHEDULED" || s.Status == "DELAYED");
+                    var isDelayed = s.Status == "DELAYED";
+
+                    var pillClass = "pill-scheduled";
+                    var statusVi = "Scheduled";
+                    if (s.Status == "DELAYED") { pillClass = "pill-delayed"; statusVi = "Delayed"; }
+                    else if (s.Status == "CANCELLED") { pillClass = "pill-cancelled"; statusVi = "Cancelled"; }
+                    else if (s.Status == "COMPLETED") { pillClass = "pill-completed"; statusVi = "Completed"; }
+
+                    <tr>
+                        <td>
+                            <div class="route-cell">
+                                <span class="route-cities">@depCity → @arrCity</span>
+                                <span class="flight-num"><i class="fa-solid fa-plane"></i> @flightNum</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="time-badge @(isDelayed ? "delay-badge" : "")">
+                                <i class="fa-solid fa-plane-departure"></i>
+                                @s.DepartureTime.ToString("dd/MM/yyyy HH:mm")
+                            </div>
+                        </td>
+                        <td>
+                            <div class="time-badge @(isDelayed ? "delay-badge" : "")">
+                                <i class="fa-solid fa-plane-arrival"></i>
+                                @s.ArrivalTime.ToString("dd/MM/yyyy HH:mm")
+                            </div>
+                        </td>
+                        <td>
+                            <span class="status-pill @pillClass">@statusVi</span>
+                        </td>
+                        <td>
+                            <div class="action-btns">
+                                @if (isEditable)
+                                {
+                                    <button class="act-btn act-reschedule" title="Adjust Times" onclick="openRescheduleModal(@s.ScheduleId)">
+                                        <i class="fa-solid fa-clock-rotate-left"></i> Reschedule
+                                    </button>
+                                    <button class="act-btn act-cancel-flight" title="Cancel Flight" onclick="openCancelModal(@s.ScheduleId)">
+                                        <i class="fa-solid fa-ban"></i> Cancel Flight
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="act-btn act-disabled" disabled>
+                                        <i class="fa-solid fa-lock"></i> Locked
+                                    </button>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="5">
+                        <div class="empty-state">
+                            <i class="fa-solid fa-clipboard-check"></i>
+                            <div>No flights require rescheduling based on your filters</div>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- ======================= MODALS ======================= -->
+
+<!-- RESCHEDULE MODAL -->
+<div class="modal-overlay" id="rescheduleModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <span class="modal-title" id="rTitle"><i class="fa-solid fa-clock-rotate-left" style="color:var(--accent-gold);margin-right:6px"></i> Reschedule Flight</span>
+            <button class="modal-close" onclick="closeModal('rescheduleModal')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="rsId" value="0" />
+
+            <div class="info-box" id="rsInfoBox">
+                Loading flight info...
+            </div>
+
+            <div class="form-group" style="margin-top:0.5rem">
+                <label class="form-label">New Departure Time</label>
+                <input type="datetime-local" class="form-control" id="rsDepTime" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">New Arrival Time</label>
+                <input type="datetime-local" class="form-control" id="rsArrTime" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Update Status</label>
+                <select class="form-control" id="rsStatus">
+                    <option value="DELAYED">Mark as Delayed</option>
+                    <option value="SCHEDULED">Revert to Scheduled</option>
+                </select>
+                <small style="color:rgba(255,255,255,0.4);font-size:0.75rem">Delaying a flight may send automated notifications to booked passengers.</small>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closeModal('rescheduleModal')">Discard Changes</button>
+            <button class="btn-submit" onclick="submitReschedule()"><i class="fa-solid fa-check"></i> Confirm Reschedule</button>
+        </div>
+    </div>
+</div>
+
+<!-- CANCEL FLIGHT MODAL -->
+<div class="modal-overlay" id="cancelModal">
+    <div class="modal-box" style="width:min(450px,90vw)">
+        <div class="modal-header">
+            <span class="modal-title"><i class="fa-solid fa-ban" style="color:var(--accent-coral);margin-right:6px"></i> Cancel Flight</span>
+            <button class="modal-close" onclick="closeModal('cancelModal')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body" style="text-align:center;padding:1.5rem 1.4rem">
+            <p style="color:rgba(255,255,255,0.8);font-size:1.05rem;margin-bottom:0.5rem">
+                You are about to cancel this flight.
+            </p>
+            <p style="color:rgba(255,255,255,0.5);font-size:0.9rem">
+                This will change its status to <strong style="color:var(--accent-coral)">CANCELLED</strong>. Passengers may need to be refunded or rebooked. This action should be taken carefully.
+            </p>
+            <input type="hidden" id="cancelId" />
+        </div>
+        <div class="modal-footer" style="justify-content:center">
+            <button class="btn-cancel" onclick="closeModal('cancelModal')">Do not cancel</button>
+            <button class="btn-danger" onclick="submitCancelFlight()"><i class="fa-solid fa-check"></i> Yes, Cancel Flight</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+@Html.AntiForgeryToken()
+
+@section Scripts {
+    <script>
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.style.borderLeftColor = isError ? 'var(--accent-coral)' : 'var(--accent-gold)';
+            const icon = isError ? '<i class="fa-solid fa-circle-exclamation" style="color:var(--accent-coral)"></i>'
+                                 : '<i class="fa-solid fa-circle-check" style="color:var(--accent-gold)"></i>';
+            toast.innerHTML = icon + ' ' + msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        // --- RESCHEDULE LOGIC ---
+        async function openRescheduleModal(id) {
+            const res = await fetch('/Admin/GetSchedule/' + id);
+            if (!res.ok) { showToast('Failed to load data', true); return; }
+            const s = await res.json();
+
+            document.getElementById('rsId').value = s.scheduleId;
+            document.getElementById('rsDepTime').value = s.departureTime.substring(0, 16);
+            document.getElementById('rsArrTime').value = s.arrivalTime.substring(0, 16);
+
+            if (s.status === 'SCHEDULED' || s.status === 'DELAYED') {
+                document.getElementById('rsStatus').value = s.status === 'SCHEDULED' ? 'DELAYED' : 'DELAYED';
+            }
+
+            document.getElementById('rsInfoBox').innerHTML = `
+                Current Time: <br/>
+                Dep: <span>${new Date(s.departureTime).toLocaleString('en-GB')}</span> <br/>
+                Arr: <span>${new Date(s.arrivalTime).toLocaleString('en-GB')}</span>
+            `;
+
+            document.getElementById('rescheduleModal').classList.add('active');
+        }
+
+        async function submitReschedule() {
+            const id = document.getElementById('rsId').value;
+            const newDep = document.getElementById('rsDepTime').value;
+            const newArr = document.getElementById('rsArrTime').value;
+            const status = document.getElementById('rsStatus').value;
+
+            if (!newDep || !newArr) {
+                showToast('Please specify the new times', true);
+                return;
+            }
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            const fd = new FormData();
+            fd.append('id', id);
+            fd.append('newDepartureTime', newDep);
+            fd.append('newArrivalTime', newArr);
+            fd.append('status', status);
+            fd.append('__RequestVerificationToken', token);
+
+            try {
+                const res = await fetch('/Admin/ProcessReschedule', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (data.success) {
+                    location.reload();
+                } else {
+                    showToast(data.message, true);
+                }
+            } catch (e) {
+                showToast('A network error occurred', true);
+            }
+        }
+
+        // --- CANCEL FLIGHT LOGIC ---
+        function openCancelModal(id) {
+            document.getElementById('cancelId').value = id;
+            document.getElementById('cancelModal').classList.add('active');
+        }
+
+        async function submitCancelFlight() {
+            const id = document.getElementById('cancelId').value;
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            const fd = new FormData();
+            fd.append('id', id);
+            fd.append('__RequestVerificationToken', token);
+
+            try {
+                const res = await fetch('/Admin/CancelFlightSchedule', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (data.success) {
+                    location.reload();
+                } else {
+                    showToast(data.message, true);
+                }
+            } catch (e) {
+                showToast('A network error occurred', true);
+            }
+            closeModal('cancelModal');
+        }
+    </script>
+}
