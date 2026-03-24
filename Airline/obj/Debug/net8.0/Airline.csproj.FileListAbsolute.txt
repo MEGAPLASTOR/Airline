@@ -318,3 +318,4 @@ D:\EPro\Airline\Airline\obj\Debug\net8.0\refint\Airline.dll
 D:\EPro\Airline\Airline\obj\Debug\net8.0\Airline.pdb
 D:\EPro\Airline\Airline\obj\Debug\net8.0\Airline.genruntimeconfig.cache
 D:\EPro\Airline\Airline\obj\Debug\net8.0\ref\Airline.dll
+D:\Eproject\Airline\Airline\obj\Debug\net8.0\scopedcss\Views\Shared\_AdminLayout.cshtml.rz.scp.css
