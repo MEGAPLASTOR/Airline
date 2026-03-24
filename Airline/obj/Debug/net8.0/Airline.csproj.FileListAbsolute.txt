@@ -157,7 +157,6 @@ D:\Eproject\Airline\Airline\bin\Debug\net8.0\runtimes\win\lib\net6.0\System.Wind
 D:\Eproject\Airline\Airline\obj\Debug\net8.0\Airline.csproj.AssemblyReference.cache
 D:\Eproject\Airline\Airline\obj\Debug\net8.0\Airline.MvcApplicationPartsAssemblyInfo.cs
 D:\Eproject\Airline\Airline\obj\Debug\net8.0\Airline.csproj.Up2Date
-D:\Eproject\Airline\Airline\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 D:\Eproject\Airline\Airline\obj\Debug\net8.0\Airline.sourcelink.json
 D:\Eproject\Airline\Airline\obj\Debug\net8.0\scopedcss\Views\Shared\_Layout.cshtml.rz.scp.css
 D:\EPro\Airline\Airline\bin\Debug\net8.0\appsettings.Development.json
@@ -319,3 +318,4 @@ D:\EPro\Airline\Airline\obj\Debug\net8.0\Airline.pdb
 D:\EPro\Airline\Airline\obj\Debug\net8.0\Airline.genruntimeconfig.cache
 D:\EPro\Airline\Airline\obj\Debug\net8.0\ref\Airline.dll
 D:\Eproject\Airline\Airline\obj\Debug\net8.0\scopedcss\Views\Shared\_AdminLayout.cshtml.rz.scp.css
+D:\Eproject\Airline\Airline\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

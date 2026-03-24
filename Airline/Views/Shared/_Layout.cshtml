@@ -1879,19 +1879,22 @@
                         'Content-Type': 'application/json',
                         'RequestVerificationToken': getToken()
                     },
-                    body: JSON.stringify({ username, password, rememberMe: remember })
+                    body: JSON.stringify({
+                        username,
+                        password,
+                        rememberMe: remember
+                    })
                 });
 
                 const json = await res.json().catch(() => null);
 
                 if (json && json.success) {
-                    window.location.reload();
-                } else if (res.ok && !json) {
-                    window.location.reload();
-                } else {
-                    showAlert('loginErr', json?.message || 'Invalid username or password.');
-                    setBtn('loginBtn', false, 'Sign In', 'right-to-bracket');
+                    window.location.href = json.redirectUrl || '/';
+                    return;
                 }
+
+                showAlert('loginErr', json?.message || 'Invalid username or password.');
+                setBtn('loginBtn', false, 'Sign In', 'right-to-bracket');
             } catch {
                 showAlert('loginErr', 'Network error. Please try again.');
                 setBtn('loginBtn', false, 'Sign In', 'right-to-bracket');

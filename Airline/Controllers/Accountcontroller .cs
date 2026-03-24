@@ -1,9 +1,9 @@
 ﻿using Airline.Models;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace Airline.Controllers
 {
@@ -20,17 +20,38 @@ namespace Airline.Controllers
         [HttpPost("Login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest req)
         {
-            if (string.IsNullOrWhiteSpace(req.username) || string.IsNullOrWhiteSpace(req.password))
-                return Ok(new { success = false, message = "Thiếu dữ liệu" });
+            if (req == null ||
+                string.IsNullOrWhiteSpace(req.username) ||
+                string.IsNullOrWhiteSpace(req.password))
+            {
+                return Ok(new
+                {
+                    success = false,
+                    message = "Thiếu dữ liệu"
+                });
+            }
 
             var user = await _context.Users.FirstOrDefaultAsync(x => x.Username == req.username);
 
             if (user == null || user.Password != req.password)
-                return Ok(new { success = false, message = "Sai tài khoản hoặc mật khẩu" });
+            {
+                return Ok(new
+                {
+                    success = false,
+                    message = "Sai tài khoản hoặc mật khẩu"
+                });
+            }
 
             await SignIn(user, req.rememberMe);
 
-            return Ok(new { success = true });
+            var isAdmin = !string.IsNullOrWhiteSpace(user.Role) &&
+                          user.Role.Trim().Equals("ADMIN", StringComparison.OrdinalIgnoreCase);
+
+            return Ok(new
+            {
+                success = true,
+                redirectUrl = isAdmin ? "/Auth/AdminDashboard" : "/"
+            });
         }
 
         [HttpPost("Register")]
@@ -38,19 +59,45 @@ namespace Airline.Controllers
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(req.username) || string.IsNullOrWhiteSpace(req.password))
-                    return Ok(new { success = false, message = "Thiếu dữ liệu" });
+                if (req == null ||
+                    string.IsNullOrWhiteSpace(req.username) ||
+                    string.IsNullOrWhiteSpace(req.password))
+                {
+                    return Ok(new
+                    {
+                        success = false,
+                        message = "Thiếu dữ liệu"
+                    });
+                }
 
                 if (await _context.Users.AnyAsync(x => x.Username == req.username))
-                    return Ok(new { success = false, message = "Username đã tồn tại" });
+                {
+                    return Ok(new
+                    {
+                        success = false,
+                        message = "Username đã tồn tại"
+                    });
+                }
 
-                if (!string.IsNullOrEmpty(req.email) &&
+                if (!string.IsNullOrWhiteSpace(req.email) &&
                     await _context.Users.AnyAsync(x => x.Email == req.email))
-                    return Ok(new { success = false, message = "Email đã tồn tại" });
+                {
+                    return Ok(new
+                    {
+                        success = false,
+                        message = "Email đã tồn tại"
+                    });
+                }
 
-                if (!string.IsNullOrEmpty(req.cccd) &&
+                if (!string.IsNullOrWhiteSpace(req.cccd) &&
                     await _context.Users.AnyAsync(x => x.Cccd == req.cccd))
-                    return Ok(new { success = false, message = "CCCD đã tồn tại" });
+                {
+                    return Ok(new
+                    {
+                        success = false,
+                        message = "CCCD đã tồn tại"
+                    });
+                }
 
                 var user = new User
                 {
@@ -71,15 +118,35 @@ namespace Airline.Controllers
 
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
-
                 await SignIn(user, true);
 
-                return Ok(new { success = true });
+                return Ok(new
+                {
+                    success = true
+                });
             }
             catch (Exception ex)
             {
-                return Ok(new { success = false, message = ex.Message });
+                return Ok(new
+                {
+                    success = false,
+                    message = ex.Message
+                });
             }
+        }
+
+        [HttpGet("AdminDashboard")]
+        public IActionResult AdminDashboard()
+        {
+            var isAuth = User?.Identity?.IsAuthenticated == true;
+            var role = User?.FindFirst(ClaimTypes.Role)?.Value;
+
+            if (!isAuth || !string.Equals(role, "ADMIN", StringComparison.OrdinalIgnoreCase))
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            return View("~/Views/Admin/AdminDashboard.cshtml");
         }
 
         [HttpGet("Logout")]
@@ -105,43 +172,49 @@ namespace Airline.Controllers
         {
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.Name, user.Username ?? ""),
                 new Claim("FirstName", user.FirstName ?? ""),
                 new Claim("LastName", user.LastName ?? ""),
                 new Claim("SkyMiles", (user.SkyMiles ?? 0).ToString()),
-                new Claim(ClaimTypes.Role, user.Role)
+                new Claim(ClaimTypes.Role, user.Role ?? "")
             };
 
-            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var identity = new ClaimsIdentity(
+                claims,
+                CookieAuthenticationDefaults.AuthenticationScheme
+            );
+
+            var principal = new ClaimsPrincipal(identity);
 
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(identity),
+                principal,
                 new AuthenticationProperties
                 {
                     IsPersistent = rememberMe
-                });
+                }
+            );
         }
     }
 
     public class LoginRequest
     {
-        public string username { get; set; }
-        public string password { get; set; }
+        public string username { get; set; } = "";
+        public string password { get; set; } = "";
         public bool rememberMe { get; set; }
     }
 
     public class RegisterRequest
     {
-        public string username { get; set; }
-        public string password { get; set; }
-        public string first_name { get; set; }
-        public string last_name { get; set; }
-        public string email { get; set; }
-        public string phone { get; set; }
-        public string cccd { get; set; }
-        public string address { get; set; }
-        public string gender { get; set; }
+        public string username { get; set; } = "";
+        public string password { get; set; } = "";
+        public string first_name { get; set; } = "";
+        public string last_name { get; set; } = "";
+        public string email { get; set; } = "";
+        public string phone { get; set; } = "";
+        public string cccd { get; set; } = "";
+        public string address { get; set; } = "";
+        public string gender { get; set; } = "";
         public int? age { get; set; }
     }
 }
