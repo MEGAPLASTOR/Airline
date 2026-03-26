@@ -1,0 +1,81 @@
+@model Airline.Models.Flight
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Manage Seats - " + Model.FlightNumber;
+    var ticketClasses = ViewBag.TicketClasses as IEnumerable<Airline.Models.TicketClass>;
+}
+
+<div class="schedule-header">
+    <div class="page-title-block">
+        <div class="page-greeting">Operations</div>
+        <h1 class="page-title">Manage Seats: @Model.FlightNumber</h1>
+        <p class="page-subtitle">@Model.Route.DepartureCityNavigation.CityName → @Model.Route.ArrivalCityNavigation.CityName</p>
+    </div>
+    <button class="btn-create" onclick="openAddSeatModal()">
+        <i class="fa-solid fa-plus"></i> Add Seat
+    </button>
+</div>
+
+<div class="seat-grid-container" style="background:rgba(255,255,255,0.03);padding:2rem;border-radius:12px;margin-top:2rem">
+    <div style="display:grid;grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));gap:1rem">
+        @foreach (var seat in Model.Seats.OrderBy(s => s.SeatNumber))
+        {
+            <div class="seat-item @(seat.IsActive ? "active" : "inactive")" 
+                 id="seat-@seat.SeatId"
+                 style="background:@(seat.IsActive ? "rgba(212,175,55,0.15)" : "rgba(255,255,255,0.05)");border:1px solid @(seat.IsActive ? "var(--accent-gold)" : "#444");padding:1rem;text-align:center;border-radius:8px">
+                <div style="font-weight:bold;color:@(seat.IsActive ? "var(--accent-gold)" : "#888")">@seat.SeatNumber</div>
+                <div style="font-size:0.7rem;margin-top:0.3rem">@seat.Class.ClassName</div>
+                <div style="margin-top:0.5rem;display:flex;gap:0.3rem;justify-content:center">
+                    <button onclick="toggleSeat(@seat.SeatId)" style="background:none;border:none;color:#fff;cursor:pointer"><i class="fa-solid fa-power-off"></i></button>
+                    <button onclick="deleteSeat(@seat.SeatId)" style="background:none;border:none;color:#ff4d4d;cursor:pointer"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Add Seat Modal (Simplified for this task) -->
+<div id="addSeatModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:9999;justify-content:center;align-items:center">
+    <div style="background:#1a1a1a;padding:2rem;border-radius:12px;width:400px;border:1px solid var(--accent-gold)">
+        <h2 style="color:var(--accent-gold)">Add New Seat</h2>
+        <div style="margin-top:1.5rem">
+            <label>Seat Number (e.g., A1, B12)</label>
+            <input type="text" id="newSeatNumber" placeholder="Enter seat label" style="width:100%;padding:0.8rem;margin-top:0.5rem;background:#222;border:1px solid #444;color:#fff" />
+        </div>
+        <div style="margin-top:1rem">
+            <label>Class</label>
+            <select id="newSeatClass" style="width:100%;padding:0.8rem;margin-top:0.5rem;background:#222;border:1px solid #444;color:#fff">
+                @foreach (var c in ticketClasses) { <option value="@c.ClassId">@c.ClassName</option> }
+            </select>
+        </div>
+        <div style="margin-top:2rem;display:flex;justify-content:flex-end;gap:1rem">
+            <button onclick="closeModal()" style="background:none;border:none;color:#888;cursor:pointer">Cancel</button>
+            <button onclick="saveSeat()" style="background:var(--accent-gold);border:none;padding:0.5rem 1.5rem;color:#000;font-weight:bold;border-radius:4px;cursor:pointer">Save Seat</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openAddSeatModal() { document.getElementById('addSeatModal').style.display='flex'; }
+        function closeModal() { document.getElementById('addSeatModal').style.display='none'; }
+        
+        function saveSeat() {
+            var num = document.getElementById('newSeatNumber').value;
+            var cls = document.getElementById('newSeatClass').value;
+            $.post('/Seat/Create', { flightId: @Model.FlightId, seatNumber: num, classId: cls }, function(r) {
+                if(r.success) location.reload(); else alert(r.message);
+            });
+        }
+        
+        function toggleSeat(id) {
+            $.post('/Seat/ToggleStatus', { seatId: id }, function(r) { if(r.success) location.reload(); });
+        }
+        
+        function deleteSeat(id) {
+            if(confirm('Delete this seat?')) {
+                $.post('/Seat/Delete', { seatId: id }, function(r) { if(r.success) location.reload(); });
+            }
+        }
+    </script>
+}

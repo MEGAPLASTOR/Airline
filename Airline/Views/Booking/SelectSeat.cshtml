@@ -1,0 +1,61 @@
+@model Airline.Models.FlightSchedule
+@{
+    ViewData["Title"] = "Select Your Seat";
+    var bookedSeats = ViewBag.BookedSeats as List<string>;
+}
+
+<div class="container mt-5" style="color:#eee">
+    <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
+        <div>
+            <h2 style="color:var(--accent-gold)">Select Your Seat</h2>
+            <p class="mb-0">Flight @Model.Flight.FlightNumber | @Model.DepartureTime.ToString("dd MMM yyyy, HH:mm")</p>
+        </div>
+        <div class="text-end">
+            <div class="badge bg-success">Available</div>
+            <div class="badge bg-danger">Occupied</div>
+            <div class="badge bg-warning text-dark">Selected</div>
+        </div>
+    </div>
+
+    <div class="seat-map-wrapper text-center p-5" style="background:#0a0a0a;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,0.5)">
+        <div class="plane-nose mb-5" style="width:200px;height:60px;background:#1a1a1a;margin:0 auto;border-radius:100px 100px 0 0"></div>
+        
+        <div style="display:grid;grid-template-columns: repeat(4, 60px);gap:15px;justify-content:center">
+            @foreach (var seat in Model.Flight.Seats.OrderBy(s => s.SeatNumber))
+            {
+                var isOccupied = bookedSeats.Contains(seat.SeatNumber) || !seat.IsActive;
+                <div class="seat-box @(isOccupied ? "occupied" : "available")" 
+                     data-seat="@seat.SeatNumber"
+                     onclick="@(isOccupied ? "" : "selectSeat(this)")"
+                     style="width:60px;height:60px;border-radius:8px;background:@(isOccupied ? "#331111" : "#112211");border:2px solid @(isOccupied ? "#662222" : "#224422");display:flex;align-items:center;justify-content:center;cursor:@(isOccupied ? "not-allowed" : "pointer");transition:all 0.2s">
+                    <span style="font-weight:bold;font-size:0.9rem">@seat.SeatNumber</span>
+                </div>
+            }
+        </div>
+
+        <div class="mt-5">
+            <button id="btnConfirm" disabled class="btn btn-warning btn-lg px-5" onclick="confirmSelection()">Confirm Selection</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .seat-box.selected { background: var(--accent-gold) !important; color: #000 !important; border-color: #fff !important; transform: scale(1.1); box-shadow: 0 0 15px var(--accent-gold); }
+    .seat-box:hover:not(.occupied) { border-color: var(--accent-gold); transform: scale(1.05); }
+</style>
+
+@section Scripts {
+    <script>
+        var selectedSeat = null;
+        function selectSeat(el) {
+            $('.seat-box').removeClass('selected');
+            $(el).addClass('selected');
+            selectedSeat = $(el).data('seat');
+            $('#btnConfirm').prop('disabled', false);
+        }
+        function confirmSelection() {
+            alert('Confirmed seat: ' + selectedSeat + '\nMoving to checkout...');
+            // Redirect to a real checkout or POST
+        }
+    </script>
+}

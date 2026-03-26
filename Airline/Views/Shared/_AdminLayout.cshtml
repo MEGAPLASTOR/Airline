@@ -1,4 +1,4 @@
-﻿@{
+@{
     var firstName = User?.FindFirst("FirstName")?.Value ?? "Admin";
     var lastName = User?.FindFirst("LastName")?.Value ?? "User";
     var initials = $"{firstName.FirstOrDefault()}{lastName.FirstOrDefault()}".ToUpper();
@@ -562,7 +562,7 @@
                     <a asp-area="" asp-controller="Admin" asp-action="FlightManagement">Set Flight Management</a>
                     <a asp-area="" asp-controller="Admin" asp-action="FlightSchedules">Manage Flight Schedules</a>
                     <a asp-area="" asp-controller="Admin" asp-action="FlightReschedule">Manage Flight Reschedule</a>
-                    <a asp-area="" asp-controller="Admin" asp-action="FlightSeats">Manage Flight Seats</a>
+                    <a asp-area="" asp-controller="Seat" asp-action="Index">Manage Flight Seats</a>
                     <a asp-area="" asp-controller="Admin" asp-action="FlightNotifications">Manage Flight Notifications</a>
                 </div>
             </div>

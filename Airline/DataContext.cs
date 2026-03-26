@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
@@ -43,8 +43,7 @@ public partial class DataContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer("Server=localhost;Database=AirlineReservation;Trusted_Connection=True;TrustServerCertificate=True");
+// Connection configured in Program.cs
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -323,12 +322,21 @@ public partial class DataContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__TicketPri__class__7D439ABD");
 
-            entity.HasOne(d => d.Schedule).WithMany(p => p.TicketPrices)
                 .HasForeignKey(d => d.ScheduleId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__TicketPri__sched__7C4F7684");
         });
+    public virtual DbSet<TicketPrice> TicketPrices { get; set; }
 
+    public virtual DbSet<User> Users { get; set; }
+
+    public virtual DbSet<Seat> Seats { get; set; }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        => optionsBuilder.UseSqlServer("Server=localhost;Database=AirlineReservation;Trusted_Connection=True;TrustServerCertificate=True");
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasKey(e => e.UserId).HasName("PK__Users__B9BE370F99B4C109");

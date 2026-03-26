@@ -1,0 +1,50 @@
+@model IEnumerable<Airline.Models.FlightSchedule>
+@{
+    ViewData["Title"] = "Book Your Flight";
+}
+
+<div class="container mt-5" style="color:#eee">
+    <h1 style="color:var(--accent-gold)">Find Your Flight</h1>
+    
+    <form method="get" class="row g-3 mb-5 p-4" style="background:rgba(255,255,255,0.05);border-radius:12px">
+        <div class="col-md-4">
+            <label>Departure City</label>
+            <input type="text" name="from" class="form-control bg-dark text-white border-secondary" placeholder="From..."/>
+        </div>
+        <div class="col-md-4">
+            <label>Destination City</label>
+            <input type="text" name="to" class="form-control bg-dark text-white border-secondary" placeholder="To..."/>
+        </div>
+        <div class="col-md-3">
+            <label>Date</label>
+            <input type="date" name="date" class="form-control bg-dark text-white border-secondary" />
+        </div>
+        <div class="col-md-1 d-flex align-items-end">
+            <button type="submit" class="btn btn-warning w-100" style="font-weight:bold">Go</button>
+        </div>
+    </form>
+
+    <div class="row">
+        @if (!Model.Any()) { <div class="text-center py-5">No flights found matching your criteria.</div> }
+        @foreach (var s in Model)
+        {
+            <div class="col-12 mb-3">
+                <div class="card bg-dark text-white border-secondary p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-0">@s.DepartureTime.ToString("HH:mm") — @s.ArrivalTime.ToString("HH:mm")</h4>
+                            <div class="text-muted">@s.Flight.FlightNumber | @s.Flight.Route.DepartureCityNavigation.CityName → @s.Flight.Route.ArrivalCityNavigation.CityName</div>
+                        </div>
+                        <div class="text-center">
+                            <div style="font-size:0.8rem;color:#888">Price from</div>
+                            <div style="font-size:1.5rem;color:var(--accent-gold)">$@s.TicketPrices.FirstOrDefault()?.Price</div>
+                        </div>
+                        <div>
+                            <a asp-action="SelectSeat" asp-route-scheduleId="@s.ScheduleId" class="btn btn-outline-warning">Select Seats</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

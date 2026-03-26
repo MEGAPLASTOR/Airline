@@ -69,6 +69,9 @@
                                 <button class="act-btn act-edit" title="Edit Flight" onclick="openEditModal(@f.FlightId)">
                                     <i class="fa-solid fa-pen"></i> Edit
                                 </button>
+                                <a class="act-btn act-edit" style="background:rgba(212,175,55,0.1);color:var(--accent-gold)" href="/Seat/Index?flightId=@f.FlightId">
+                                    <i class="fa-solid fa-chair"></i> Seats
+                                </a>
                                 @if (scheduleCount == 0)
                                 {
                                     <button class="act-btn act-cancel" title="Delete Flight" onclick="openDeleteModal(@f.FlightId)">

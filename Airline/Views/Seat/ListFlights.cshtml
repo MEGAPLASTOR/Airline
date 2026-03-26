@@ -1,0 +1,43 @@
+@model IEnumerable<Airline.Models.Flight>
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Select Flight - Seat Management";
+}
+
+<div class="schedule-header">
+    <div class="page-title-block">
+        <div class="page-greeting">Operations</div>
+        <h1 class="page-title">Manage Flight Seats</h1>
+        <p class="page-subtitle">Select a flight to view and manage its seating plan</p>
+    </div>
+</div>
+
+<div class="schedule-table-card">
+    <table class="schedule-table">
+        <thead>
+            <tr>
+                <th>Flight</th>
+                <th>Route</th>
+                <th>Schedules</th>
+                <th>Seats Defined</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var f in Model)
+            {
+                <tr>
+                    <td style="font-weight:bold;color:var(--accent-gold)">@f.FlightNumber</td>
+                    <td>@f.Route.DepartureCityNavigation.CityName → @f.Route.ArrivalCityNavigation.CityName</td>
+                    <td>@f.FlightSchedules.Count schedules</td>
+                    <td>@f.Seats.Count seats</td>
+                    <td>
+                        <a asp-action="Index" asp-route-flightId="@f.FlightId" class="act-btn" style="background:var(--accent-gold);color:#000;padding:0.4rem 1rem;border-radius:4px;text-decoration:none;font-weight:600">
+                             Manage Seats
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

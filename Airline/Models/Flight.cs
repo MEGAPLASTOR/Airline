@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace Airline.Models;
@@ -14,4 +14,6 @@ public partial class Flight
     public virtual ICollection<FlightSchedule> FlightSchedules { get; set; } = new List<FlightSchedule>();
 
     public virtual Route Route { get; set; } = null!;
+
+    public virtual ICollection<Seat> Seats { get; set; } = new List<Seat>();
 }
