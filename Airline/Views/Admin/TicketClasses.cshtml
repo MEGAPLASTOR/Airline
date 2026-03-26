@@ -1,0 +1,111 @@
+﻿@model IEnumerable<Airline.Models.TicketClass>
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Ticket Classes";
+    var search = ViewBag.Search as string;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/TicketClass.css" />
+}
+
+<div class="ticket-class-page">
+    <div class="page-header">
+        <div>
+            <div class="page-greeting">Ticketing</div>
+            <h1 class="page-title">Manage <span>Ticket Classes</span></h1>
+            <p class="page-subtitle">Create, edit, delete and search ticket classes.</p>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert-box alert-success">@TempData["SuccessMessage"]</div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert-box alert-error">@TempData["ErrorMessage"]</div>
+    }
+
+    <div class="ticket-card">
+        <div class="ticket-toolbar">
+            <form method="get" asp-controller="ManageTicketClass" asp-action="TicketClasses">
+                <input class="ticket-input"
+                       type="text"
+                       name="search"
+                       value="@search"
+                       maxlength="50"
+                       placeholder="Search class name..." />
+                <button class="ticket-btn ticket-btn-ghost" type="submit">Search</button>
+            </form>
+
+            <form method="post" asp-controller="ManageTicketClass" asp-action="CreateTicketClass">
+                @Html.AntiForgeryToken()
+                <input class="ticket-input"
+                       type="text"
+                       name="className"
+                       maxlength="50"
+                       required
+                       placeholder="New class name..." />
+                <button class="ticket-btn ticket-btn-primary" type="submit">Add Class</button>
+            </form>
+        </div>
+
+        <table class="ticket-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Class Name</th>
+                    <th style="width: 360px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>#@item.ClassId</td>
+                            <td>@item.ClassName</td>
+                            <td>
+                                <div class="row-form">
+                                    <form method="post"
+                                          asp-controller="ManageTicketClass"
+                                          asp-action="EditTicketClass"
+                                          class="row-form">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@item.ClassId" />
+                                        <input class="ticket-input"
+                                               type="text"
+                                               name="className"
+                                               value="@item.ClassName"
+                                               maxlength="50"
+                                               required />
+                                        <button class="ticket-btn ticket-btn-ghost" type="submit">Save</button>
+                                    </form>
+
+                                    <form method="post"
+                                          asp-controller="ManageTicketClass"
+                                          asp-action="DeleteTicketClass"
+                                          onsubmit="return confirm('Are you sure you want to delete this class?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@item.ClassId" />
+                                        <button class="ticket-btn ticket-btn-danger" type="submit">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="3" class="empty-state">No ticket classes found.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

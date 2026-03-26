@@ -1,0 +1,405 @@
+﻿@model Airline.ViewModels.Admin.ManageAccountsViewModel
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Manage Accounts";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin-manage-accounts.css" asp-append-version="true" />
+}
+
+<div class="page-header">
+    <div class="page-title-block">
+        <div class="page-greeting">Account Management</div>
+        <h1 class="page-title">Manage <span>Accounts</span></h1>
+        <p class="page-subtitle">Add, edit and delete user accounts from the system.</p>
+    </div>
+
+    <div class="page-actions">
+        <button type="button" class="btn-ghost js-refresh-page">
+            <i class="fa-solid fa-arrows-rotate"></i> Refresh
+        </button>
+        <button type="button" class="btn-primary js-open-create-modal">
+            <i class="fa-solid fa-user-plus"></i> Add Account
+        </button>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert-box alert-success">
+        <i class="fa-solid fa-circle-check"></i>
+        <span>@TempData["SuccessMessage"]</span>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert-box alert-error">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span>@TempData["ErrorMessage"]</span>
+    </div>
+}
+
+<div class="kpi-grid">
+    <div class="kpi-card" style="--kpi-accent:#17aab8">
+        <div class="kpi-top">
+            <div class="kpi-icon-wrap"><i class="fa-solid fa-users"></i></div>
+        </div>
+        <div class="kpi-value">@Model.TotalAccounts</div>
+        <div class="kpi-label">Total Accounts</div>
+    </div>
+
+    <div class="kpi-card" style="--kpi-accent:#f0b429">
+        <div class="kpi-top">
+            <div class="kpi-icon-wrap"><i class="fa-solid fa-user-shield"></i></div>
+        </div>
+        <div class="kpi-value">@Model.TotalAdmins</div>
+        <div class="kpi-label">Admin Accounts</div>
+    </div>
+
+    <div class="kpi-card" style="--kpi-accent:#5de8a8">
+        <div class="kpi-top">
+            <div class="kpi-icon-wrap"><i class="fa-solid fa-user"></i></div>
+        </div>
+        <div class="kpi-value">@Model.TotalUsers</div>
+        <div class="kpi-label">User Accounts</div>
+    </div>
+
+    <div class="kpi-card" style="--kpi-accent:#ff6b6b">
+        <div class="kpi-top">
+            <div class="kpi-icon-wrap"><i class="fa-solid fa-user-clock"></i></div>
+        </div>
+        <div class="kpi-value">@Model.NewThisMonth</div>
+        <div class="kpi-label">New This Month</div>
+    </div>
+</div>
+
+<div class="table-card">
+    <div class="toolbar">
+        <div class="toolbar-left">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="accountSearch" placeholder="Search by name, username, email..." />
+            </div>
+
+            <select id="roleFilter" class="toolbar-select">
+                <option value="">All Roles</option>
+                <option value="ADMIN">Admin</option>
+                <option value="USER">User</option>
+            </select>
+        </div>
+
+        <div class="toolbar-right">
+            <span class="result-text">
+                Total: <strong id="accountCount">@Model.Accounts.Count</strong> account(s)
+            </span>
+        </div>
+    </div>
+
+    <div class="table-wrap">
+        <table class="data-table" id="accountsTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Full Name</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Role</th>
+                    <th>Sky Miles</th>
+                    <th>Created At</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Accounts != null && Model.Accounts.Any())
+                {
+                    foreach (var account in Model.Accounts)
+                    {
+                        var fullName = $"{account.FirstName} {account.LastName}".Trim();
+                        var role = (account.Role ?? "USER").ToUpper();
+
+                        <tr class="account-row"
+                            data-role="@role"
+                            data-search="@($"{fullName} {account.Username} {account.Email} {account.Phone}")">
+                            <td class="td-mono">#@account.UserId</td>
+                            <td class="td-bold">@fullName</td>
+                            <td>@account.Username</td>
+                            <td>@account.Email</td>
+                            <td>@(string.IsNullOrWhiteSpace(account.Phone) ? "-" : account.Phone)</td>
+                            <td>
+                                <span class="status-pill @(role == "ADMIN" ? "pill-gold" : "pill-green")">
+                                    @role
+                                </span>
+                            </td>
+                            <td>@(account.SkyMiles ?? 0)</td>
+                            <td>@(account.CreatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
+                            <td class="text-center">
+                                <div class="row-actions">
+                                    <button type="button"
+                                            class="icon-btn edit-btn js-open-edit-modal"
+                                            data-user-id="@account.UserId"
+                                            data-first-name="@account.FirstName"
+                                            data-last-name="@account.LastName"
+                                            data-username="@account.Username"
+                                            data-email="@account.Email"
+                                            data-phone="@account.Phone"
+                                            data-address="@account.Address"
+                                            data-gender="@account.Gender"
+                                            data-age="@account.Age"
+                                            data-cccd="@account.Cccd"
+                                            data-role="@account.Role"
+                                            data-skymiles="@account.SkyMiles">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </button>
+
+                                    <button type="button"
+                                            class="icon-btn delete-btn js-open-delete-modal"
+                                            data-user-id="@account.UserId"
+                                            data-full-name="@fullName"
+                                            data-username="@account.Username">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="9" class="empty-state">No accounts found.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal-overlay" id="createModal">
+    <div class="modal-card modal-lg">
+        <div class="modal-header">
+            <div>
+                <h3>Create Account</h3>
+                <p>Add a new account to the system.</p>
+            </div>
+            <button type="button" class="modal-close js-close-modal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <form asp-action="CreateAccount" asp-controller="Admin" method="post" class="account-form">
+            @Html.AntiForgeryToken()
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input name="FirstName" required />
+                </div>
+
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input name="LastName" required />
+                </div>
+
+                <div class="form-group">
+                    <label>Username</label>
+                    <input name="Username" required />
+                </div>
+
+                <div class="form-group">
+                    <label>Email</label>
+                    <input name="Email" type="email" required />
+                </div>
+
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input name="Phone" />
+                </div>
+
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select name="Gender">
+                        <option value="">Select gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Age</label>
+                    <input name="Age" type="number" min="0" />
+                </div>
+
+                <div class="form-group">
+                    <label>CCCD</label>
+                    <input name="Cccd" />
+                </div>
+
+                <div class="form-group">
+                    <label>Role</label>
+                    <select name="Role" required>
+                        <option value="USER">USER</option>
+                        <option value="ADMIN">ADMIN</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Sky Miles</label>
+                    <input name="SkyMiles" type="number" min="0" value="0" />
+                </div>
+
+                <div class="form-group form-group-full">
+                    <label>Address</label>
+                    <input name="Address" />
+                </div>
+
+                <div class="form-group form-group-full">
+                    <label>Password</label>
+                    <input name="Password" type="text" required />
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-ghost js-close-modal">Cancel</button>
+                <button type="submit" class="btn-primary">
+                    <i class="fa-solid fa-floppy-disk"></i> Save Account
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal-overlay" id="editModal">
+    <div class="modal-card modal-lg">
+        <div class="modal-header">
+            <div>
+                <h3>Edit Account</h3>
+                <p>Update account information.</p>
+            </div>
+            <button type="button" class="modal-close js-close-modal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <form asp-action="UpdateAccount" asp-controller="Admin" method="post" class="account-form" id="editAccountForm">
+            @Html.AntiForgeryToken()
+
+            <input type="hidden" name="UserId" id="editUserId" />
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input name="FirstName" id="editFirstName" required />
+                </div>
+
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input name="LastName" id="editLastName" required />
+                </div>
+
+                <div class="form-group">
+                    <label>Username</label>
+                    <input name="Username" id="editUsername" required />
+                </div>
+
+                <div class="form-group">
+                    <label>Email</label>
+                    <input name="Email" id="editEmail" type="email" required />
+                </div>
+
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input name="Phone" id="editPhone" />
+                </div>
+
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select name="Gender" id="editGender">
+                        <option value="">Select gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Age</label>
+                    <input name="Age" id="editAge" type="number" min="0" />
+                </div>
+
+                <div class="form-group">
+                    <label>CCCD</label>
+                    <input name="Cccd" id="editCccd" />
+                </div>
+
+                <div class="form-group">
+                    <label>Role</label>
+                    <select name="Role" id="editRole" required>
+                        <option value="USER">USER</option>
+                        <option value="ADMIN">ADMIN</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Sky Miles</label>
+                    <input name="SkyMiles" id="editSkyMiles" type="number" min="0" />
+                </div>
+
+                <div class="form-group form-group-full">
+                    <label>Address</label>
+                    <input name="Address" id="editAddress" />
+                </div>
+
+                <div class="form-group form-group-full">
+                    <label>New Password (leave blank to keep current password)</label>
+                    <input name="Password" id="editPassword" type="text" />
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-ghost js-close-modal">Cancel</button>
+                <button type="submit" class="btn-primary">
+                    <i class="fa-solid fa-floppy-disk"></i> Update Account
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal-card modal-sm">
+        <div class="modal-header">
+            <div>
+                <h3>Delete Account</h3>
+                <p>This action cannot be undone.</p>
+            </div>
+            <button type="button" class="modal-close js-close-modal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <form asp-action="DeleteAccount" asp-controller="Admin" method="post">
+            @Html.AntiForgeryToken()
+
+            <input type="hidden" name="userId" id="deleteUserId" />
+
+            <div class="delete-content">
+                <p>Are you sure you want to delete this account?</p>
+                <div class="delete-target" id="deleteTargetText"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-ghost js-close-modal">Cancel</button>
+                <button type="submit" class="btn-danger">
+                    <i class="fa-solid fa-trash"></i> Delete
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/admin-manage-accounts.js" asp-append-version="true"></script>
+}

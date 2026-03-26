@@ -1,0 +1,111 @@
+﻿
+.ticket-class-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.ticket-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 18px;
+    padding: 1rem;
+}
+
+.ticket-toolbar {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+    .ticket-toolbar form {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+.ticket-input {
+    min-width: 240px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #fff;
+    border-radius: 12px;
+    padding: 0.75rem 0.9rem;
+    outline: none;
+}
+
+.ticket-btn {
+    border: none;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.ticket-btn-primary {
+    background: linear-gradient(135deg, #17aab8, #0fd2e4);
+    color: #fff;
+}
+
+.ticket-btn-ghost {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #fff;
+}
+
+.ticket-btn-danger {
+    background: rgba(255,107,107,0.15);
+    border: 1px solid rgba(255,107,107,0.25);
+    color: #ffb3b3;
+}
+
+.alert-box {
+    padding: 0.9rem 1rem;
+    border-radius: 12px;
+    font-size: 0.9rem;
+}
+
+.alert-success {
+    background: rgba(93,232,168,0.12);
+    border: 1px solid rgba(93,232,168,0.2);
+    color: #bff7dc;
+}
+
+.alert-error {
+    background: rgba(255,107,107,0.12);
+    border: 1px solid rgba(255,107,107,0.2);
+    color: #ffc4c4;
+}
+
+.ticket-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+    .ticket-table th,
+    .ticket-table td {
+        padding: 0.9rem 0.75rem;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        text-align: left;
+        vertical-align: middle;
+    }
+
+    .ticket-table th {
+        color: rgba(255,255,255,0.55);
+        font-size: 0.8rem;
+    }
+
+.row-form {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.empty-state {
+    text-align: center;
+    color: rgba(255,255,255,0.55);
+    padding: 1.5rem 0;
+}
+

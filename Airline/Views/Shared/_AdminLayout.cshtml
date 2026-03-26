@@ -3,6 +3,65 @@
     var lastName = User?.FindFirst("LastName")?.Value ?? "User";
     var initials = $"{firstName.FirstOrDefault()}{lastName.FirstOrDefault()}".ToUpper();
     var displayName = $"{firstName} {lastName}".Trim();
+
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+
+    bool IsActive(string controller, params string[] actions)
+    {
+        if (!string.Equals(currentController, controller, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (actions == null || actions.Length == 0)
+        {
+            return true;
+        }
+
+        return actions.Any(action =>
+            string.Equals(currentAction, action, StringComparison.OrdinalIgnoreCase));
+    }
+
+    bool IsAny(params (string Controller, string Action)[] routes)
+    {
+        return routes.Any(route =>
+            string.Equals(currentController, route.Controller, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(currentAction, route.Action, StringComparison.OrdinalIgnoreCase));
+    }
+
+    var isDashboard = IsAny(
+        ("Admin", "Dashboard"),
+        ("Admin", "AdminDashboard"),
+        ("Account", "AdminDashboard")
+    );
+
+    var isTicketingGroup = IsAny(
+        ("Admin", "TicketStatuses"),
+        ("Admin", "ConfirmTicket"),
+        ("Admin", "TicketClasses")
+    );
+
+    var isManageAccounts = IsActive("Admin", "ManageAccounts");
+
+    var isFlightsGroup = IsAny(
+        ("Admin", "ManageFlights"),
+        ("Admin", "FlightManagement"),
+        ("Admin", "FlightSchedules"),
+        ("Admin", "FlightReschedule"),
+        ("Admin", "FlightSeats"),
+        ("Admin", "FlightNotifications")
+    );
+
+    var isRoutesGroup = IsAny(
+        ("Admin", "ManageRoutes"),
+        ("Admin", "ManageCity")
+    );
+
+    var isCommerceGroup = IsAny(
+        ("Admin", "ManagePromotions"),
+        ("Admin", "ManageBaggage")
+    );
 }
 
 <!DOCTYPE html>
@@ -41,7 +100,6 @@
             --tr: 0.24s cubic-bezier(0.4,0,0.2,1);
             --card-bg: rgba(255,255,255,0.04);
             --card-border: rgba(255,255,255,0.08);
-            --glass: rgba(255,255,255,0.05);
         }
 
         body {
@@ -129,7 +187,9 @@
             color: rgba(255,255,255,0.33);
         }
 
-        .nav-link, .nav-group-trigger, .nav-group-items a {
+        .nav-link,
+        .nav-group-trigger,
+        .nav-group-items a {
             display: flex;
             align-items: center;
             gap: 0.78rem;
@@ -138,13 +198,16 @@
             transition: background var(--tr), color var(--tr), transform var(--tr);
         }
 
-        .nav-link, .nav-group-trigger {
+        .nav-link,
+        .nav-group-trigger {
             padding: 0.78rem 0.9rem;
             font-size: 0.86rem;
             font-weight: 500;
         }
 
-            .nav-link:hover, .nav-group-trigger:hover, .nav-group-items a:hover {
+            .nav-link:hover,
+            .nav-group-trigger:hover,
+            .nav-group-items a:hover {
                 background: rgba(255,255,255,0.05);
                 color: #fff;
             }
@@ -203,6 +266,12 @@
             font-size: 0.8rem;
         }
 
+            .nav-group-items a.active-sub-link {
+                background: rgba(23,170,184,0.12);
+                color: #fff;
+                border: 1px solid rgba(23,170,184,0.16);
+            }
+
         .sidebar-footer {
             padding: 1rem;
             border-top: 1px solid rgba(255,255,255,0.07);
@@ -218,7 +287,8 @@
             border-radius: var(--radius-lg);
         }
 
-        .admin-avatar, .user-avatar {
+        .admin-avatar,
+        .user-avatar {
             width: 42px;
             height: 42px;
             border-radius: 50%;
@@ -267,7 +337,8 @@
             border-bottom: 1px solid rgba(255,255,255,0.06);
         }
 
-        .topbar-left, .topbar-right {
+        .topbar-left,
+        .topbar-right {
             display: flex;
             align-items: center;
             gap: 0.9rem;
@@ -281,6 +352,7 @@
             background: rgba(255,255,255,0.06);
             color: #fff;
             border-radius: 12px;
+            cursor: pointer;
         }
 
         .topbar-search {
@@ -330,6 +402,7 @@
             color: #fff;
             border-radius: 999px;
             padding: 0.35rem 0.42rem 0.35rem 0.5rem;
+            cursor: pointer;
         }
 
         .user-name {
@@ -361,7 +434,8 @@
                 display: block;
             }
 
-            .user-dropdown a, .user-dropdown button {
+            .user-dropdown a,
+            .user-dropdown button {
                 display: flex;
                 align-items: center;
                 gap: 0.6rem;
@@ -373,9 +447,11 @@
                 border: none;
                 text-align: left;
                 transition: background var(--tr), color var(--tr);
+                cursor: pointer;
             }
 
-                .user-dropdown a:hover, .user-dropdown button:hover {
+                .user-dropdown a:hover,
+                .user-dropdown button:hover {
                     background: rgba(255,255,255,0.07);
                     color: #fff;
                 }
@@ -452,7 +528,8 @@
             flex-wrap: wrap;
         }
 
-        .btn-primary, .btn-ghost {
+        .btn-primary,
+        .btn-ghost {
             border: none;
             border-radius: 12px;
             padding: 0.72rem 1rem;
@@ -506,7 +583,8 @@
         }
 
         @@media (max-width: 640px) {
-            .topbar-search, .topbar-datetime {
+            .topbar-search,
+            .topbar-datetime {
                 display: none;
             }
 
@@ -520,7 +598,7 @@
 </head>
 <body>
     <aside class="sidebar" id="sidebar">
-        <a class="sidebar-brand" asp-controller="Account" asp-action="AdminDashboard">
+        <a class="sidebar-brand" asp-controller="Admin" asp-action="Dashboard">
             <div class="brand-icon"><i class="fa-solid fa-shield-halved"></i></div>
             <div class="brand-text">
                 <span class="brand-name">The Airline</span>
@@ -529,64 +607,92 @@
         </a>
 
         <nav class="sidebar-nav">
-            <a class="nav-link active" asp-controller="Account" asp-action="AdminDashboard">
-                <span class="nav-icon"><i class="fa-solid fa-gauge-high"></i></span> Dashboard
+            <a class="nav-link @(isDashboard ? "active" : "")" asp-controller="Admin" asp-action="Dashboard">
+                <span class="nav-icon"><i class="fa-solid fa-gauge-high"></i></span>
+                Dashboard
             </a>
 
             <div class="nav-label">Ticketing</div>
-            <div class="nav-group">
+            <div class="nav-group @(isTicketingGroup ? "open" : "")">
                 <div class="nav-group-trigger" onclick="toggleGroup(this)">
                     <span class="nav-icon"><i class="fa-solid fa-ticket"></i></span>
-                    Tickets <i class="fa-solid fa-chevron-down arrow"></i>
+                    Tickets
+                    <i class="fa-solid fa-chevron-down arrow"></i>
                 </div>
                 <div class="nav-group-items">
-                    <a asp-area="" asp-controller="Admin" asp-action="TicketStatuses">Manage Ticket Statuses</a>
-                    <a asp-area="" asp-controller="Admin" asp-action="ConfirmTicket">Confirm Ticket</a>
-                    <a asp-area="" asp-controller="Admin" asp-action="TicketClasses">Manage Ticket Classes</a>
+                    <a class="@(IsActive("Admin", "TicketStatuses") ? "active-sub-link" : "")"
+                       asp-controller="Admin" asp-action="TicketStatuses">Manage Ticket Statuses</a>
+
+                    <a class="@(IsActive("Admin", "ConfirmTicket") ? "active-sub-link" : "")"
+                       asp-controller="Admin" asp-action="ConfirmTicket">Confirm Ticket</a>
+
+                    <a class="@(IsActive("ManageTicketClass", "TicketClasses") ? "active-sub-link" : "")"
+                       asp-controller="ManageTicketClass" asp-action="TicketClasses">Manage Ticket Classes</a>
                 </div>
             </div>
 
-            <div class="nav-label">User Management</div>
-            <a class="nav-link" asp-area="" asp-controller="Admin" asp-action="ManageUsers">
-                <span class="nav-icon"><i class="fa-solid fa-users-gear"></i></span> Manage User Account
+            <a class="nav-link @(isManageAccounts ? "active" : "")"
+               asp-controller="Admin" asp-action="ManageAccounts">
+                <span class="nav-icon"><i class="fa-solid fa-users-gear"></i></span>
+                Manage User Account
             </a>
 
             <div class="nav-label">Flight Operations</div>
-            <div class="nav-group">
+            <div class="nav-group @(isFlightsGroup ? "open" : "")">
                 <div class="nav-group-trigger" onclick="toggleGroup(this)">
                     <span class="nav-icon"><i class="fa-solid fa-plane"></i></span>
-                    Flights <i class="fa-solid fa-chevron-down arrow"></i>
+                    Flights
+                    <i class="fa-solid fa-chevron-down arrow"></i>
                 </div>
                 <div class="nav-group-items">
-                    <a asp-area="" asp-controller="Admin" asp-action="ManageFlights">Manage Flights</a>
-                    <a asp-area="" asp-controller="Admin" asp-action="FlightManagement">Set Flight Management</a>
-                    <a asp-area="" asp-controller="Admin" asp-action="FlightSchedules">Manage Flight Schedules</a>
-                    <a asp-area="" asp-controller="Admin" asp-action="FlightReschedule">Manage Flight Reschedule</a>
-                    <a asp-area="" asp-controller="Admin" asp-action="FlightSeats">Manage Flight Seats</a>
-                    <a asp-area="" asp-controller="Admin" asp-action="FlightNotifications">Manage Flight Notifications</a>
+                    <a class="@(IsActive("Admin", "ManageFlights") ? "active-sub-link" : "")"
+                       asp-controller="Admin" asp-action="ManageFlights">Manage Flights</a>
+
+                    <a class="@(IsActive("Admin", "FlightManagement") ? "active-sub-link" : "")"
+                       asp-controller="Admin" asp-action="FlightManagement">Set Flight Management</a>
+
+                    <a class="@(IsActive("Admin", "FlightSchedules") ? "active-sub-link" : "")"
+                       asp-controller="Admin" asp-action="FlightSchedules">Manage Flight Schedules</a>
+
+                    <a class="@(IsActive("Admin", "FlightReschedule") ? "active-sub-link" : "")"
+                       asp-controller="Admin" asp-action="FlightReschedule">Manage Flight Reschedule</a>
+
+                    <a class="@(IsActive("Admin", "FlightSeats") ? "active-sub-link" : "")"
+                       asp-controller="Admin" asp-action="FlightSeats">Manage Flight Seats</a>
+
+                    <a class="@(IsActive("Admin", "FlightNotifications") ? "active-sub-link" : "")"
+                       asp-controller="Admin" asp-action="FlightNotifications">Manage Flight Notifications</a>
                 </div>
             </div>
 
-            <div class="nav-group">
+            <div class="nav-group @(isRoutesGroup ? "open" : "")">
                 <div class="nav-group-trigger" onclick="toggleGroup(this)">
                     <span class="nav-icon"><i class="fa-solid fa-route"></i></span>
-                    Routes & Cities <i class="fa-solid fa-chevron-down arrow"></i>
+                    Routes & Cities
+                    <i class="fa-solid fa-chevron-down arrow"></i>
                 </div>
                 <div class="nav-group-items">
-                    <a asp-area="" asp-controller="Admin" asp-action="ManageRoutes">Manage Routes</a>
-                    <a asp-area="" asp-controller="Admin" asp-action="ManageCity">Manage City</a>
+                    <a class="@(IsActive("Admin", "ManageRoutes") ? "active-sub-link" : "")"
+                       asp-controller="Admin" asp-action="ManageRoutes">Manage Routes</a>
+
+                    <a class="@(IsActive("Admin", "ManageCity") ? "active-sub-link" : "")"
+                       asp-controller="Admin" asp-action="ManageCity">Manage City</a>
                 </div>
             </div>
 
             <div class="nav-label">Commerce</div>
-            <div class="nav-group">
+            <div class="nav-group @(isCommerceGroup ? "open" : "")">
                 <div class="nav-group-trigger" onclick="toggleGroup(this)">
                     <span class="nav-icon"><i class="fa-solid fa-tags"></i></span>
-                    Promotions & Baggage <i class="fa-solid fa-chevron-down arrow"></i>
+                    Promotions & Baggage
+                    <i class="fa-solid fa-chevron-down arrow"></i>
                 </div>
                 <div class="nav-group-items">
-                    <a asp-area="" asp-controller="Admin" asp-action="ManagePromotions">Manage Promotions</a>
-                    <a asp-area="" asp-controller="Admin" asp-action="ManageBaggage">Manage Baggage</a>
+                    <a class="@(IsActive("Admin", "ManagePromotions") ? "active-sub-link" : "")"
+                       asp-controller="Admin" asp-action="ManagePromotions">Manage Promotions</a>
+
+                    <a class="@(IsActive("Admin", "ManageBaggage") ? "active-sub-link" : "")"
+                       asp-controller="Admin" asp-action="ManageBaggage">Manage Baggage</a>
                 </div>
             </div>
         </nav>
@@ -606,7 +712,10 @@
 
     <header class="topbar">
         <div class="topbar-left">
-            <button class="menu-toggle" onclick="openSidebar()"><i class="fa-solid fa-bars"></i></button>
+            <button type="button" class="menu-toggle" onclick="openSidebar()">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+
             <div class="topbar-search">
                 <i class="fa-solid fa-magnifying-glass"></i>
                 <input type="text" placeholder="Search anything in admin..." />
@@ -617,17 +726,23 @@
             <div class="topbar-datetime" id="topbarDateTime"></div>
 
             <div class="topbar-user">
-                <button class="user-btn" onclick="toggleUserDropdown()">
+                <button type="button" class="user-btn" onclick="toggleUserDropdown()">
                     <div class="user-avatar">@initials</div>
                     <span class="user-name">@displayName</span>
                     <i class="fa-solid fa-chevron-down user-chevron"></i>
                 </button>
 
                 <div class="user-dropdown" id="userDropdown">
-                    <a asp-controller="Account" asp-action="EditAccount"><i class="fa-regular fa-user"></i> Edit Account</a>
-                    <a asp-controller="Account" asp-action="ChangePassword"><i class="fa-solid fa-key"></i> Change Password</a>
+                    <a asp-controller="Account" asp-action="EditAccount">
+                        <i class="fa-regular fa-user"></i> Edit Account
+                    </a>
+                    <a asp-controller="Account" asp-action="ChangePassword">
+                        <i class="fa-solid fa-key"></i> Change Password
+                    </a>
                     <div class="user-dropdown-divider"></div>
-                    <a class="logout-btn" asp-controller="Account" asp-action="Logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+                    <a class="logout-btn" asp-controller="Account" asp-action="Logout">
+                        <i class="fa-solid fa-right-from-bracket"></i> Logout
+                    </a>
                 </div>
             </div>
         </div>
@@ -641,21 +756,21 @@
 
     <script>
         function openSidebar() {
-            document.getElementById('sidebar').classList.add('open');
-            document.getElementById('sidebarOverlay').classList.add('open');
+            document.getElementById('sidebar')?.classList.add('open');
+            document.getElementById('sidebarOverlay')?.classList.add('open');
         }
 
         function closeSidebar() {
-            document.getElementById('sidebar').classList.remove('open');
-            document.getElementById('sidebarOverlay').classList.remove('open');
+            document.getElementById('sidebar')?.classList.remove('open');
+            document.getElementById('sidebarOverlay')?.classList.remove('open');
         }
 
-        function toggleGroup(el) {
-            el.parentElement.classList.toggle('open');
+        function toggleGroup(element) {
+            element.parentElement.classList.toggle('open');
         }
 
         function toggleUserDropdown() {
-            document.getElementById('userDropdown').classList.toggle('open');
+            document.getElementById('userDropdown')?.classList.toggle('open');
         }
 
         document.addEventListener('click', function (e) {
@@ -666,9 +781,10 @@
         });
 
         function updateClock() {
-            const el = document.getElementById('topbarDateTime');
-            if (!el) return;
-            el.textContent = new Date().toLocaleString('vi-VN', {
+            const element = document.getElementById('topbarDateTime');
+            if (!element) return;
+
+            element.textContent = new Date().toLocaleString('vi-VN', {
                 weekday: 'short',
                 day: '2-digit',
                 month: '2-digit',
