@@ -1,0 +1,82 @@
+/* ManageRoutes page-specific logic */
+
+function openCreateModal() {
+    document.getElementById('mTitle').innerHTML = '<i class="fa-solid fa-plus" style="color:var(--accent-gold);margin-right:6px"></i> Add Route';
+    document.getElementById('rId').value = 0;
+    document.getElementById('rDep').value = '';
+    document.getElementById('rArr').value = '';
+    document.getElementById('routeModal').classList.add('active');
+}
+
+async function openEditModal(id) {
+    document.getElementById('mTitle').innerHTML = '<i class="fa-solid fa-pen" style="color:var(--accent-gold);margin-right:6px"></i> Edit Route';
+    document.getElementById('rId').value = id;
+    try {
+        const res = await fetch('/Admin/GetRoute/' + id);
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        document.getElementById('rDep').value = data.departureCity;
+        document.getElementById('rArr').value = data.arrivalCity;
+        document.getElementById('routeModal').classList.add('active');
+    } catch {
+        showToast('Failed to load route data.', true);
+    }
+}
+
+async function submitRoute() {
+    const id = document.getElementById('rId').value;
+    const dep = document.getElementById('rDep').value;
+    const arr = document.getElementById('rArr').value;
+
+    if (!dep || !arr) {
+        showToast('Please select both cities.', true);
+        return;
+    }
+
+    const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+    const fd = new FormData();
+    fd.append('departureCity', dep);
+    fd.append('arrivalCity', arr);
+    fd.append('__RequestVerificationToken', token);
+
+    const url = id == 0 ? '/Admin/CreateRoute' : '/Admin/EditRoute';
+    if (id != 0) fd.append('id', id);
+
+    try {
+        const res = await fetch(url, { method: 'POST', body: fd });
+        const json = await res.json();
+        if (json.success) {
+            location.reload();
+        } else {
+            showToast(json.message, true);
+        }
+    } catch {
+        showToast('A network error occurred.', true);
+    }
+}
+
+function openDeleteModal(id) {
+    document.getElementById('delId').value = id;
+    document.getElementById('deleteModal').classList.add('active');
+}
+
+async function submitDelete() {
+    const id = document.getElementById('delId').value;
+    const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+    const fd = new FormData();
+    fd.append('id', id);
+    fd.append('__RequestVerificationToken', token);
+
+    try {
+        const res = await fetch('/Admin/DeleteRoute', { method: 'POST', body: fd });
+        const json = await res.json();
+        if (json.success) {
+            location.reload();
+        } else {
+            showToast(json.message, true);
+        }
+    } catch {
+        showToast('A network error occurred.', true);
+    }
+    closeModal('deleteModal');
+}
