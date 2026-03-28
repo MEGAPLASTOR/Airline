@@ -5,49 +5,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Airline.Controllers
 {
-    public class AdminController : Controller
+    [Route("Admin")]
+    public class AdminAccountController : AdminBaseController
     {
-        private readonly DataContext _context;
+        public AdminAccountController(DataContext context) : base(context) { }
 
-        public AdminController(DataContext context)
-        {
-            _context = context;
-        }
-
-        private bool IsAdmin()
-        {
-            var isAuth = User?.Identity?.IsAuthenticated == true;
-            var role = User?.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
-
-            return isAuth && string.Equals(role, "ADMIN", StringComparison.OrdinalIgnoreCase);
-        }
-
-        private IActionResult RedirectIfNotAdmin()
-        {
-            return RedirectToAction("Index", "Home");
-        }
-
-        // =========================
-        // Dashboard
-        // =========================
-        [HttpGet]
-        public IActionResult Dashboard()
-        {
-            if (!IsAdmin()) return RedirectIfNotAdmin();
-            return View("AdminDashboard");
-        }
-
-        [HttpGet]
-        public IActionResult AdminDashboard()
-        {
-            if (!IsAdmin()) return RedirectIfNotAdmin();
-            return View("AdminDashboard");
-        }
-
-        // =========================
-        // Manage Accounts
-        // =========================
-        [HttpGet]
+        [HttpGet("ManageAccounts")]
         public async Task<IActionResult> ManageAccounts()
         {
             if (!IsAdmin()) return RedirectIfNotAdmin();
@@ -62,10 +25,10 @@ namespace Airline.Controllers
                 Accounts = accounts
             };
 
-            return View(viewModel);
+            return View("~/Views/Admin/ManageAccounts.cshtml", viewModel);
         }
 
-        [HttpPost]
+        [HttpPost("CreateAccount")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateAccount(AccountFormModel model)
         {
@@ -130,7 +93,7 @@ namespace Airline.Controllers
             return RedirectToAction(nameof(ManageAccounts));
         }
 
-        [HttpPost]
+        [HttpPost("UpdateAccount")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateAccount(AccountFormModel model)
         {
@@ -202,7 +165,7 @@ namespace Airline.Controllers
             return RedirectToAction(nameof(ManageAccounts));
         }
 
-        [HttpPost]
+        [HttpPost("DeleteAccount")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteAccount(int userId)
         {
@@ -229,85 +192,6 @@ namespace Airline.Controllers
 
             TempData["SuccessMessage"] = "Account deleted successfully.";
             return RedirectToAction(nameof(ManageAccounts));
-        }
-
-        // =========================
-        // Manage City
-        // =========================
-        [HttpGet]
-        public async Task<IActionResult> ManageCity()
-        {
-            if (!IsAdmin()) return RedirectIfNotAdmin();
-
-            var cities = await _context.Cities
-                .OrderBy(x => x.CityName)
-                .ToListAsync();
-
-            return View(cities);
-        }
-
-        // =========================
-        // Manage Routes
-        // =========================
-        [HttpGet]
-        public async Task<IActionResult> ManageRoutes()
-        {
-            if (!IsAdmin()) return RedirectIfNotAdmin();
-
-            var routes = await _context.Routes
-                .Include(x => x.DepartureCityNavigation)
-                .Include(x => x.ArrivalCityNavigation)
-                .ToListAsync();
-
-            return View(routes);
-        }
-
-        // =========================
-        // Manage Flights
-        // =========================
-        [HttpGet]
-        public async Task<IActionResult> ManageFlights()
-        {
-            if (!IsAdmin()) return RedirectIfNotAdmin();
-
-            var flights = await _context.Flights
-                .Include(x => x.Route)
-                .OrderByDescending(x => x.FlightId)
-                .ToListAsync();
-
-            return View(flights);
-        }
-
-        // =========================
-        // Flight Schedules
-        // =========================
-        [HttpGet]
-        public async Task<IActionResult> FlightSchedules()
-        {
-            if (!IsAdmin()) return RedirectIfNotAdmin();
-
-            var schedules = await _context.FlightSchedules
-                .Include(x => x.Flight)
-                .OrderByDescending(x => x.ScheduleId)
-                .ToListAsync();
-
-            return View(schedules);
-        }
-
-        // =========================
-        // Flight Reschedule
-        // =========================
-        [HttpGet]
-        public async Task<IActionResult> FlightReschedule()
-        {
-            if (!IsAdmin()) return RedirectIfNotAdmin();
-
-            var schedules = await _context.FlightSchedules
-                .Include(x => x.Flight)
-                .OrderByDescending(x => x.ScheduleId)
-                .ToListAsync();
-
-            return View(schedules);
         }
     }
 }
