@@ -1,0 +1,61 @@
+@model int
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Booking Successful";
+}
+
+<style>
+    .success-container {
+        text-align: center;
+        max-width: 600px;
+        margin: 80px auto;
+        padding: 40px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        color: #fff;
+    }
+    .success-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: var(--accent-green);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        color: #fff;
+        margin: 0 auto 30px;
+        box-shadow: 0 0 30px rgba(93, 232, 168, 0.3);
+    }
+    .booking-id {
+        font-size: 1.2rem;
+        color: var(--ocean-aqua);
+        margin: 15px 0;
+        letter-spacing: 2px;
+    }
+</style>
+
+<div class="success-container">
+    <div class="success-icon">
+        <i class="fa-solid fa-check"></i>
+    </div>
+    
+    <div class="section-heading">
+        <span class="section-kicker">Confirmed</span>
+        <h2>Booking <span>Successful</span></h2>
+    </div>
+
+    <p style="margin-top: 20px; color: rgba(255,255,255,0.7);">
+        Thank you for choosing SkyWave Airlines. Your reservation has been confirmed.
+    </p>
+
+    <div class="booking-id">
+        RESERVATION ID: #@Model.ToString("D6")
+    </div>
+
+    <div style="margin-top: 40px; display: flex; gap: 15px; justify-content: center;">
+        <a asp-controller="Home" asp-action="Index" class="home-btn secondary">Back to Home</a>
+        <a asp-controller="Profile" asp-action="MyTickets" class="home-btn primary">View My Tickets</a>
+    </div>
+</div>

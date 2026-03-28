@@ -152,5 +152,131 @@ namespace Airline.Controllers
             await _context.SaveChangesAsync();
             return Json(new { success = true });
         }
+
+        // =========================
+        // Flight Seats Management
+        // =========================
+        [HttpGet("FlightSeats/{id?}")]
+        public async Task<IActionResult> FlightSeats(int? id)
+        {
+            if (!IsAdmin()) return RedirectIfNotAdmin();
+
+            if (id == null)
+            {
+                var schedules = await _context.FlightSchedules
+                    .Include(x => x.Flight)
+                    .OrderByDescending(x => x.DepartureTime)
+                    .ToListAsync();
+                return View("~/Views/Admin/FlightSeats.cshtml", schedules);
+            }
+
+            var schedule = await _context.FlightSchedules
+                .Include(x => x.Flight)
+                .Include(x => x.Tickets)
+                    .ThenInclude(t => t.Passenger)
+                .FirstOrDefaultAsync(x => x.ScheduleId == id.Value);
+
+            if (schedule == null) return NotFound();
+
+            return View("~/Views/Admin/FlightSeats.cshtml", schedule);
+        }
+
+        [HttpGet("GetSeatDetails")]
+        public async Task<IActionResult> GetSeatDetails(int scheduleId, string seatNumber)
+        {
+            if (!IsAdmin()) return Unauthorized();
+
+            var ticket = await _context.Tickets
+                .Include(x => x.Passenger)
+                .Include(x => x.Booking)
+                    .ThenInclude(b => b.User)
+                .FirstOrDefaultAsync(x => x.Booking.ScheduleId == scheduleId && x.SeatNumber == seatNumber);
+
+            if (ticket == null) return NotFound();
+
+            return Json(new
+            {
+                success = true,
+                seatNumber = ticket.SeatNumber,
+                passengerName = ticket.Passenger?.FullName ?? "Unknown",
+                passengerType = ticket.Passenger?.PassengerType ?? "N/A",
+                status = ticket.Status,
+                bookingDate = ticket.Booking?.BookingDate.ToString("dd/MM/yyyy HH:mm"),
+                username = ticket.Booking?.User?.Username ?? "Guest"
+            });
+        }
+
+        [HttpPost("ToggleSeatStatus")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleSeatStatus(int scheduleId, string seatNumber)
+        {
+            if (!IsAdmin()) return Unauthorized();
+
+            var schedule = await _context.FlightSchedules.FirstOrDefaultAsync(x => x.ScheduleId == scheduleId);
+            if (schedule == null) return Json(new { success = false, message = "Schedule not found" });
+
+            // Check if there is an existing ticket
+            var existingTicket = await _context.Tickets
+                .Include(x => x.Booking)
+                .FirstOrDefaultAsync(x => x.Booking.ScheduleId == scheduleId && x.SeatNumber == seatNumber);
+
+            if (existingTicket != null)
+            {
+                if (existingTicket.Status == "BLOCKED")
+                {
+                    // Unblock: remove the placeholder ticket
+                    _context.Tickets.Remove(existingTicket);
+                    
+                    schedule.AvailableSeats++;
+                    await _context.SaveChangesAsync();
+                    return Json(new { success = true, action = "unblocked" });
+                }
+                else
+                {
+                    return Json(new { success = false, message = "Cannot toggle status of an active reservation." });
+                }
+            }
+            else
+            {
+                // Block: create a placeholder booking and ticket
+                var systemUser = await _context.Users.FirstOrDefaultAsync(x => x.Role == "ADMIN");
+                if (systemUser == null) return Json(new { success = false, message = "No admin user found for blocking." });
+
+                var booking = new Booking
+                {
+                    UserId = systemUser.UserId,
+                    ScheduleId = scheduleId,
+                    BookingDate = DateTime.Now,
+                    BookingType = "ADMIN_BLOCK",
+                    Status = "BLOCKED"
+                };
+                _context.Bookings.Add(booking);
+                await _context.SaveChangesAsync();
+
+                var ticket = new Ticket
+                {
+                    BookingId = booking.BookingId,
+                    SeatNumber = seatNumber,
+                    Status = "BLOCKED",
+                    ClassId = (await _context.TicketClasses.FirstOrDefaultAsync())?.ClassId ?? 1
+                };
+                
+                var passenger = new Passenger
+                {
+                    BookingId = booking.BookingId,
+                    FullName = "ADMIN BLOCK",
+                    PassengerType = "SYSTEM"
+                };
+                _context.Passengers.Add(passenger);
+                await _context.SaveChangesAsync();
+
+                ticket.PassengerId = passenger.PassengerId;
+                _context.Tickets.Add(ticket);
+
+                schedule.AvailableSeats--;
+                await _context.SaveChangesAsync();
+                return Json(new { success = true, action = "blocked" });
+            }
+        }
     }
 }

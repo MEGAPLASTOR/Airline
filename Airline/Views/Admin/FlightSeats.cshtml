@@ -1,0 +1,293 @@
+@model dynamic
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Manage Flight Seats";
+    
+    // Model can be IEnumerable<FlightSchedule> or a single FlightSchedule
+    var isDetail = Model is Airline.Models.FlightSchedule;
+    var schedules = !isDetail ? Model as IEnumerable<Airline.Models.FlightSchedule> : null;
+    var schedule = isDetail ? Model as Airline.Models.FlightSchedule : null;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin-pages.css" />
+    <style>
+        .seat-map-container {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            margin-top: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .seat-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr); /* 6 seats + 1 aisle */
+            gap: 12px;
+            margin-top: 2rem;
+        }
+        .seat {
+            width: 45px;
+            height: 45px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: rgba(255,255,255,0.6);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .seat:hover {
+            transform: scale(1.05);
+            background: rgba(255,255,255,0.15);
+        }
+        .seat.occupied {
+            background: var(--accent-coral);
+            border-color: #ff4d4d;
+            color: #fff;
+        }
+        .seat.blocked {
+            background: #555;
+            border-color: #777;
+            color: #ccc;
+        }
+        .seat.available {
+            background: var(--accent-green);
+            border-color: #4cd995;
+            color: #0c3a25;
+        }
+        .aisle {
+            width: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.3);
+            font-weight: 700;
+        }
+        .map-legend {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+        }
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+    </style>
+}
+
+<div class="page-header">
+    <div class="page-title-block">
+        <div class="page-greeting">Operations</div>
+        <h1 class="page-title">Manage <span>Flight Seats</span></h1>
+        @if (isDetail)
+        {
+            <p class="page-subtitle">Flight: @schedule.Flight.FlightNumber | Route: @schedule.Flight.Route?.DepartureCityNavigation?.CityName to @schedule.Flight.Route?.ArrivalCityNavigation?.CityName</p>
+        }
+        else
+        {
+            <p class="page-subtitle">Select a flight schedule to manage seat availability</p>
+        }
+    </div>
+    @if (isDetail)
+    {
+        <a asp-action="FlightSeats" class="btn-ghost">
+            <i class="fa-solid fa-arrow-left"></i> Back to List
+        </a>
+    }
+</div>
+
+@if (!isDetail)
+{
+    <div class="schedule-table-card">
+        <table class="schedule-table">
+            <thead>
+                <tr>
+                    <th>Flight</th>
+                    <th>Route</th>
+                    <th>Departure</th>
+                    <th>Capacity</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var s in schedules)
+                {
+                    <tr>
+                        <td><strong>@s.Flight?.FlightNumber</strong></td>
+                        <td>@s.Flight?.Route?.DepartureCityNavigation?.CityName &rarr; @s.Flight?.Route?.ArrivalCityNavigation?.CityName</td>
+                        <td>@s.DepartureTime.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@s.AvailableSeats / @s.TotalSeats</td>
+                        <td>
+                            <a asp-action="FlightSeats" asp-route-id="@s.ScheduleId" class="act-btn act-edit">
+                                <i class="fa-solid fa-chair"></i> Manage Seats
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="seat-map-container">
+        <div class="map-legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background:var(--accent-green)"></div>
+                <span>Available</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background:var(--accent-coral)"></div>
+                <span>Occupied</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background:#555"></div>
+                <span>Blocked (Admin)</span>
+            </div>
+        </div>
+
+        <div class="seat-grid">
+            @for (int i = 0; i < (schedule.TotalSeats / 6) + 1; i++)
+            {
+                int rowNum = i + 1;
+                string[] letters = { "A", "B", "C", "D", "E", "F" };
+                
+                for (int j = 0; j < 7; j++)
+                {
+                    if (j == 3) // Aisle
+                    {
+                        <div class="aisle">@rowNum</div>
+                    }
+                    else
+                    {
+                        int seatIdx = j > 3 ? j - 1 : j;
+                        string seatNum = $"{rowNum}{letters[seatIdx]}";
+                        
+                        // Check if seat exists for total seats
+                        int seatAbsoluteIndex = (i * 6) + seatIdx + 1;
+                        if (seatAbsoluteIndex <= schedule.TotalSeats)
+                        {
+                            var ticket = schedule.Tickets.FirstOrDefault(t => t.SeatNumber == seatNum);
+                            string statusClass = "available";
+                            if (ticket != null)
+                            {
+                                statusClass = ticket.Status == "BLOCKED" ? "blocked" : "occupied";
+                            }
+                            
+                            <div class="seat @statusClass" 
+                                 onclick="handleSeatClick(@schedule.ScheduleId, '@seatNum', '@statusClass')"
+                                 title="Seat @seatNum">
+                                @seatNum
+                            </div>
+                        }
+                    }
+                }
+            }
+        </div>
+    </div>
+}
+
+<!-- Seat Details Modal -->
+<div class="modal-overlay" id="seatModal">
+    <div class="modal-box" style="width: 400px">
+        <div class="modal-header">
+            <span class="modal-title">Seat <span id="modalSeatNum"></span> Details</span>
+            <button class="modal-close" onclick="closeModal('seatModal')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body" id="modalSeatBody">
+            <!-- Content loaded via JS -->
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closeModal('seatModal')">Close</button>
+            <button class="btn-primary" id="btnToggleStatus" onclick="toggleStatus()">Toggle Block</button>
+        </div>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+@section Scripts {
+    <script src="~/js/admin-common.js"></script>
+    <script>
+        let currentScheduleId = 0;
+        let currentSeatNum = '';
+        let currentStatus = '';
+
+        async function handleSeatClick(scheduleId, seatNum, status) {
+            currentScheduleId = scheduleId;
+            currentSeatNum = seatNum;
+            currentStatus = status;
+
+            document.getElementById('modalSeatNum').textContent = seatNum;
+            const body = document.getElementById('modalSeatBody');
+            const btnToggle = document.getElementById('btnToggleStatus');
+
+            if (status === 'occupied') {
+                body.innerHTML = '<p style="text-align:center">Loading passenger details...</p>';
+                document.getElementById('seatModal').classList.add('active');
+                btnToggle.style.display = 'none';
+
+                const res = await fetch(`/Admin/GetSeatDetails?scheduleId=${scheduleId}&seatNumber=${seatNum}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    body.innerHTML = `
+                        <div style="display:grid; gap:10px">
+                            <div style="display:flex; justify-content:space-between"><span>Passenger:</span> <strong>${data.passengerName}</strong></div>
+                            <div style="display:flex; justify-content:space-between"><span>Type:</span> <span>${data.passengerType}</span></div>
+                            <div style="display:flex; justify-content:space-between"><span>Username:</span> <span>${data.username}</span></div>
+                            <div style="display:flex; justify-content:space-between"><span>Booking Date:</span> <span>${data.bookingDate}</span></div>
+                            <div style="display:flex; justify-content:space-between"><span>Status:</span> <span class="status-pill pill-completed">${data.status}</span></div>
+                        </div>
+                    `;
+                } else {
+                    body.innerHTML = '<p style="color:var(--accent-coral)">Failed to load details.</p>';
+                }
+            } else {
+                btnToggle.style.display = 'block';
+                btnToggle.textContent = status === 'blocked' ? 'Unblock Seat' : 'Block Seat';
+                body.innerHTML = `
+                    <p>This seat is currently <strong>${status}</strong>.</p>
+                    <p style="font-size:0.85rem; color:rgba(255,255,255,0.5)">You can block this seat to prevent customers from booking it.</p>
+                `;
+                document.getElementById('seatModal').classList.add('active');
+            }
+        }
+
+        async function toggleStatus() {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            const fd = new FormData();
+            fd.append('scheduleId', currentScheduleId);
+            fd.append('seatNumber', currentSeatNum);
+            fd.append('__RequestVerificationToken', token);
+
+            const res = await fetch('/Admin/ToggleSeatStatus', {
+                method: 'POST',
+                body: fd
+            });
+            const data = await res.json();
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || 'Failed to update status');
+            }
+        }
+    </script>
+}

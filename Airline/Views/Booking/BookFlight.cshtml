@@ -1,0 +1,119 @@
+@model IEnumerable<Airline.Models.FlightSchedule>
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Book a Flight";
+}
+
+<style>
+    .booking-container {
+        max-width: 1000px;
+        margin: 40px auto;
+        padding: 20px;
+    }
+    .flight-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: transform 0.3s;
+    }
+    .flight-card:hover {
+        transform: translateY(-5px);
+        background: rgba(255, 255, 255, 0.08);
+    }
+    .flight-info {
+        display: flex;
+        gap: 30px;
+        align-items: center;
+    }
+    .city-block {
+        text-align: center;
+    }
+    .city-name {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #fff;
+    }
+    .time {
+        font-size: 0.9rem;
+        color: rgba(255,255,255,0.6);
+    }
+    .flight-separator {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        color: var(--ocean-aqua);
+    }
+    .flight-price {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--accent-gold);
+    }
+    .btn-select {
+        background: var(--ocean-aqua);
+        color: #fff;
+        border: none;
+        padding: 10px 25px;
+        border-radius: 30px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background 0.3s;
+    }
+    .btn-select:hover {
+        background: #1cb5c4;
+    }
+</style>
+
+<div class="booking-container">
+    <div class="section-heading">
+        <span class="section-kicker">Reservation</span>
+        <h2>Select Your <span>Flight</span></h2>
+        <p>Choose from our available schedules to your destination.</p>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="empty-state" style="text-align:center; padding: 50px;">
+            <i class="fa-solid fa-plane-slash" style="font-size: 3rem; color: rgba(255,255,255,0.2);"></i>
+            <p style="margin-top:20px;">No available flights found at this time.</p>
+        </div>
+    }
+    else
+    {
+        @foreach (var s in Model)
+        {
+            var depCity = s.Flight?.Route?.DepartureCityNavigation?.CityName ?? "Origin";
+            var arrCity = s.Flight?.Route?.ArrivalCityNavigation?.CityName ?? "Destination";
+            
+            <div class="flight-card">
+                <div class="flight-info">
+                    <div class="city-block">
+                        <div class="city-name">@depCity</div>
+                        <div class="time">@s.DepartureTime.ToString("HH:mm")</div>
+                    </div>
+                    
+                    <div class="flight-separator">
+                        <i class="fa-solid fa-plane"></i>
+                        <span style="font-size: 0.7rem;">@s.Flight.FlightNumber</span>
+                    </div>
+
+                    <div class="city-block">
+                        <div class="city-name">@arrCity</div>
+                        <div class="time">@s.ArrivalTime.ToString("HH:mm")</div>
+                    </div>
+                </div>
+                
+                <div style="text-align:right">
+                    <div class="flight-price">1.500.000 VND</div>
+                    <div style="font-size:0.8rem; color:rgba(255,255,255,0.5); margin-bottom:10px;">@s.AvailableSeats seats left</div>
+                    <a asp-action="SelectSeat" asp-route-id="@s.ScheduleId" class="btn-select">Select Flight</a>
+                </div>
+            </div>
+        }
+    }
+</div>
