@@ -21,7 +21,8 @@ Dưới đây là cấu trúc chính của dự án:
         - `Accountcontroller.cs`: Xử lý đăng nhập, đăng ký và xác thực Cookie. **[sang-fix + Sửa tên file bỏ khoảng trắng]**
         - `ProfileController.cs`: Cập nhật thông tin cá nhân và mật khẩu cho người dùng.
         - `BookingController.cs`: Xử lý quy trình đặt chuyến bay. **[sang]**
-        - `TicketController.cs`: Quản lý thông tin và xác nhận vé.
+        - `TicketController.cs`: Quản lý thông tin, xác nhận vé và đổi chỗ ngồi. **[sang]**
+        - `BaggageController.cs`: Đăng ký hành lý ký gửi kèm theo vé. **[sang]**
   - `Models/`: Chứa các thực thể cơ sở dữ liệu và ViewModels.
     - `BookingViewModel.cs`: Lớp trung gian xử lý quy trình đặt vé. **[sang]**
     - `User.cs`: Thông tin người dùng (Admin/User).
@@ -35,7 +36,7 @@ Dưới đây là cấu trúc chính của dự án:
     - `Admin/FlightSeats.cshtml`: Giao diện quản lý sơ đồ ghế cho Admin. **[sang]**
     - `Booking/`: Chứa các trang đặt vé (BookFlight, SelectSeat, PassengerInfo, Success). **[sang]**
     - `Account/`: Các trang đăng nhập, đăng ký, chỉnh sửa tài khoản.
-  - `DataContext.cs`: Cấu hình Entity Framework Core và ánh xạ cơ sở dữ liệu.
+  - `DataContext.cs`: Cấu hình Entity Framework Core. **[sang-fix + Gỡ bỏ Hardcoded Connection String]**
   - `Program.cs`: Nơi cấu hình Services, Pipeline và Dependency Injection.
   - `wwwroot/`: Tài nguyên tĩnh như CSS, JavaScript, hình ảnh và biểu tượng.
 - `Airline.slnx`: Tệp giải pháp thực thi dự án.
@@ -50,10 +51,10 @@ Dưới đây là cấu trúc chính của dự án:
 - **Quản lý Tài khoản**: Chỉnh sửa thông tin cá nhân (Họ tên, Email, SĐT, CCCD, Địa chỉ, Giới tính, Tuổi) và đổi mật khẩu.
 - **SkyMiles**: Hệ thống điểm thưởng tích lũy cho khách hàng thân thiết.
 - **Tìm kiếm & Đặt vé**: Quy trình đặt vé nhanh chóng, hỗ trợ chọn hành trình linh hoạt.
-- **Dịch vụ Hành lý**: Đăng ký và tính phí hành lý theo trọng lượng.
+- **Dịch vụ Hành lý**: Đăng ký và tính phí hành lý theo trọng lượng (Gói 20-40kg). **[sang-fix + Khôi phục RegisterBaggage]**
 - **Thanh toán trực tuyến**: Ghi nhận trạng thái thanh toán và phương thức giao dịch.
 - **Khuyến mãi**: Áp dụng mã giảm giá trực tiếp vào đơn đặt vé.
-- **Quản lý vé**: Xem lại các vé đã đặt và thông tin xác nhận.
+- **Quản lý vé**: Xem lại các vé đã đặt, xác nhận thông tin và đổi chỗ ngồi linh hoạt. **[sang-fix + Khôi phục ViewConfirmation & ChangeSeat]**
 
 ### 2. Dành cho Quản trị viên (Admin)
 

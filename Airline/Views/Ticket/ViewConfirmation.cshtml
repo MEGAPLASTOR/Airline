@@ -1,0 +1,275 @@
+@model IEnumerable<Airline.Models.Ticket>
+@{
+    ViewData["Title"] = "My Tickets";
+}
+
+<style>
+    .ticket-container {
+        padding: 2.5rem 2rem;
+    }
+
+    .page-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 2rem;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+    }
+
+    .ticket-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .ticket-card:hover {
+        transform: translateY(-5px);
+        background: rgba(255, 255, 255, 0.08);
+        border-color: var(--ocean-aqua);
+    }
+
+    .ticket-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+
+    .flight-info {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .city-group {
+        text-align: center;
+    }
+
+    .city-name {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 0.2rem;
+    }
+
+    .city-code {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.5);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+
+    .flight-divider {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        width: 120px;
+    }
+
+    .flight-line {
+        height: 2px;
+        background: rgba(255, 255, 255, 0.15);
+        width: 100%;
+        position: relative;
+    }
+
+    .flight-line i {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: var(--ocean-aqua);
+        font-size: 1rem;
+    }
+
+    .flight-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1.5rem;
+        background: rgba(0, 0, 0, 0.15);
+        padding: 1.25rem;
+        border-radius: var(--radius-md);
+    }
+
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+    }
+
+    .detail-label {
+        font-size: 0.65rem;
+        color: rgba(255, 255, 255, 0.4);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-weight: 600;
+    }
+
+    .detail-value {
+        font-size: 1rem;
+        font-weight: 500;
+        color: #fff;
+    }
+
+    .status-badge {
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 0.35rem 0.65rem;
+        border-radius: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .status-confirmed {
+        background: rgba(23, 184, 120, 0.12);
+        color: #5de8a8;
+        border: 1px solid rgba(23, 184, 120, 0.3);
+    }
+
+    .status-cancelled {
+        background: rgba(255, 107, 107, 0.12);
+        color: #ff8f8f;
+        border: 1px solid rgba(255, 107, 107, 0.3);
+    }
+
+    .ticket-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+    }
+
+    .btn-action {
+        padding: 0.72rem 1.4rem;
+        border-radius: var(--radius-md);
+        font-size: 0.825rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all var(--transition);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+    }
+
+    .btn-primary-custom {
+        background: linear-gradient(135deg, var(--ocean-aqua), var(--ocean-teal));
+        color: #fff;
+        border: none;
+        box-shadow: 0 4px 15px rgba(23, 170, 184, 0.25);
+    }
+
+    .btn-primary-custom:hover {
+        opacity: 0.9;
+        transform: translateY(-2px);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 5rem 2rem;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px dashed rgba(255, 255, 255, 0.1);
+        border-radius: var(--radius-lg);
+    }
+
+    .empty-icon {
+        font-size: 3rem;
+        color: rgba(255, 255, 255, 0.1);
+        margin-bottom: 1.5rem;
+    }
+
+    .empty-text {
+        font-size: 1.25rem;
+        color: rgba(255, 255, 255, 0.4);
+        margin-bottom: 2rem;
+    }
+</style>
+
+<div class="ticket-container">
+    <h1 class="page-title"><i class="fa-solid fa-clipboard-list"></i> My Airline Tickets</h1>
+
+    @if (!Model.Any())
+    {
+        <div class="empty-state">
+            <div class="empty-icon"><i class="fa-solid fa-ticket"></i></div>
+            <div class="empty-text">Chưa có vé nào được tìm thấy. Bạn hãy bắt đầu cuộc hành trình ngay từ bây giờ!</div>
+            <a asp-controller="Booking" asp-action="BookFlight" class="btn-action btn-primary-custom">
+                <i class="fa-solid fa-paper-plane"></i> Book a Flight
+            </a>
+        </div>
+    }
+    else
+    {
+        foreach (var ticket in Model)
+        {
+            var schedule = ticket.Booking.Schedule;
+            var flight = schedule.Flight;
+            var route = flight.Route;
+
+            <div class="ticket-card">
+                <div class="ticket-header">
+                    <div class="flight-info">
+                        <div class="city-group">
+                            <div class="city-name">@route.DepartureCityNavigation.CityName</div>
+                            <div class="city-code">Departure</div>
+                        </div>
+                        <div class="flight-divider">
+                            <div class="flight-line"><i class="fa-solid fa-plane"></i></div>
+                            <span class="detail-value" style="font-size: 0.8rem;">@flight.FlightNumber</span>
+                        </div>
+                        <div class="city-group">
+                            <div class="city-name">@route.ArrivalCityNavigation.CityName</div>
+                            <div class="city-code">Arrival</div>
+                        </div>
+                    </div>
+                    <div class="status-badge @(ticket.Status == "BOOKED" || ticket.Status == "PAID" ? "status-confirmed" : "status-cancelled")">
+                        @ticket.Status
+                    </div>
+                </div>
+
+                <div class="flight-details">
+                    <div class="detail-item">
+                        <span class="detail-label">Passenger</span>
+                        <span class="detail-value">@(ticket.Passenger?.FullName ?? "Unknown")</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Departure Time</span>
+                        <span class="detail-value">@schedule.DepartureTime.ToString("dd/MM/yyyy HH:mm")</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Seat Number</span>
+                        <span class="detail-value" style="color: var(--ocean-aqua); font-weight: 700;">@(ticket.SeatNumber ?? "Unassigned")</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Class</span>
+                        <span class="detail-value">@ticket.Class.ClassName</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Reservation ID</span>
+                        <span class="detail-value">#@ticket.BookingId</span>
+                    </div>
+                </div>
+
+                <div class="ticket-footer">
+                    @if (ticket.Status != "CANCELLED")
+                    {
+                        <a asp-controller="Ticket" asp-action="ChangeSeat" asp-route-id="@ticket.TicketId" class="btn-action btn-primary-custom">
+                            <i class="fa-solid fa-chair"></i> Change Seat
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>
