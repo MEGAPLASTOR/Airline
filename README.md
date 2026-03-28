@@ -23,6 +23,7 @@ Dưới đây là cấu trúc chính của dự án:
         - `BookingController.cs`: Xử lý quy trình đặt chuyến bay. **[sang]**
         - `TicketController.cs`: Quản lý thông tin, xác nhận vé và đổi chỗ ngồi. **[sang]**
         - `BaggageController.cs`: Đăng ký hành lý ký gửi kèm theo vé. **[sang]**
+        - `PaymentController.cs`: Tích hợp cổng thanh toán VNPay để xử lý giao dịch vé. **[sang]**
   - `Models/`: Chứa các thực thể cơ sở dữ liệu và ViewModels.
     - `BookingViewModel.cs`: Lớp trung gian xử lý quy trình đặt vé. **[sang]**
     - `User.cs`: Thông tin người dùng (Admin/User).
@@ -52,7 +53,7 @@ Dưới đây là cấu trúc chính của dự án:
 - **SkyMiles**: Hệ thống điểm thưởng tích lũy cho khách hàng thân thiết.
 - **Tìm kiếm & Đặt vé**: Quy trình đặt vé nhanh chóng, hỗ trợ chọn hành trình linh hoạt.
 - **Dịch vụ Hành lý**: Đăng ký và tính phí hành lý theo trọng lượng (Gói 20-40kg). **[sang-fix + Khôi phục RegisterBaggage]**
-- **Thanh toán trực tuyến**: Ghi nhận trạng thái thanh toán và phương thức giao dịch.
+- **Thanh toán trực tuyến**: Tích hợp cổng VNPay (Sandbox), hỗ trợ thanh toán qua QR Code, Thẻ nội địa và Quốc tế. **[sang-fix + Tích hợp VNPay]**
 - **Khuyến mãi**: Áp dụng mã giảm giá trực tiếp vào đơn đặt vé.
 - **Quản lý vé**: Xem lại các vé đã đặt, xác nhận thông tin và đổi chỗ ngồi linh hoạt. **[sang-fix + Khôi phục ViewConfirmation & ChangeSeat]**
 
