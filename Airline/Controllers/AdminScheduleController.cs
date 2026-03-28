@@ -172,8 +172,9 @@ namespace Airline.Controllers
 
             var schedule = await _context.FlightSchedules
                 .Include(x => x.Flight)
-                .Include(x => x.Tickets)
-                    .ThenInclude(t => t.Passenger)
+                .Include(x => x.Bookings)
+                    .ThenInclude(t => t.Tickets)
+                        .ThenInclude(t => t.Passenger)
                 .FirstOrDefaultAsync(x => x.ScheduleId == id.Value);
 
             if (schedule == null) return NotFound();
@@ -201,7 +202,7 @@ namespace Airline.Controllers
                 passengerName = ticket.Passenger?.FullName ?? "Unknown",
                 passengerType = ticket.Passenger?.PassengerType ?? "N/A",
                 status = ticket.Status,
-                bookingDate = ticket.Booking?.BookingDate.ToString("dd/MM/yyyy HH:mm"),
+                bookingDate = ticket.Booking?.BookingDate?.ToString("dd/MM/yyyy HH:mm") ?? "N/A",
                 username = ticket.Booking?.User?.Username ?? "Guest"
             });
         }

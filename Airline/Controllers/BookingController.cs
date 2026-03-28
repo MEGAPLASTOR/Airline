@@ -37,7 +37,8 @@ namespace Airline.Controllers
                     .ThenInclude(f => f.Route)
                         .ThenInclude(r => r.DepartureCityNavigation)
                 .Include(s => s.Flight.Route.ArrivalCityNavigation)
-                .Include(s => s.Tickets)
+                .Include(s => s.Bookings)
+                    .ThenInclude(b => b.Tickets)
                 .FirstOrDefaultAsync(s => s.ScheduleId == id);
 
             if (schedule == null) return NotFound();
@@ -123,7 +124,7 @@ namespace Airline.Controllers
                     _context.Tickets.Add(ticket);
 
                     // 4. Update Seats
-                    schedule.AvailableSeats--;
+                    schedule.AvailableSeats = (schedule.AvailableSeats ?? 0) - 1;
                     await _context.SaveChangesAsync();
 
                     await transaction.CommitAsync();

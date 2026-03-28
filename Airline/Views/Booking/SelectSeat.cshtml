@@ -142,9 +142,9 @@
                         string seatNum = $"{rowNum}{letters[seatIdx]}";
                         int seatAbsoluteIndex = (i * 6) + seatIdx + 1;
 
-                        if (seatAbsoluteIndex <= Model.TotalSeats)
+                        if (seatAbsoluteIndex <= (Model.TotalSeats ?? 0))
                         {
-                            var ticket = Model.Tickets.FirstOrDefault(t => t.SeatNumber == seatNum);
+                            var ticket = Model.Bookings.SelectMany(b => b.Tickets).FirstOrDefault(t => t.SeatNumber == seatNum);
                             string statusClass = "";
                             if (ticket != null)
                             {

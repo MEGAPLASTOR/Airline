@@ -134,7 +134,7 @@
                         <td><strong>@s.Flight?.FlightNumber</strong></td>
                         <td>@s.Flight?.Route?.DepartureCityNavigation?.CityName &rarr; @s.Flight?.Route?.ArrivalCityNavigation?.CityName</td>
                         <td>@s.DepartureTime.ToString("dd/MM/yyyy HH:mm")</td>
-                        <td>@s.AvailableSeats / @s.TotalSeats</td>
+                        <td>@(s.AvailableSeats ?? 0) / @(s.TotalSeats ?? 0)</td>
                         <td>
                             <a asp-action="FlightSeats" asp-route-id="@s.ScheduleId" class="act-btn act-edit">
                                 <i class="fa-solid fa-chair"></i> Manage Seats
@@ -165,7 +165,7 @@ else
         </div>
 
         <div class="seat-grid">
-            @for (int i = 0; i < (schedule.TotalSeats / 6) + 1; i++)
+            @for (int i = 0; i < ((schedule.TotalSeats ?? 0) / 6) + 1; i++)
             {
                 int rowNum = i + 1;
                 string[] letters = { "A", "B", "C", "D", "E", "F" };
@@ -183,9 +183,9 @@ else
                         
                         // Check if seat exists for total seats
                         int seatAbsoluteIndex = (i * 6) + seatIdx + 1;
-                        if (seatAbsoluteIndex <= schedule.TotalSeats)
+                        if (seatAbsoluteIndex <= (schedule.TotalSeats ?? 0))
                         {
-                            var ticket = schedule.Tickets.FirstOrDefault(t => t.SeatNumber == seatNum);
+                            var ticket = schedule.Bookings.SelectMany(b => b.Tickets).FirstOrDefault(t => t.SeatNumber == seatNum);
                             string statusClass = "available";
                             if (ticket != null)
                             {

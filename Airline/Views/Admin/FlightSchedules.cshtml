@@ -83,8 +83,8 @@
                         case "COMPLETED": pillClass = "pill-completed"; statusVi = "Completed"; break;
                     }
 
-                    var booked = s.TotalSeats - s.AvailableSeats;
-                    var percent = s.TotalSeats > 0 ? (booked * 100.0 / s.TotalSeats) : 0;
+                    var booked = (s.TotalSeats ?? 0) - (s.AvailableSeats ?? 0);
+                    var percent = (s.TotalSeats ?? 0) > 0 ? (booked * 100.0 / (s.TotalSeats ?? 1)) : 0;
 
                     <tr>
                         <td>

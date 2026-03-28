@@ -146,7 +146,7 @@
 
         <div class="seat-grid">
             @{
-                int rows = (schedule.TotalSeats / 6) + 1;
+                int rows = ((schedule.TotalSeats ?? 0) / 6) + 1;
                 string[] letters = { "A", "B", "C", "D", "E", "F" };
             }
             @for (int i = 0; i < rows; i++)
@@ -164,7 +164,7 @@
                         string seatNum = $"{rowNum}{letters[seatIdxForLetter]}";
                         int absoluteIdx = (i * 6) + seatIdxForLetter + 1;
 
-                        if (absoluteIdx <= schedule.TotalSeats)
+                        if (absoluteIdx <= (schedule.TotalSeats ?? 0))
                         {
                             bool isCurrent = seatNum == currentSeat;
                             bool isOccupied = !isCurrent && occupiedSeats.Contains(seatNum);
