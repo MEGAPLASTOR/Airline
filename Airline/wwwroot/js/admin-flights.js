@@ -1,4 +1,18 @@
 /* ManageFlights page-specific logic */
+function showToast(msg, isError = false) {
+    const toast = document.getElementById('toast');
+    toast.style.borderLeftColor = isError ? 'var(--accent-coral)' : 'var(--accent-gold)';
+    const icon = isError
+        ? '<i class="fa-solid fa-circle-exclamation" style="color:var(--accent-coral)"></i>'
+        : '<i class="fa-solid fa-circle-check" style="color:var(--accent-gold)"></i>';
+    toast.innerHTML = icon + ' ' + msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+}
 
 function openCreateModal() {
     document.getElementById('mTitle').innerHTML = '<i class="fa-solid fa-plus" style="color:var(--accent-gold);margin-right:6px"></i> Add Flight';
