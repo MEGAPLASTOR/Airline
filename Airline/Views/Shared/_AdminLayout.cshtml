@@ -39,7 +39,8 @@
     var isTicketingGroup = IsAny(
         ("Admin", "TicketStatuses"),
         ("Admin", "ConfirmTicket"),
-        ("ManageTicketClass", "TicketClasses")
+        ("ManageTicketClass", "TicketClasses"),
+        ("TicketPrice", "TicketPrice")
     );
 
     var isManageAccounts = IsActive("AdminAccount", "ManageAccounts");
@@ -104,8 +105,7 @@
 
         body {
             font-family: 'DM Sans', sans-serif;
-            background: radial-gradient(circle at top right, rgba(23,170,184,0.12), transparent 25%), radial-gradient(circle at left bottom, rgba(13,127,143,0.18), transparent 25%), linear-gradient(160deg, #061525, #0a223c 42%, #081b31 100%);
-            color: rgba(255,255,255,0.82);
+            background: radial-gradient(circle at top right, rgba(23,170,184,0.12), transparent 25%), radial-gradient(circle at left bottom, rgba(13,127,143,0.18), transparent 25%), linear-gradient(160deg, #061525, #0a223c 42%, #081b31 100%) !important;
             min-height: 100vh;
             overflow-x: hidden;
         }
@@ -625,6 +625,9 @@
 
                     <a class="@(IsActive("Admin", "ConfirmTicket") ? "active-sub-link" : "")"
                        asp-controller="Admin" asp-action="ConfirmTicket">Confirm Ticket</a>
+
+                    <a class="@(IsActive("TicketPrice", "TicketPrice") ? "active-sub-link" : "")"
+                       asp-controller="TicketPrice" asp-action="TicketPrice">Manage Ticket Prices</a>
 
                     <a class="@(IsActive("ManageTicketClass", "TicketClasses") ? "active-sub-link" : "")"
                        asp-controller="ManageTicketClass" asp-action="TicketClasses">Manage Ticket Classes</a>

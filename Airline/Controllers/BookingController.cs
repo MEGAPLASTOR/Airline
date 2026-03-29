@@ -65,7 +65,7 @@ namespace Airline.Controllers
                 SeatNumber = seatNumber,
                 FlightNumber = schedule?.Flight?.FlightNumber ?? "Unknown",
                 DepartureTime = schedule?.DepartureTime ?? DateTime.Now,
-                Price = 1500000 // Placeholder price logic
+                //Price = 1500000
             };
 
             return View(model);

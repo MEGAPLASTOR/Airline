@@ -1,0 +1,135 @@
+﻿@model Airline.Controllers.TicketPriceController.TicketPricePageVm
+@{
+    ViewData["Title"] = "Ticket Prices";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<link rel="stylesheet" href="~/css/admin-ticketprice.css" />
+
+<div class="tp-wrap">
+    <div class="tp-page-label">TICKETING</div>
+
+    <div class="tp-head">
+        <div class="tp-head__content">
+            <h1 class="tp-title">Manage <span>Ticket Prices</span></h1>
+            <div class="tp-sub">Create, edit and delete ticket prices.</div>
+        </div>
+
+        <button class="tp-btn tp-btn--primary" id="openModalBtn" type="button">
+            Add Price
+        </button>
+    </div>
+
+    @if (TempData["tp_ok"] != null)
+    {
+        <div class="tp-alert tp-alert--ok">@TempData["tp_ok"]</div>
+    }
+
+    @if (TempData["tp_err"] != null)
+    {
+        <div class="tp-alert tp-alert--danger">@TempData["tp_err"]</div>
+    }
+
+    <div class="tp-card">
+        <div class="tp-table-wrap">
+            <table class="tp-table">
+                <thead>
+                    <tr>
+                        <th>Flight</th>
+                        <th>Class Name</th>
+                        <th>Price</th>
+                        <th class="tp-th-actions">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Items != null && Model.Items.Any())
+                    {
+                        @foreach (var x in Model.Items)
+                        {
+                            <tr>
+                                <td>@x.FlightNumber</td>
+                                <td>@x.ClassName</td>
+                                <td class="tp-price">@x.Price.ToString("N0") VNĐ</td>
+                                <td class="tp-row-actions">
+                                    <button class="tp-icon-btn editBtn"
+                                            type="button"
+                                            data-id="@x.PriceId"
+                                            data-schedule="@x.ScheduleId"
+                                            data-class="@x.ClassId"
+                                            data-price="@x.Price">
+                                        ✎
+                                    </button>
+
+                                    <form method="post" asp-action="Delete" onsubmit="return confirm('Delete this ticket price?')">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@x.PriceId" />
+                                        <button class="tp-icon-btn tp-icon-btn--danger" type="submit">🗑</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="4" class="tp-empty">No ticket prices found.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="tp-modal" id="modal">
+    <div class="tp-modal__card">
+        <div class="tp-modal__head">
+            <div>
+                <h3>Set Ticket Price</h3>
+                <div class="tp-modal__sub">Fill in the information below.</div>
+            </div>
+            <button id="closeModal" type="button" class="tp-modal__close">✕</button>
+        </div>
+
+        <form method="post" asp-action="Upsert" class="tp-form">
+            @Html.AntiForgeryToken()
+
+            <input type="hidden" name="PriceId" id="PriceId" />
+
+            <div class="tp-grid">
+                <div class="tp-field">
+                    <label for="ScheduleId">Schedule</label>
+                    <select name="ScheduleId" id="ScheduleId">
+                        @foreach (var s in Model.Schedules)
+                        {
+                            <option value="@s.ScheduleId">@s.Label</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="tp-field">
+                    <label for="ClassId">Class</label>
+                    <select name="ClassId" id="ClassId">
+                        @foreach (var c in Model.Classes)
+                        {
+                            <option value="@c.ClassId">@c.ClassName</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="tp-field tp-field--full">
+                    <label for="Price">Price</label>
+                    <input type="number" name="Price" id="Price" min="0" step="1000" placeholder="Enter ticket price..." />
+                    <div id="preview">0 VNĐ</div>
+                </div>
+            </div>
+
+            <div class="tp-form__actions">
+                <button type="button" class="tp-btn tp-btn--ghost" id="cancelModalBtn">Cancel</button>
+                <button type="submit" class="tp-btn tp-btn--primary">Save Price</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="~/js/admin-ticketprice.js"></script>
