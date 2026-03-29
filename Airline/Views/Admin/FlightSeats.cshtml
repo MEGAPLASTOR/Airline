@@ -10,7 +10,7 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/admin-pages.css" />
+    <link rel="stylesheet" href="~/css/admin-flightseats.css" />
     <style>
         .seat-map-container {
             background: var(--card-bg);
@@ -225,8 +225,26 @@ else
 @Html.AntiForgeryToken()
 
 @section Scripts {
-    <script src="~/js/admin-common.js"></script>
     <script>
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            if(toast) {
+                toast.style.borderLeftColor = isError ? 'var(--accent-coral)' : 'var(--accent-gold)';
+                const icon = isError
+                    ? '<i class="fa-solid fa-circle-exclamation" style="color:var(--accent-coral)"></i>'
+                    : '<i class="fa-solid fa-circle-check" style="color:var(--accent-gold)"></i>';
+                toast.innerHTML = icon + ' ' + msg;
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 3000);
+            } else {
+                alert(msg);
+            }
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
         let currentScheduleId = 0;
         let currentSeatNum = '';
         let currentStatus = '';
