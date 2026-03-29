@@ -24,7 +24,10 @@ main,
 
 .main-content {
     position: relative;
-    background: radial-gradient(circle at top right, rgba(23,170,184,0.12), transparent 25%), radial-gradient(circle at left bottom, rgba(13,127,143,0.18), transparent 25%), linear-gradient(160deg, #061525, #0a223c 42%, #081b31 100%) !important;
+    background:
+        radial-gradient(circle at top right, rgba(23,170,184,0.12), transparent 25%),
+        radial-gradient(circle at left bottom, rgba(13,127,143,0.18), transparent 25%),
+        linear-gradient(160deg, #061525, #0a223c 42%, #081b31 100%) !important;
 }
 
 :root {
@@ -63,33 +66,21 @@ main,
 }
 
 .tp-page-label {
-    margin-bottom: 10px;
-    font-size: 13px;
+    margin-bottom: 8px;
+    font-size: 12px;
     font-weight: 700;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
     color: var(--tp-ocean-aqua);
 }
 
-.tp-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 24px;
-    flex-wrap: wrap;
-    margin-bottom: 28px;
-}
-
-.tp-head__content {
-    max-width: 680px;
-}
-
 .tp-title {
+    font-family: 'Playfair Display', serif;
     margin: 0;
-    font-size: 56px;
-    line-height: 1.04;
-    font-weight: 800;
-    letter-spacing: -0.03em;
+    font-size: clamp(32px, 4vw, 44px);
+    line-height: 1.15;
+    font-weight: 700;
+    letter-spacing: -0.02em;
     color: #ffffff;
 }
 
@@ -98,11 +89,12 @@ main,
     }
 
 .tp-sub {
-    margin-top: 8px;
-    font-size: 18px;
-    line-height: 1.6;
+    margin-top: 10px;
+    font-size: 15px;
+    line-height: 1.65;
     font-weight: 500;
     color: var(--tp-text-soft);
+    max-width: 680px;
 }
 
 .tp-btn {
@@ -123,11 +115,11 @@ main,
     backdrop-filter: blur(12px);
 }
 
-    .tp-btn:hover {
-        transform: translateY(-2px);
-        background: var(--tp-hover);
-        color: #fff;
-    }
+.tp-btn:hover {
+    transform: translateY(-2px);
+    background: var(--tp-hover);
+    color: #fff;
+}
 
 .tp-btn--primary {
     border: none;
@@ -136,9 +128,9 @@ main,
     box-shadow: 0 14px 28px rgba(23,170,184,0.24);
 }
 
-    .tp-btn--primary:hover {
-        box-shadow: 0 18px 34px rgba(23,170,184,0.3);
-    }
+.tp-btn--primary:hover {
+    box-shadow: 0 18px 34px rgba(23,170,184,0.3);
+}
 
 .tp-btn--ghost {
     background: rgba(255,255,255,0.04);
@@ -192,22 +184,22 @@ main,
     background: transparent !important;
 }
 
-    .tp-table thead tr {
-        background: transparent;
-    }
+.tp-table thead tr {
+    background: transparent;
+}
 
-    .tp-table th {
-        padding: 18px 14px 16px;
-        text-align: left;
-        font-size: 14px;
-        font-weight: 700;
-        letter-spacing: 0.03em;
-        text-transform: none;
-        color: rgba(255,255,255,0.62);
-        border-bottom: 1px solid var(--tp-card-border);
-        background: transparent !important;
-        white-space: nowrap;
-    }
+.tp-table th {
+    padding: 18px 14px 16px;
+    text-align: left;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: none;
+    color: rgba(255,255,255,0.62);
+    border-bottom: 1px solid var(--tp-card-border);
+    background: transparent !important;
+    white-space: nowrap;
+}
 
 .tp-th-actions {
     text-align: right !important;
@@ -228,14 +220,14 @@ main,
     background: transparent !important;
 }
 
-    .tp-table tbody tr:hover td {
-        background: rgba(255,255,255,0.04) !important;
-        color: #fff;
-    }
+.tp-table tbody tr:hover td {
+    background: rgba(255,255,255,0.04) !important;
+    color: #fff;
+}
 
-    .tp-table tbody tr:last-child td {
-        border-bottom: none;
-    }
+.tp-table tbody tr:last-child td {
+    border-bottom: none;
+}
 
 .tp-price {
     font-weight: 800;
@@ -250,9 +242,9 @@ main,
     gap: 10px;
 }
 
-    .tp-row-actions form {
-        margin: 0;
-    }
+.tp-row-actions form {
+    margin: 0;
+}
 
 .tp-icon-btn {
     width: 42px;
@@ -269,12 +261,12 @@ main,
     transition: transform var(--tp-tr), background var(--tp-tr), border-color var(--tp-tr), box-shadow var(--tp-tr);
 }
 
-    .tp-icon-btn:hover {
-        transform: translateY(-2px);
-        background: rgba(255,255,255,0.08);
-        border-color: rgba(255,255,255,0.14);
-        box-shadow: 0 12px 24px rgba(0,0,0,0.18);
-    }
+.tp-icon-btn:hover {
+    transform: translateY(-2px);
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.14);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.18);
+}
 
 .tp-icon-btn--danger {
     color: #ffb6b6;
@@ -282,11 +274,11 @@ main,
     border-color: rgba(255,107,107,0.22);
 }
 
-    .tp-icon-btn--danger:hover {
-        background: rgba(255,107,107,0.14);
-        border-color: rgba(255,107,107,0.3);
-        color: #fff;
-    }
+.tp-icon-btn--danger:hover {
+    background: rgba(255,107,107,0.14);
+    border-color: rgba(255,107,107,0.3);
+    color: #fff;
+}
 
 .tp-empty {
     text-align: center;
@@ -307,9 +299,9 @@ main,
     z-index: 9999;
 }
 
-    .tp-modal.open {
-        display: flex;
-    }
+.tp-modal.open {
+    display: flex;
+}
 
 .tp-modal__card {
     width: 100%;
@@ -343,13 +335,13 @@ main,
     border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
-    .tp-modal__head h3 {
-        margin: 0;
-        font-size: 26px;
-        font-weight: 800;
-        line-height: 1.2;
-        color: #fff;
-    }
+.tp-modal__head h3 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1.2;
+    color: #fff;
+}
 
 .tp-modal__sub {
     margin-top: 6px;
@@ -370,10 +362,10 @@ main,
     transition: all var(--tp-tr);
 }
 
-    .tp-modal__close:hover {
-        background: rgba(255,255,255,0.08);
-        color: #fff;
-    }
+.tp-modal__close:hover {
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+}
 
 .tp-form {
     padding: 24px;
@@ -418,21 +410,21 @@ main,
     transition: border-color var(--tp-tr), box-shadow var(--tp-tr), background var(--tp-tr);
 }
 
-    .tp-field input::placeholder {
-        color: rgba(255,255,255,0.34);
-    }
+.tp-field input::placeholder {
+    color: rgba(255,255,255,0.34);
+}
 
-    .tp-field select:focus,
-    .tp-field input:focus {
-        border-color: rgba(23,170,184,0.65);
-        background: rgba(255,255,255,0.07);
-        box-shadow: 0 0 0 4px rgba(23,170,184,0.14);
-    }
+.tp-field select:focus,
+.tp-field input:focus {
+    border-color: rgba(23,170,184,0.65);
+    background: rgba(255,255,255,0.07);
+    box-shadow: 0 0 0 4px rgba(23,170,184,0.14);
+}
 
-    .tp-field select option {
-        background: #0b2240;
-        color: #fff;
-    }
+.tp-field select option {
+    background: #0b2240;
+    color: #fff;
+}
 
 #preview {
     margin-top: 2px;
@@ -452,40 +444,29 @@ main,
 
 @media (max-width: 992px) {
     .tp-title {
-        font-size: 42px;
-    }
-}
-
-@media (max-width: 768px) {
-    .tp-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .tp-head {
-        align-items: stretch;
-    }
-
-    .tp-btn--primary {
-        width: 100%;
-    }
-
-    .tp-form__actions {
-        flex-direction: column-reverse;
-    }
-
-        .tp-form__actions .tp-btn {
-            width: 100%;
-        }
-}
-
-@media (max-width: 640px) {
-    .tp-title {
-        font-size: 34px;
+        font-size: 36px;
     }
 
     .tp-sub {
         font-size: 15px;
     }
+}
+
+@media (max-width: 640px) {
+    .tp-page-label {
+        font-size: 11px;
+    }
+
+    .tp-title {
+        font-size: 28px;
+        line-height: 1.2;
+    }
+
+    .tp-sub {
+        font-size: 14px;
+        line-height: 1.6;
+    }
+}
 
     .tp-card {
         padding: 8px 10px 10px;
