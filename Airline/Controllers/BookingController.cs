@@ -1,186 +1,202 @@
-//using Microsoft.AspNetCore.Mvc;
-//using Microsoft.EntityFrameworkCore;
-//using Airline.Models;
-//using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Airline.Models;
+using System.Security.Claims;
+using Airline.Services;
 
-//namespace Airline.Controllers
-//{
-//    public class BookingController : Controller
-//    {
-//        private readonly DataContext _context;
+namespace Airline.Controllers
+{
+    public class BookingController : Controller
+    {
+        private readonly DataContext _context;
+        private readonly SeatService _seatService;
 
-//        public BookingController(DataContext context)
-//        {
-//            _context = context;
-//        }
+        public BookingController(DataContext context, SeatService seatService)
+        {
+            _context = context;
+            _seatService = seatService;
+        }
 
-//        // 1. Search and Select Flight
-//        public async Task<IActionResult> BookFlight()
-//        {
-//            var schedules = await _context.FlightSchedules
-//                .Include(s => s.Flight)
-//                    .ThenInclude(f => f.Route)
-//                        .ThenInclude(r => r.DepartureCityNavigation)
-//                .Include(s => s.Flight.Route.ArrivalCityNavigation)
-//                .Where(s => s.DepartureTime > DateTime.Now && s.AvailableSeats > 0 && s.Status == "SCHEDULED")
-//                .OrderBy(s => s.DepartureTime)
-//                .ToListAsync();
+        // 1. Search and Select Flight
+        public async Task<IActionResult> BookFlight(string origin, string destination)
+        {
+            var query = _context.FlightSchedules
+                .Include(s => s.Flight)
+                    .ThenInclude(f => f.Route)
+                        .ThenInclude(r => r.DepartureCityNavigation)
+                .Include(s => s.Flight.Route.ArrivalCityNavigation)
+                .Where(s => s.DepartureTime > DateTime.Now && s.Status == "SCHEDULED")
+                .OrderBy(s => s.DepartureTime)
+                .AsQueryable();
 
-//            return View(schedules);
-//        }
+            if (!string.IsNullOrEmpty(origin))
+            {
+                query = query.Where(s => s.Flight.Route.DepartureCityNavigation.CityName.Contains(origin));
+            }
 
-//        // 2. Select Seat
-//        public async Task<IActionResult> SelectSeat(int id)
-//        {
-//            var schedule = await _context.FlightSchedules
-//                .Include(s => s.Flight)
-//                    .ThenInclude(f => f.Route)
-//                        .ThenInclude(r => r.DepartureCityNavigation)
-//                .Include(s => s.Flight.Route.ArrivalCityNavigation)
-//                .Include(s => s.Bookings)
-//                    .ThenInclude(b => b.Tickets)
-//                .FirstOrDefaultAsync(s => s.ScheduleId == id);
+            if (!string.IsNullOrEmpty(destination))
+            {
+                query = query.Where(s => s.Flight.Route.ArrivalCityNavigation.CityName.Contains(destination));
+            }
 
-//            if (schedule == null) return NotFound();
+            var schedules = await query.ToListAsync();
+            ViewBag.Origin = origin;
+            ViewBag.Destination = destination;
 
-//            return View(schedule);
-//        }
+            return View(schedules);
+        }
 
-//        // 3. Passenger Information
-//        [HttpPost]
-//        public IActionResult PassengerInfo(int scheduleId, string seatNumber)
-//        {
-//            if (string.IsNullOrEmpty(seatNumber))
-//            {
-//                return RedirectToAction("SelectSeat", new { id = scheduleId });
-//            }
+        // 2. Select Seat
+        public async Task<IActionResult> SelectSeat(int id)
+        {
+            // Ensure seats exist for this schedule (4-cabin generation)
+            await _seatService.GenerateSeatsAsync(id);
 
-//            var schedule = _context.FlightSchedules
-//                .Include(s => s.Flight)
-//                .FirstOrDefault(s => s.ScheduleId == scheduleId);
+            var schedule = await _context.FlightSchedules
+                .Include(s => s.Flight)
+                    .ThenInclude(f => f.Route)
+                        .ThenInclude(r => r.DepartureCityNavigation)
+                .Include(s => s.Flight.Route.ArrivalCityNavigation)
+                .Include(s => s.Seats)
+                    .ThenInclude(seat => seat.Class)
+                .Include(s => s.TicketPrices)
+                    .ThenInclude(p => p.Class)
+                .FirstOrDefaultAsync(s => s.ScheduleId == id);
 
-//            var model = new BookingViewModel
-//            {
-//                ScheduleId = scheduleId,
-//                SeatNumber = seatNumber,
-//                FlightNumber = schedule?.Flight?.FlightNumber ?? "Unknown",
-//                DepartureTime = schedule?.DepartureTime ?? DateTime.Now,
-//                //Price = 1500000
-//            };
+            if (schedule == null) return NotFound();
 
-//            return View(model);
-//        }
+            return View(schedule);
+        }
 
-//        // 4. Confirm and Save Booking
-//        [HttpPost]
-//        public async Task<IActionResult> ConfirmBooking(BookingViewModel model)
-//        {
-//            ModelState.Remove(nameof(model.Destination));
-//            ModelState.Remove(nameof(model.Origin));
-//            ModelState.Remove(nameof(model.FlightNumber));
-//            ModelState.Remove(nameof(model.DepartureTime));
-//            ModelState.Remove(nameof(model.Price));
+        // 3. Passenger Information
+        [HttpPost]
+        public async Task<IActionResult> PassengerInfo(int scheduleId, int seatId)
+        {
+            var schedule = await _context.FlightSchedules
+                .Include(s => s.Flight)
+                    .ThenInclude(f => f.Route)
+                        .ThenInclude(r => r.DepartureCityNavigation)
+                .Include(s => s.Flight.Route.ArrivalCityNavigation)
+                .FirstOrDefaultAsync(s => s.ScheduleId == scheduleId);
 
-//            if (!ModelState.IsValid)
-//            {
-//                var errors = string.Join("; ", ModelState.Values
-//                                        .SelectMany(x => x.Errors)
-//                                        .Select(x => x.ErrorMessage));
-//                Console.WriteLine($"[ConfirmBooking] ModelState is INVALID. Errors: {errors}");
-                
-//                RehydrateBookingModel(model);
-//                return View("PassengerInfo", model);
-//            }
+            var seat = await _context.Seats
+                .Include(s => s.Class)
+                .FirstOrDefaultAsync(s => s.SeatId == seatId);
 
-//            // Authentication check
-//            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-//            if (string.IsNullOrEmpty(userIdStr)) return RedirectToAction("Login", "Account");
-//            int userId = int.Parse(userIdStr);
+            if (schedule == null || seat == null) return NotFound();
 
-//            using (var transaction = await _context.Database.BeginTransactionAsync())
-//            {
-//                try
-//                {
-//                    var schedule = await _context.FlightSchedules.FindAsync(model.ScheduleId);
-//                    if (schedule == null || schedule.AvailableSeats <= 0)
-//                        throw new Exception("Flight no longer available.");
+            // Fetch price for this cabin class
+            var priceEntry = await _context.TicketPrices
+                .FirstOrDefaultAsync(p => p.ScheduleId == scheduleId && p.ClassId == seat.ClassId);
 
-//                    // 1. Create Booking
-//                    var booking = new Booking
-//                    {
-//                        UserId = userId,
-//                        ScheduleId = model.ScheduleId,
-//                        BookingDate = DateTime.Now,
-//                        BookingType = "ONLINE",
-//                        Status = "CONFIRMED"
-//                    };
-//                    _context.Bookings.Add(booking);
-//                    await _context.SaveChangesAsync();
+            var model = new BookingViewModel
+            {
+                ScheduleId = scheduleId,
+                SeatId = seatId,
+                ClassId = seat.ClassId,
+                SeatNumber = seat.SeatNumber,
+                FlightNumber = schedule.Flight?.FlightNumber ?? "Unknown",
+                DepartureTime = schedule.DepartureTime,
+                Origin = schedule.Flight?.Route?.DepartureCityNavigation?.CityName ?? "Unknown",
+                Destination = schedule.Flight?.Route?.ArrivalCityNavigation?.CityName ?? "Unknown",
+                Price = priceEntry?.Price ?? 1500000 // Fallback price
+            };
 
-//                    // 2. Create Passenger
-//                    var passenger = new Passenger
-//                    {
-//                        BookingId = booking.BookingId,
-//                        FullName = model.FullName,
-//                        PassengerType = model.PassengerType
-//                    };
-//                    _context.Passengers.Add(passenger);
-//                    await _context.SaveChangesAsync();
+            return View(model);
+        }
 
-//                    // 3. Create Ticket
-//                    var ticketClass = await _context.TicketClasses.FirstOrDefaultAsync();
-//                    if (ticketClass == null)
-//                    {
-//                        ticketClass = new TicketClass { ClassName = "Economy" };
-//                        _context.TicketClasses.Add(ticketClass);
-//                        await _context.SaveChangesAsync();
-//                    }
+        // GET: ConfirmBooking (Redirect back if hit directly or refreshed)
+        [HttpGet]
+        public IActionResult ConfirmBooking()
+        {
+            return RedirectToAction("BookFlight");
+        }
 
-//                    var ticket = new Ticket
-//                    {
-//                        BookingId = booking.BookingId,
-//                        PassengerId = passenger.PassengerId,
-//                        ClassId = ticketClass.ClassId,
-//                        SeatNumber = model.SeatNumber,
-//                        Status = "ACTIVE"
-//                    };
-//                    _context.Tickets.Add(ticket);
+        // POST: Confirm and Save Booking
+        [HttpPost]
+        [IgnoreAntiforgeryToken] // Rule out Antiforgery issues for now
+        public async Task<IActionResult> ConfirmBooking([FromForm] BookingViewModel model)
+        {
+            if (model == null) return BadRequest("Model is null");
 
-//                    // 4. Update Seats
-//                    schedule.AvailableSeats = (schedule.AvailableSeats ?? 0) - 1;
-//                    await _context.SaveChangesAsync();
+            if (!ModelState.IsValid)
+            {
+                return View("PassengerInfo", model);
+            }
 
-//                    await transaction.CommitAsync();
+            // Authentication check - Redirect to "/" if not logged in
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdStr)) return Redirect("/"); 
+            int userId = int.Parse(userIdStr);
 
-//                    return View("BookingSuccess", booking.BookingId);
-//                }
-//                catch (Exception ex)
-//                {
-//                    Console.WriteLine($"[ConfirmBooking] Exception occurred: {ex.Message}\n{ex.StackTrace}");
-//                    await transaction.RollbackAsync();
-//                    ModelState.AddModelError("", "Booking failed: " + ex.Message);
-//                    RehydrateBookingModel(model);
-//                    return View("PassengerInfo", model);
-//                }
-//            }
-//        }
-//        private void RehydrateBookingModel(BookingViewModel model)
-//        {
-//            var schedule = _context.FlightSchedules
-//                .Include(s => s.Flight)
-//                    .ThenInclude(f => f.Route)
-//                        .ThenInclude(r => r.DepartureCityNavigation)
-//                .Include(s => s.Flight.Route.ArrivalCityNavigation)
-//                .FirstOrDefault(s => s.ScheduleId == model.ScheduleId);
+            using (var transaction = await _context.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    // Refresh data from DB to ensure integrity and avoid hidden field tampering/formatting issues
+                    var schedule = await _context.FlightSchedules
+                        .Include(s => s.Flight)
+                            .ThenInclude(f => f.Route)
+                                .ThenInclude(r => r.DepartureCityNavigation)
+                        .Include(s => s.Flight.Route.ArrivalCityNavigation)
+                        .FirstOrDefaultAsync(s => s.ScheduleId == model.ScheduleId);
 
-//            if (schedule != null)
-//            {
-//                model.FlightNumber = schedule.Flight?.FlightNumber ?? "Unknown";
-//                model.Origin = schedule.Flight?.Route?.DepartureCityNavigation?.CityName ?? "Unknown";
-//                model.Destination = schedule.Flight?.Route?.ArrivalCityNavigation?.CityName ?? "Unknown";
-//                model.DepartureTime = schedule.DepartureTime;
-//                model.Price = 1500000;
-//            }
-//        }
-//    }
-//}
+                    var seat = await _context.Seats.FindAsync(model.SeatId);
+
+                    if (schedule == null || seat == null || seat.SeatStatus != "AVAILABLE")
+                    {
+                         throw new Exception("Chỗ ngồi không còn sẵn hoặc lịch trình không tồn tại.");
+                    }
+
+                    // 1. Create Booking
+                    var booking = new Booking
+                    {
+                        UserId = userId,
+                        ScheduleId = model.ScheduleId,
+                        BookingDate = DateTime.Now,
+                        BookingType = "ONLINE",
+                        Status = "PENDING_PAYMENT"
+                    };
+                    _context.Bookings.Add(booking);
+                    await _context.SaveChangesAsync();
+
+                    // 2. Create Passenger
+                    var passenger = new Passenger
+                    {
+                        BookingId = booking.BookingId,
+                        FullName = model.FullName ?? "Người mới",
+                        PassengerType = model.PassengerType ?? "Người lớn"
+                    };
+                    _context.Passengers.Add(passenger);
+                    await _context.SaveChangesAsync();
+
+                    // 3. Create Ticket
+                    var ticket = new Ticket
+                    {
+                        BookingId = booking.BookingId,
+                        PassengerId = passenger.PassengerId,
+                        ClassId = seat.ClassId,
+                        SeatId = seat.SeatId,
+                        Status = "BOOKED"
+                    };
+                    _context.Tickets.Add(ticket);
+
+                    // 4. Update Seat & Schedule
+                    seat.SeatStatus = "BOOKED";
+                    schedule.AvailableSeats = (schedule.AvailableSeats ?? 0) - 1;
+                    
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    return View("BookingSuccess", booking.BookingId);
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    ModelState.AddModelError("", "Đặt vé thất bại: " + ex.Message);
+                    return View("PassengerInfo", model);
+                }
+            }
+        }
+    }
+}

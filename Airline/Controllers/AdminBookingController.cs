@@ -25,7 +25,7 @@ namespace Airline.Controllers
                     .ThenInclude(s => s.Flight)
                 .Include(b => b.Tickets)
                 .Include(b => b.Passengers)
-                .Where(b => b.Status == "CONFIRMED")
+                .Where(b => b.Status == "CONFIRMED" || b.Status == "PENDING_PAYMENT")
                 .OrderByDescending(b => b.BookingDate)
                 .ToListAsync();
 

@@ -1,4 +1,4 @@
-@* @model dynamic
+@model dynamic
 @{
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
     ViewData["Title"] = "Manage Flight Seats";
@@ -22,73 +22,74 @@
             flex-direction: column;
             align-items: center;
         }
-        .seat-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr); /* 6 seats + 1 aisle */
-            gap: 12px;
-            margin-top: 2rem;
+        
+        .cabin-block {
+            width: 100%;
+            margin-bottom: 2rem;
+            border-bottom: 1px dashed rgba(255,255,255,0.1);
+            padding-bottom: 1.5rem;
         }
+
+        .cabin-title {
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: rgba(255,255,255,0.3);
+            margin-bottom: 1rem;
+            display: block;
+            text-align: center;
+        }
+
+        .seat-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 8px; /* Compact row gap */
+            align-items: center;
+        }
+        
+        .seat-row {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
         .seat {
-            width: 45px;
-            height: 45px;
+            width: 48px;
+            height: 48px;
             border-radius: 8px;
             background: rgba(255,255,255,0.08);
             border: 1px solid rgba(255,255,255,0.15);
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: rgba(255,255,255,0.6);
             cursor: pointer;
             transition: all 0.2s ease;
         }
-        .seat:hover {
-            transform: scale(1.05);
-            background: rgba(255,255,255,0.15);
-        }
-        .seat.occupied {
-            background: var(--accent-coral);
-            border-color: #ff4d4d;
-            color: #fff;
-        }
-        .seat.blocked {
-            background: #555;
-            border-color: #777;
-            color: #ccc;
-        }
-        .seat.available {
-            background: var(--accent-green);
-            border-color: #4cd995;
-            color: #0c3a25;
-        }
-        .aisle {
-            width: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.7rem;
-            color: rgba(255,255,255,0.3);
-            font-weight: 700;
-        }
+
+        .seat-num { font-size: 0.75rem; font-weight: 700; color: #fff; }
+        .seat-type-icon { font-size: 0.6rem; opacity: 0.5; }
+
+        .seat:hover { transform: scale(1.1); background: rgba(255,255,255,0.15); }
+
+        .seat.BOOKED { background: var(--accent-coral); border-color: #ff4d4d; }
+        .seat.BLOCKED { background: #555; border-color: #777; color: #ccc; }
+        .seat.AVAILABLE { background: var(--accent-green); border-color: #4cd995; }
+        .seat.AVAILABLE .seat-num { color: #0c3a25; }
+
         .map-legend {
-            display: flex;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-            padding: 1rem;
-            background: rgba(255,255,255,0.03);
-            border-radius: 12px;
+            display: flex; gap: 1.5rem; margin-bottom: 2rem;
+            padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 12px;
         }
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.85rem;
-        }
-        .legend-color {
-            width: 16px;
-            height: 16px;
-            border-radius: 4px;
+        .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; }
+        .legend-color { width: 16px; height: 16px; border-radius: 4px; }
+        .interior-scroll-area {
+            max-height: 600px;
+            overflow-y: auto;
+            width: 100%;
+            padding-right: 15px;
+            scrollbar-width: thin;
         }
     </style>
 }
@@ -156,7 +157,7 @@ else
             </div>
             <div class="legend-item">
                 <div class="legend-color" style="background:var(--accent-coral)"></div>
-                <span>Occupied</span>
+                <span>Booked</span>
             </div>
             <div class="legend-item">
                 <div class="legend-color" style="background:#555"></div>
@@ -164,43 +165,31 @@ else
             </div>
         </div>
 
-        <div class="seat-grid">
-            @for (int i = 0; i < ((schedule.TotalSeats ?? 0) / 6) + 1; i++)
-            {
-                int rowNum = i + 1;
-                string[] letters = { "A", "B", "C", "D", "E", "F" };
-                
-                for (int j = 0; j < 7; j++)
+        <div class="interior-scroll-area">
+            <div class="airplane-interior" style="width: 100%; max-width: 600px; margin: 0 auto;">
+                @foreach (var classGroup in schedule.Seats.GroupBy(s => s.ClassId).OrderByDescending(g => g.Key))
                 {
-                    if (j == 3) // Aisle
-                    {
-                        <div class="aisle">@rowNum</div>
-                    }
-                    else
-                    {
-                        int seatIdx = j > 3 ? j - 1 : j;
-                        string seatNum = $"{rowNum}{letters[seatIdx]}";
-                        
-                        // Check if seat exists for total seats
-                        int seatAbsoluteIndex = (i * 6) + seatIdx + 1;
-                        if (seatAbsoluteIndex <= (schedule.TotalSeats ?? 0))
-                        {
-                            var ticket = schedule.Bookings.SelectMany(b => b.Tickets).FirstOrDefault(t => t.SeatNumber == seatNum);
-                            string statusClass = "available";
-                            if (ticket != null)
+                    <div class="cabin-block">
+                        <span class="cabin-title">@classGroup.First().Class.ClassName Cabin</span>
+                        <div class="seat-grid">
+                            @foreach (var rowGroup in classGroup.GroupBy(s => s.SeatNumber.Substring(1)).OrderBy(r => r.Key))
                             {
-                                statusClass = ticket.Status == "BLOCKED" ? "blocked" : "occupied";
+                                <div class="seat-row">
+                                    @foreach (var seat in rowGroup.OrderBy(s => s.SeatNumber[0]))
+                                    {
+                                        <div class="seat @seat.SeatStatus" 
+                                             onclick="handleSeatClick(@schedule.ScheduleId, '@seat.SeatNumber', '@seat.SeatStatus')"
+                                             title="Seat @seat.SeatNumber">
+                                            <span class="seat-num">@seat.SeatNumber</span>
+                                            <i class="fa-solid fa-couch seat-type-icon"></i>
+                                        </div>
+                                    }
+                                </div>
                             }
-                            
-                            <div class="seat @statusClass" 
-                                 onclick="handleSeatClick(@schedule.ScheduleId, '@seatNum', '@statusClass')"
-                                 title="Seat @seatNum">
-                                @seatNum
-                            </div>
-                        }
-                    }
+                        </div>
+                    </div>
                 }
-            }
+            </div>
         </div>
     </div>
 }
@@ -226,66 +215,52 @@ else
 
 @section Scripts {
     <script>
-        function showToast(msg, isError = false) {
-            const toast = document.getElementById('toast');
-            if(toast) {
-                toast.style.borderLeftColor = isError ? 'var(--accent-coral)' : 'var(--accent-gold)';
-                const icon = isError
-                    ? '<i class="fa-solid fa-circle-exclamation" style="color:var(--accent-coral)"></i>'
-                    : '<i class="fa-solid fa-circle-check" style="color:var(--accent-gold)"></i>';
-                toast.innerHTML = icon + ' ' + msg;
-                toast.classList.add('show');
-                setTimeout(() => toast.classList.remove('show'), 3000);
-            } else {
-                alert(msg);
-            }
-        }
-
         function closeModal(id) {
             document.getElementById(id).classList.remove('active');
         }
 
         let currentScheduleId = 0;
         let currentSeatNum = '';
-        let currentStatus = '';
 
         async function handleSeatClick(scheduleId, seatNum, status) {
             currentScheduleId = scheduleId;
             currentSeatNum = seatNum;
-            currentStatus = status;
 
             document.getElementById('modalSeatNum').textContent = seatNum;
             const body = document.getElementById('modalSeatBody');
             const btnToggle = document.getElementById('btnToggleStatus');
 
-            if (status === 'occupied') {
-                body.innerHTML = '<p style="text-align:center">Loading passenger details...</p>';
-                document.getElementById('seatModal').classList.add('active');
-                btnToggle.style.display = 'none';
+            body.innerHTML = '<p style="text-align:center">Loading seat details...</p>';
+            document.getElementById('seatModal').classList.add('active');
 
-                const res = await fetch(`/Admin/GetSeatDetails?scheduleId=${scheduleId}&seatNumber=${seatNum}`);
-                if (res.ok) {
-                    const data = await res.json();
+            const res = await fetch(`/Admin/GetSeatDetails?scheduleId=${scheduleId}&seatNumber=${seatNum}`);
+            if (res.ok) {
+                const data = await res.json();
+                
+                if (data.status === 'BOOKED') {
+                    btnToggle.style.display = 'none';
                     body.innerHTML = `
                         <div style="display:grid; gap:10px">
+                            <div style="display:flex; justify-content:space-between"><span>Class:</span> <strong>${data.className}</strong></div>
                             <div style="display:flex; justify-content:space-between"><span>Passenger:</span> <strong>${data.passengerName}</strong></div>
-                            <div style="display:flex; justify-content:space-between"><span>Type:</span> <span>${data.passengerType}</span></div>
-                            <div style="display:flex; justify-content:space-between"><span>Username:</span> <span>${data.username}</span></div>
+                            <div style="display:flex; justify-content:space-between"><span>Booked By:</span> <span>${data.username}</span></div>
                             <div style="display:flex; justify-content:space-between"><span>Booking Date:</span> <span>${data.bookingDate}</span></div>
                             <div style="display:flex; justify-content:space-between"><span>Status:</span> <span class="status-pill pill-completed">${data.status}</span></div>
                         </div>
                     `;
                 } else {
-                    body.innerHTML = '<p style="color:var(--accent-coral)">Failed to load details.</p>';
+                    btnToggle.style.display = 'block';
+                    btnToggle.textContent = data.status === 'BLOCKED' ? 'Unblock Seat' : 'Block Seat';
+                    body.innerHTML = `
+                        <div style="display:grid; gap:10px">
+                             <div style="display:flex; justify-content:space-between"><span>Class:</span> <strong>${data.className}</strong></div>
+                             <div style="display:flex; justify-content:space-between"><span>Status:</span> <span class="status-pill">${data.status}</span></div>
+                        </div>
+                        <p style="margin-top:1rem; font-size:0.85rem; color:rgba(255,255,255,0.5)">You can block this seat to prevent customers from booking it.</p>
+                    `;
                 }
             } else {
-                btnToggle.style.display = 'block';
-                btnToggle.textContent = status === 'blocked' ? 'Unblock Seat' : 'Block Seat';
-                body.innerHTML = `
-                    <p>This seat is currently <strong>${status}</strong>.</p>
-                    <p style="font-size:0.85rem; color:rgba(255,255,255,0.5)">You can block this seat to prevent customers from booking it.</p>
-                `;
-                document.getElementById('seatModal').classList.add('active');
+                body.innerHTML = '<p style="color:var(--accent-coral)">Failed to load details.</p>';
             }
         }
 
@@ -308,4 +283,4 @@ else
             }
         }
     </script>
-} *@
+}

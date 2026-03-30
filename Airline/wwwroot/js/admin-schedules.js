@@ -20,11 +20,12 @@ function openCreateModal() {
     document.getElementById('sFlight').value = '';
     document.getElementById('sDepTime').value = '';
     document.getElementById('sArrTime').value = '';
-    document.getElementById('sTotal').value = '150';
-    document.getElementById('sAvail').value = '150';
+    document.getElementById('sTotal').value = '180';
+    document.getElementById('sAvail').value = '180';
     document.getElementById('sStatus').value = 'SCHEDULED';
 
     document.getElementById('sAvail').disabled = true;
+    document.getElementById('sTotal').disabled = false;
     document.getElementById('sTotal').oninput = function () {
         document.getElementById('sAvail').value = this.value;
     };
@@ -46,7 +47,8 @@ async function openEditModal(id) {
     document.getElementById('sAvail').value = s.availableSeats;
     document.getElementById('sStatus').value = s.status;
 
-    document.getElementById('sAvail').disabled = false;
+    document.getElementById('sAvail').disabled = true;
+    document.getElementById('sTotal').disabled = false;
     document.getElementById('sTotal').oninput = null;
 
     document.getElementById('scheduleModal').classList.add('active');

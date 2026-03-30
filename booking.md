@@ -1,105 +1,91 @@
 # Quy trình Đặt vé Máy bay (Customer Booking Flow)
 
-Tài liệu này mô tả chi tiết luồng nghiệp vụ khi khách hàng thực hiện đặt vé máy bay trên hệ thống Airline.
+Tài liệu này mô tả chi tiết luồng nghiệp vụ và quy trình kỹ thuật khi khách hàng thực hiện đặt vé máy bay trên hệ thống SkyWave Airlines.
 
 ## 1. Tổng quan Luồng Nghiệp vụ (Flowchart)
 
 ```mermaid
 graph TD
-    A[Trang tìm kiếm/chuyến bay] -->|Chọn chuyến bay| B[Chọn chỗ ngồi]
+    A[Trang tìm kiếm chuyến bay] -->|Chọn chuyến bay| B[Sơ đồ chọn chỗ ngồi]
     B -->|Chọn ghế & Tiếp tục| C[Thông tin hành khách]
-    C -->|Xác nhận| D{Xử lý SQL Transaction}
+    C -->|Xác nhận đặt vé| D{Giao dịch SQL (Transaction)}
     D -->|Lỗi| C
-    D -->|Thành công| E[Trang thành công/Mã đặt chỗ]
-    E -->|Thanh toán| F[Cổng VNPay]
+    D -->|Thành công| E[Trang thành công / Mã đặt chỗ]
+    E -->|Thanh toán ngay| F[Cổng thanh toán]
     F -->|Thành công| G[Cập nhật trạng thái PAID]
     F -->|Thất bại| H[Thông báo lỗi thanh toán]
-    G -->|Xem vé| I[Vé của tôi/Quản lý vé]
+    G -->|Xem vé| I[Vé của tôi / Quản lý đặt chỗ]
 ```
 
 ---
 
-## 2. Chi tiết các Bước
+## 2. Chi tiết các Bước thực hiện
 
-### Bước 1: Chọn Chuyến bay (Select Flight)
+### Bước 1: Tìm kiếm & Chọn Chuyến bay
 - **URL**: `/Booking/BookFlight`
-- **View**: `BookFlight.cshtml`
-- **Mô tả**: Hiển thị danh sách các lịch trình bay (`FlightSchedule`) có trạng thái `SCHEDULED`, còn chỗ trống (`AvailableSeats > 0`) và thời gian khởi hành trong tương lai.
-- **Dữ liệu hiển thị**: Điểm đi, điểm đến, giờ bay, số hiệu chuyến bay, giá vé và số lượng ghế còn lại.
+- **Controller**: `BookingController.cs`
+- **Mô tả**: Hiển thị tất cả các bản ghi `FlightSchedule` có trạng thái `SCHEDULED` và thời gian khởi hành trong tương lai.
+- **Giá vé 4 khoang**: Mỗi chuyến bay hiển thị mức giá "Chỉ từ", giá thực tế sẽ phụ thuộc vào khoang ghế khách hàng chọn ở bước sau.
 
-### Bước 2: Chọn Chỗ ngồi (Select Seat)
+### Bước 2: Sơ đồ chọn Chỗ ngồi tương tác
 - **URL**: `/Booking/SelectSeat/{id}`
-- **View**: `SelectSeat.cshtml`
-- **Mô tả**: Hiển thị sơ đồ ghế ngồi (Seat Map) của tàu bay.
-- **Trạng thái ghế**:
-    - **Trống (Available)**: Có thể chọn.
-    - **Đã chọn (Selected)**: Ghế đang được người dùng click chọn.
-    - **Đã đặt (Occupied)**: Ghế đã có người khác đặt thành công.
-    - **Bị khóa (Blocked)**: Ghế không khả dụng do yêu cầu kỹ thuật hoặc hành chính.
+- **Logic xử lý**: 
+    1. Hệ thống gọi `SeatService.GenerateSeatsAsync(id)` để đảm bảo sơ đồ 4 khoang ghế đã được tạo cho lịch trình này.
+    2. Truy vấn tất cả thực thể `Seat` liên kết với `ScheduleId`.
+- **Cấu trúc 4 Khoang ghế (4 Cabins)**:
+    - **Hạng Nhất (First Class)**: Hàng 1 (Cấu hình 1-2-1).
+    - **Hạng Thương gia (Business Class)**: Hàng 2-3 (Cấu hình 2-2).
+    - **Hạng Phổ thông Đặc biệt (Premium Economy)**: Hàng 4-5 (Cấu hình 2-3-2).
+    - **Hạng Phổ thông (Economy)**: Hàng 6-10 (Cấu hình 3-3).
+- **Trạng thái Ghế**:
+    - **AVAILABLE (Trống)**: Màu xanh (Cho phép chọn).
+    - **BOOKED (Đã đặt)**: Màu san hô (Không thể chọn).
+    - **BLOCKED (Khóa)**: Màu xám (Admin khóa thủ công).
 
-### Bước 3: Thông tin Hành khách (Passenger Information)
+### Bước 3: Thông tin Hành khách
 - **URL**: `/Booking/PassengerInfo` (POST)
-- **View**: `PassengerInfo.cshtml`
-- **ViewModel**: `BookingViewModel.cs` mang các thông tin từ các bước trước chuyển sang (ScheduleId, SeatNumber, Price, FlightNumber...).
-- **Dữ liệu cần nhập thêm**:
-    - **Họ và tên**: Tên đầy đủ trên căn cước/hộ chiếu.
-    - **Loại hành khách**: Phân loại Adult/Child/Infant để tính giá vé sau này.
-- **Mục tiêu**: Chuẩn bị đầy đủ `BookingViewModel` trước khi gửi lên `ConfirmBooking`.
+- **ViewModel**: `BookingViewModel.cs` lưu trữ `SeatId`, `ScheduleId` và giá vé đã tính toán.
+- **Dữ liệu đầu vào**:
+    - **Họ và tên**: Phải khớp với CMND/CCCD hoặc Hộ chiếu.
+    - **Loại hành khách**: Người lớn / Trẻ em / Em bé.
+- **Tính toán Giá vé**: Giá được lấy từ bảng `TicketPrice` dựa trên cặp `(ScheduleId, ClassId)`. Thuế 10% được cộng thêm vào tổng tiền.
 
-### Bước 4: Xác nhận và Lưu trữ (Confirm & Process)
+### Bước 4: Xác nhận và Giao dịch ACID
 - **Action**: `ConfirmBooking` (POST) trong `BookingController.cs`
-- **Phân tích chi tiết quy trình xử lý**:
-    1. **Kiểm tra Xác thực**: Yêu cầu người dùng (Customer) phải đăng nhập. Mã đăng nhập `userId` được lấy từ `ClaimTypes.NameIdentifier`.
-    2. **Khởi tạo SQL Transaction**: Sử dụng `_context.Database.BeginTransactionAsync()` để đảm bảo tính **Atomicity**. Nếu bất kỳ bước nào thất bại, toàn bộ quá trình sẽ được Rollback, tránh tình trạng dữ liệu mồ côi (ví dụ: tạo Booking nhưng không tạo được Ticket).
-    3. **Kiểm tra Availability (Chống Overbooking)**:
-        - Hệ thống thực hiện một lượt kiểm tra cuối cùng trong Database: `schedule.AvailableSeats > 0`.
-        - Điều này ngăn chặn trường hợp hai khách hàng cùng chọn một chuyến bay vào cùng một thời điểm nhưng chỉ còn 1 chỗ trống cuối cùng.
-    4. **Quy trình Lưu trữ 4 Giai đoạn**:
-        - **GĐ1 (Booking)**: Lưu thông tin đặt chỗ chung. Trạng thái mặc định là `CONFIRMED`.
-        - **GĐ2 (Passenger)**: Lưu thông tin chi tiết người bay gắn với `BookingId`.
-        - **GĐ3 (Ticket)**: Tạo vé máy bay gắn với `BookingId`, `PassengerId` và `SeatNumber`. Trạng thái mặc định là `ACTIVE`.
-        - **GĐ4 (Update Capacity)**: Trừ đi 1 ghế trống trong `FlightSchedules`.
-    5. **Commit Giao dịch**: Nếu tất cả các bước trên thành công, giao dịch được xác nhận (Commit) vào Database.
+- **Quy trình kỹ thuật**:
+    1. **Kiểm tra Xác thực**: Xác minh người dùng đã đăng nhập.
+    2. **Database Transaction**: Bắt đầu một `DbTransaction` để đảm bảo tính toàn vẹn dữ liệu.
+    3. **Tính nhất quán quan hệ**:
+        - **Booking**: Được tạo với trạng thái `PENDING_PAYMENT`.
+        - **Passenger**: Được tạo và liên kết với `BookingId`.
+        - **Ticket**: Được tạo và liên kết với `BookingId`, `PassengerId`, và `SeatId` cụ thể.
+        - **Trạng thái Ghế**: Cập nhật thành `BOOKED` cho `SeatId` tương ứng.
+        - **Sức chứa**: `FlightSchedule.AvailableSeats` được trừ đi 1.
+    4. **Commit**: Nếu tất cả 5 bước trên thành công, giao dịch được xác nhận (Commit); nếu không, toàn bộ sẽ được Rollback.
 
 ### Bước 5: Hoàn tất (Booking Success)
 - **View**: `BookingSuccess.cshtml`
-- **Mô tả**: Thông báo đặt vé thành công và cung cấp mã đặt chỗ (Booking ID).
-- **Trạng thái lúc này**: `Booking: CONFIRMED`, `Ticket: ACTIVE`. Ghế đã được giữ chỗ thành công trong hệ thống.
-
-### Bước 6: Thanh toán (Payment Integration)
-- **Controller**: `PaymentController.cs`
-- **Action**: `CreatePayment(id)`
-- **Quy trình**:
-    1. Người dùng nhấn nút "Thanh toán" hoặc được chuyển từ trang xem chi tiết vé.
-    2. Hệ thống tính tổng tiền từ `TicketPrices` (dựa trên `ScheduleId` và `ClassId`).
-    3. Tạo URL thanh toán VNPay với các tham số tương ứng (Số tiền, Mã đơn hàng, URL trả về).
-    4. Sau khi khách hàng thanh toán tại VNPay, `PaymentCallback` xử lý kết quả:
-        - Nếu thành công: Cập nhật `Booking.Status = "PAID"`, `Ticket.Status = "PAID"`, tạo bản ghi `Payment`.
-        - Nếu thất bại: Hiển thị thông báo lỗi, giữ trạng thái `CONFIRMED` để thanh toán lại sau.
+- **Mô tả**: Hiển thị Mã đặt chỗ (Booking ID) duy nhất và cung cấp các nút thao tác nhanh để Thanh toán hoặc Quản lý vé.
 
 ---
 
 ## 3. Các Thành phần Kỹ thuật Chính
 
-- **Controllers**:
-    - `BookingController.cs`: Điều phối luồng đặt vé chính.
-    - `PaymentController.cs`: Xử lý tích hợp thanh toán VNPay và cập nhật trạng thái đơn hàng.
-    - `TicketController.cs`: Quản lý danh sách vé của khách hàng (`MyTickets`).
-- **Models**:
-    - `BookingViewModel.cs`: Chứa dữ liệu tạm thời (`DTO`) để truyền giữa các View/Action.
-    - `DataContext.cs`: Entity Framework context định nghĩa các bảng và mối quan hệ.
-- **Database Tables**:
-    - `FlightSchedules`: Quản lý chuyến bay cụ thể, giờ bay và **AvailableSeats**.
-    - `Bookings`: Header của đơn hàng, lưu `UserId` và `Status` (CONFIRMED/PAID/CANCELLED).
-    - `Passengers`: Chứa tên và phân loại hành khách.
-    - `Tickets`: Chi tiết từng vé, lưu `SeatNumber` và `ClassId`.
-    - `Payments`: Lưu lịch sử giao dịch thành công từ VNPay (`TransactionNo`, `Amount`).
+### Controllers
+- **`BookingController.cs`**: Điều phối chính toàn bộ luồng 5 bước của khách hàng.
+- **`AdminScheduleController.cs`**: Cho phép Admin quản lý trạng thái ghế (Khóa/Mở) hoặc xem chi tiết hành khách.
+
+### Services
+- **`SeatService.cs`**: Logic tập trung để tạo sơ đồ ghế ngồi 4 khoang (First, Business, Premium, Economy) cho mọi chuyến bay mới.
+
+### Models & Database
+- **`Seat`**: Thực thể mới đại diện cho một ghế vật lý trên một lịch trình bay cụ thể.
+- **`BookingViewModel`**: Đối tượng DTO dùng để truyền dữ liệu qua các bước của wizard.
+- **`TicketPrice`**: Bảng chuẩn hóa lưu trữ giá theo từng Hạng vé của mỗi Lịch trình.
 
 ---
 
-## 4. Lưu ý quan trọng
-- **Quy trình Trạng thái (Status Flow)**: 
-    - `Booking`: `CONFIRMED` (Sau khi đặt) -> `PAID` (Sau khi thanh toán thành công).
-    - `Ticket`: `ACTIVE` (Mặc định) -> `PAID` (Nếu thanh toán thành công).
-- **Tính toàn vẹn**: Toàn bộ quy trình `ConfirmBooking` được bọc trong `SQL Transaction`. Nếu có lỗi (như mất kết nối DB), hệ thống sẽ không trừ ghế ảo.
-- **Thanh toán**: Hiện tại tích hợp cổng thanh toán VNPay. Nếu khách hàng không thanh toán ngay, vé vẫn được giữ ở trạng thái `CONFIRMED`. Admin có thể hủy các vé quá hạn thanh toán sau một khoảng thời gian quy định.
+## 4. Lưu ý Quan trọng
+- **Đặt vé theo Quan hệ**: Hệ thống không còn lưu `SeatNumber` dưới dạng chuỗi đơn thuần trong bảng Ticket. Mọi thứ được liên kết qua `SeatId` đến bảng `Seats`.
+- **Chống Overbooking**: Giao dịch SQL và kiểm tra `SeatStatus` đảm bảo không có hai người nào có thể đặt cùng một ghế tại cùng một thời điểm.
+- **Quản lý linh hoạt**: Admin có thể "Khóa" ghế trực tiếp từ Dashboard, hệ thống sẽ cập nhật `SeatStatus` ngay lập tức để ngăn khách hàng đặt chỗ.

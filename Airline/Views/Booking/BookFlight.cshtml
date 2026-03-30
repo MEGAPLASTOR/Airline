@@ -1,0 +1,431 @@
+@model IEnumerable<Airline.Models.FlightSchedule>
+@{
+    ViewData["Title"] = "Search Flights";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="search-container">
+    <div class="search-header">
+        <h1 class="premium-title">Explore <span class="highlight">Amazing</span> Journeys</h1>
+        <p class="premium-subtitle">Search for premium flights with SkyWave Airlines</p>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-glass-card">
+        <form asp-action="BookFlight" method="get" class="search-form">
+            <div class="input-group">
+                <i class="fas fa-plane-departure"></i>
+                <div class="input-wrapper">
+                    <label>Departure Point</label>
+                    <input type="text" name="origin" value="@ViewBag.Origin" placeholder="Example: Ho Chi Minh" />
+                </div>
+            </div>
+            <div class="search-separator"></div>
+            <div class="input-group">
+                <i class="fas fa-plane-arrival"></i>
+                <div class="input-wrapper">
+                    <label>Destination</label>
+                    <input type="text" name="destination" value="@ViewBag.Destination" placeholder="Example: Hanoi" />
+                </div>
+            </div>
+            <button type="submit" class="btn-search-glow">
+                <i class="fas fa-search"></i>
+                <span>Search Flights</span>
+            </button>
+        </form>
+    </div>
+
+    <!-- Results Section -->
+    <div class="results-layout">
+        @if (Model == null || !Model.Any())
+        {
+            <div class="empty-state">
+                <i class="fas fa-calendar-times"></i>
+                <h3>No flights found</h3>
+                <p>Please try again with a different origin/destination or date.</p>
+            </div>
+        }
+        else
+        {
+            <div class="flight-list">
+                @foreach (var s in Model)
+                {
+                    <div class="flight-card">
+                        <div class="flight-main-info">
+                            <div class="itinerary">
+                                <div class="city-info">
+                                    <span class="code">@s.Flight.Route.DepartureCityNavigation.CityName.Substring(0, 3).ToUpper()</span>
+                                    <span class="time">@s.DepartureTime.ToString("HH:mm")</span>
+                                    <span class="city">@s.Flight.Route.DepartureCityNavigation.CityName</span>
+                                </div>
+                                <div class="duration-map">
+                                    <span class="duration">@((s.ArrivalTime - s.DepartureTime).TotalHours.ToString("0"))h @((s.ArrivalTime - s.DepartureTime).Minutes.ToString("0"))m</span>
+                                    <div class="line">
+                                        <div class="dot start"></div>
+                                        <i class="fas fa-plane"></i>
+                                        <div class="dot end"></div>
+                                    </div>
+                                    <span class="type">Direct flight</span>
+                                </div>
+                                <div class="city-info dest">
+                                    <span class="code">@s.Flight.Route.ArrivalCityNavigation.CityName.Substring(0, 3).ToUpper()</span>
+                                    <span class="time">@s.ArrivalTime.ToString("HH:mm")</span>
+                                    <span class="city">@s.Flight.Route.ArrivalCityNavigation.CityName</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flight-details">
+                            <div class="flight-meta">
+                                <span class="flight-num"><i class="fas fa-rocket"></i> @s.Flight.FlightNumber</span>
+                                <span class="date"><i class="fas fa-calendar"></i> @s.DepartureTime.ToString("dd MMM yyyy")</span>
+                                <span class="status tag-scheduled">@s.Status</span>
+                            </div>
+                            <div class="pricing-action">
+                                <div class="price-info">
+                                    <span class="label">Starting from</span>
+                                    <span class="amount">1,200,000 <small>VND</small></span>
+                                </div>
+                                <a asp-action="SelectSeat" asp-route-id="@s.ScheduleId" class="btn-select-seat">
+                                    Select Seat <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .search-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding-bottom: 4rem;
+        }
+
+        .search-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .premium-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+
+        .premium-title .highlight {
+            color: var(--ocean-aqua);
+            position: relative;
+        }
+
+        .premium-subtitle {
+            color: rgba(255,255,255,0.6);
+            font-size: 1.1rem;
+            letter-spacing: 0.05em;
+        }
+
+        /* Glass Card */
+        .search-glass-card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 24px;
+            padding: 1.5rem;
+            margin-bottom: 4rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        .search-form {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .input-group {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+        }
+
+        .input-group i {
+            font-size: 1.5rem;
+            color: var(--ocean-aqua);
+            opacity: 0.8;
+        }
+
+        .input-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            flex: 1;
+        }
+
+        .input-wrapper label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: rgba(255,255,255,0.4);
+            font-weight: 700;
+        }
+
+        .input-wrapper input {
+            background: none;
+            border: none;
+            outline: none;
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 600;
+            width: 100%;
+        }
+
+        .search-separator {
+            width: 1px;
+            height: 40px;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .btn-search-glow {
+            background: linear-gradient(135deg, var(--ocean-aqua), var(--ocean-teal));
+            border: none;
+            border-radius: 16px;
+            padding: 1rem 2rem;
+            color: #fff;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            box-shadow: 0 8px 20px rgba(23,170,184,0.3);
+            transition: all 0.3s ease;
+        }
+
+        .btn-search-glow:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(23,170,184,0.45);
+        }
+
+        /* Results */
+        .flight-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .flight-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            overflow: hidden;
+            display: flex;
+            transition: all 0.3s ease;
+            animation: fadeInRight 0.6s ease-out both;
+        }
+
+        .flight-card:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(23,170,184,0.3);
+            transform: scale(1.01);
+        }
+
+        .flight-main-info {
+            flex: 2;
+            padding: 2rem;
+            border-right: 1px dashed rgba(255,255,255,0.1);
+            position: relative;
+        }
+
+        .itinerary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .city-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .city-info .code {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 0.05em;
+        }
+
+        .city-info .time {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--ocean-aqua);
+        }
+
+        .city-info .city {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.5);
+        }
+
+        .duration-map {
+            flex: 1;
+            padding: 0 3rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .duration-map .duration {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.4);
+            font-weight: 600;
+        }
+
+        .duration-map .line {
+            width: 100%;
+            height: 2px;
+            background: rgba(255,255,255,0.1);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .duration-map .line i {
+            font-size: 0.9rem;
+            color: var(--ocean-aqua);
+            background: #061525;
+            padding: 0 0.5rem;
+            z-index: 1;
+        }
+
+        .duration-map .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            position: absolute;
+        }
+
+        .duration-map .dot.start { left: 0; }
+        .duration-map .dot.end { right: 0; }
+
+        .duration-map .type {
+            font-size: 0.75rem;
+            color: var(--ocean-teal);
+            font-weight: 700;
+        }
+
+        .flight-details {
+            flex: 1;
+            padding: 2rem;
+            background: rgba(255,255,255,0.02);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .flight-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .flight-meta span {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.5);
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .tag-scheduled {
+            background: rgba(23,170,184,0.1);
+            color: var(--ocean-aqua);
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            width: fit-content;
+        }
+
+        .pricing-action {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .price-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .price-info .label {
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.4);
+        }
+
+        .price-info .amount {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--accent-gold);
+        }
+
+        .price-info .amount small {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        .btn-select-seat {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 0.75rem;
+            color: #fff;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-select-seat:hover {
+            background: var(--ocean-aqua);
+            border-color: var(--ocean-aqua);
+            color: #fff;
+            box-shadow: 0 5px 15px rgba(23,170,184,0.3);
+        }
+
+        /* Animations */
+        @@keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @@keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @@keyframes fadeInRight {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem;
+            color: rgba(255,255,255,0.3);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+}

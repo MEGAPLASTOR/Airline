@@ -1,283 +1,200 @@
-//using Airline.Models;
-//using Microsoft.AspNetCore.Mvc;
-//using Microsoft.EntityFrameworkCore;
+using Airline.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Airline.Services;
 
-//namespace Airline.Controllers
-//{
-//    [Route("Admin")]
-//    public class AdminScheduleController : AdminBaseController
-//    {
-//        public AdminScheduleController(DataContext context) : base(context) { }
+namespace Airline.Controllers
+{
+    [Route("Admin")]
+    public class AdminScheduleController : AdminBaseController
+    {
+        private readonly SeatService _seatService;
 
-//        [HttpGet("FlightSchedules")]
-//        public async Task<IActionResult> FlightSchedules()
-//        {
-//            if (!IsAdmin()) return RedirectIfNotAdmin();
+        public AdminScheduleController(DataContext context, SeatService seatService) : base(context) 
+        {
+            _seatService = seatService;
+        }
 
-//            var schedules = await _context.FlightSchedules
-//                .Include(x => x.Flight)
-//                .Include(x => x.Flight.Route.DepartureCityNavigation) // Preload for better UI
-//                .Include(x => x.Flight.Route.ArrivalCityNavigation)
-//                .OrderByDescending(x => x.ScheduleId)
-//                .ToListAsync();
+        [HttpGet("FlightSchedules")]
+        public async Task<IActionResult> FlightSchedules()
+        {
+            if (!IsAdmin()) return RedirectIfNotAdmin();
 
-//            ViewBag.Flights = await _context.Flights
-//                .Include(f => f.Route.DepartureCityNavigation)
-//                .Include(f => f.Route.ArrivalCityNavigation)
-//                .OrderBy(f => f.FlightNumber)
-//                .ToListAsync();
+            var schedules = await _context.FlightSchedules
+                .Include(x => x.Flight)
+                .Include(x => x.Flight.Route.DepartureCityNavigation)
+                .Include(x => x.Flight.Route.ArrivalCityNavigation)
+                .OrderByDescending(x => x.ScheduleId)
+                .ToListAsync();
 
-//            return View("~/Views/Admin/FlightSchedules.cshtml", schedules);
-//        }
+            ViewBag.Flights = await _context.Flights
+                .Include(f => f.Route.DepartureCityNavigation)
+                .Include(f => f.Route.ArrivalCityNavigation)
+                .OrderBy(f => f.FlightNumber)
+                .ToListAsync();
 
-//        [HttpGet("FlightReschedule")]
-//        public async Task<IActionResult> FlightReschedule()
-//        {
-//            if (!IsAdmin()) return RedirectIfNotAdmin();
+            return View("~/Views/Admin/FlightSchedules.cshtml", schedules);
+        }
 
-//            var schedules = await _context.FlightSchedules
-//                .Include(x => x.Flight)
-//                .Include(x => x.Flight.Route.DepartureCityNavigation)
-//                .Include(x => x.Flight.Route.ArrivalCityNavigation)
-//                .OrderByDescending(x => x.ScheduleId)
-//                .ToListAsync();
+        [HttpGet("FlightReschedule")]
+        public async Task<IActionResult> FlightReschedule()
+        {
+            if (!IsAdmin()) return RedirectIfNotAdmin();
 
-//            return View("~/Views/Admin/FlightReschedule.cshtml", schedules);
-//        }
+            var schedules = await _context.FlightSchedules
+                .Include(x => x.Flight)
+                .Include(x => x.Flight.Route.DepartureCityNavigation)
+                .Include(x => x.Flight.Route.ArrivalCityNavigation)
+                .OrderByDescending(x => x.ScheduleId)
+                .ToListAsync();
 
-//        [HttpGet("GetSchedule/{id}")]
-//        public async Task<IActionResult> GetSchedule(int id)
-//        {
-//            if (!IsAdmin()) return Unauthorized();
-//            var s = await _context.FlightSchedules.FindAsync(id);
-//            if (s == null) return NotFound();
-//            return Json(new { s.ScheduleId, s.FlightId, s.DepartureTime, s.ArrivalTime, s.TotalSeats, s.AvailableSeats, s.Status });
-//        }
+            return View("~/Views/Admin/FlightReschedule.cshtml", schedules);
+        }
 
-//        [HttpPost("CreateSchedule")]
-//        [ValidateAntiForgeryToken]
-//        public async Task<IActionResult> CreateSchedule([FromForm] int flightId, [FromForm] DateTime departureTime, [FromForm] DateTime arrivalTime, [FromForm] int totalSeats, [FromForm] string status)
-//        {
-//            if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized" });
+        [HttpGet("GetSchedule/{id}")]
+        public async Task<IActionResult> GetSchedule(int id)
+        {
+            if (!IsAdmin()) return Unauthorized();
+            var s = await _context.FlightSchedules.FindAsync(id);
+            if (s == null) return NotFound();
+            return Json(new { s.ScheduleId, s.FlightId, s.DepartureTime, s.ArrivalTime, s.TotalSeats, s.AvailableSeats, s.Status });
+        }
 
-//            if (flightId == 0) return Json(new { success = false, message = "Flight is required." });
-//            if (departureTime >= arrivalTime) return Json(new { success = false, message = "Arrival time must be after departure time." });
+        [HttpPost("CreateSchedule")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateSchedule([FromForm] int flightId, [FromForm] DateTime departureTime, [FromForm] DateTime arrivalTime, [FromForm] int totalSeats, [FromForm] string status)
+        {
+            if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized" });
 
-//            var s = new FlightSchedule
-//            {
-//                FlightId = flightId,
-//                DepartureTime = departureTime,
-//                ArrivalTime = arrivalTime,
-//                TotalSeats = totalSeats,
-//                AvailableSeats = totalSeats, // Available equals total on creation
-//                Status = string.IsNullOrWhiteSpace(status) ? "SCHEDULED" : status
-//            };
+            if (flightId == 0) return Json(new { success = false, message = "Flight is required." });
+            if (departureTime >= arrivalTime) return Json(new { success = false, message = "Arrival time must be after departure time." });
 
-//            _context.FlightSchedules.Add(s);
-//            await _context.SaveChangesAsync();
-//            return Json(new { success = true });
-//        }
+            var s = new FlightSchedule
+            {
+                FlightId = flightId,
+                DepartureTime = departureTime,
+                ArrivalTime = arrivalTime,
+                TotalSeats = totalSeats,
+                AvailableSeats = totalSeats,
+                Status = string.IsNullOrWhiteSpace(status) ? "SCHEDULED" : status
+            };
 
-//        [HttpPost("EditSchedule/{id}")]
-//        [ValidateAntiForgeryToken]
-//        public async Task<IActionResult> EditSchedule(int id, [FromForm] int flightId, [FromForm] DateTime departureTime, [FromForm] DateTime arrivalTime, [FromForm] int totalSeats, [FromForm] int availableSeats, [FromForm] string status)
-//        {
-//            if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized" });
+            _context.FlightSchedules.Add(s);
+            await _context.SaveChangesAsync();
 
-//            var s = await _context.FlightSchedules.FindAsync(id);
-//            if (s == null) return Json(new { success = false, message = "Schedule not found." });
+            // GENERATE SEATS for the 4 cabins
+            await _seatService.GenerateSeatsAsync(s.ScheduleId);
 
-//            if (flightId == 0) return Json(new { success = false, message = "Flight is required." });
-//            if (departureTime >= arrivalTime) return Json(new { success = false, message = "Arrival time must be after departure time." });
-//            if (availableSeats < 0 || availableSeats > totalSeats) return Json(new { success = false, message = "Invalid available seats." });
+            return Json(new { success = true });
+        }
 
-//            s.FlightId = flightId;
-//            s.DepartureTime = departureTime;
-//            s.ArrivalTime = arrivalTime;
-//            s.TotalSeats = totalSeats;
-//            s.AvailableSeats = availableSeats;
-//            s.Status = status;
+        [HttpPost("EditSchedule/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditSchedule(int id, [FromForm] int flightId, [FromForm] DateTime departureTime, [FromForm] DateTime arrivalTime, [FromForm] int totalSeats, [FromForm] int availableSeats, [FromForm] string status)
+        {
+            if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized" });
 
-//            await _context.SaveChangesAsync();
-//            return Json(new { success = true });
-//        }
+            var s = await _context.FlightSchedules.FindAsync(id);
+            if (s == null) return Json(new { success = false, message = "Schedule not found." });
 
-//        [HttpPost("DeleteSchedule/{id}")]
-//        [ValidateAntiForgeryToken]
-//        public async Task<IActionResult> DeleteSchedule(int id)
-//        {
-//            if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized" });
+            if (flightId == 0) return Json(new { success = false, message = "Flight is required." });
+            if (departureTime >= arrivalTime) return Json(new { success = false, message = "Arrival time must be after departure time." });
 
-//            var s = await _context.FlightSchedules.Include(x => x.Bookings).FirstOrDefaultAsync(x => x.ScheduleId == id);
-//            if (s == null) return Json(new { success = false, message = "Schedule not found." });
+            int diff = totalSeats - (s.TotalSeats ?? 180);
+            s.FlightId = flightId;
+            s.DepartureTime = departureTime;
+            s.ArrivalTime = arrivalTime;
+            s.TotalSeats = totalSeats;
+            s.AvailableSeats = Math.Max(0, (s.AvailableSeats ?? 180) + diff);
+            s.Status = status;
 
-//            if (s.Bookings.Any()) return Json(new { success = false, message = "Cannot delete schedule with active bookings." });
+            await _context.SaveChangesAsync();
+            return Json(new { success = true });
+        }
 
-//            _context.FlightSchedules.Remove(s);
-//            await _context.SaveChangesAsync();
+        // =========================
+        // Flight Seats Management (Refactored for Seat entity)
+        // =========================
+        [HttpGet("FlightSeats/{id?}")]
+        public async Task<IActionResult> FlightSeats(int? id)
+        {
+            if (!IsAdmin()) return RedirectIfNotAdmin();
 
-//            return Json(new { success = true });
-//        }
+            if (id == null)
+            {
+                var schedules = await _context.FlightSchedules
+                    .Include(x => x.Flight)
+                    .OrderByDescending(x => x.DepartureTime)
+                    .ToListAsync();
+                return View("~/Views/Admin/FlightSeats.cshtml", schedules);
+            }
 
-//        [HttpPost("ProcessReschedule")]
-//        [ValidateAntiForgeryToken]
-//        public async Task<IActionResult> ProcessReschedule([FromForm] int id, [FromForm] DateTime newDepartureTime, [FromForm] DateTime newArrivalTime, [FromForm] string status)
-//        {
-//            if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized" });
+            var schedule = await _context.FlightSchedules
+                .Include(x => x.Flight)
+                .Include(x => x.Seats)
+                    .ThenInclude(s => s.Class)
+                .FirstOrDefaultAsync(x => x.ScheduleId == id.Value);
 
-//            var s = await _context.FlightSchedules.FindAsync(id);
-//            if (s == null) return Json(new { success = false, message = "Schedule not found." });
+            if (schedule == null) return NotFound();
 
-//            if (newDepartureTime >= newArrivalTime) return Json(new { success = false, message = "Arrival time must be after departure time." });
+            return View("~/Views/Admin/FlightSeats.cshtml", schedule);
+        }
 
-//            s.DepartureTime = newDepartureTime;
-//            s.ArrivalTime = newArrivalTime;
-//            s.Status = string.IsNullOrWhiteSpace(status) ? "DELAYED" : status;
+        [HttpGet("GetSeatDetails")]
+        public async Task<IActionResult> GetSeatDetails(int scheduleId, string seatNumber)
+        {
+            if (!IsAdmin()) return Unauthorized();
 
-//            await _context.SaveChangesAsync();
-//            return Json(new { success = true });
-//        }
+            var seat = await _context.Seats
+                .Include(s => s.Class)
+                .Include(s => s.Tickets)
+                    .ThenInclude(t => t.Passenger)
+                .Include(s => s.Tickets)
+                    .ThenInclude(t => t.Booking)
+                        .ThenInclude(b => b.User)
+                .FirstOrDefaultAsync(x => x.ScheduleId == scheduleId && x.SeatNumber == seatNumber);
 
-//        [HttpPost("CancelFlightSchedule")]
-//        [ValidateAntiForgeryToken]
-//        public async Task<IActionResult> CancelFlightSchedule([FromForm] int id)
-//        {
-//            if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized" });
+            if (seat == null) return NotFound();
 
-//            var s = await _context.FlightSchedules.FindAsync(id);
-//            if (s == null) return Json(new { success = false, message = "Schedule not found." });
+            var ticket = seat.Tickets.OrderByDescending(t => t.TicketId).FirstOrDefault();
 
-//            s.Status = "CANCELLED";
+            return Json(new
+            {
+                success = true,
+                seatNumber = seat.SeatNumber,
+                className = seat.Class.ClassName,
+                status = seat.SeatStatus,
+                passengerName = ticket?.Passenger?.FullName ?? "N/A",
+                username = ticket?.Booking?.User?.Username ?? "N/A",
+                bookingDate = ticket?.Booking?.BookingDate?.ToString("dd/MM/yyyy HH:mm") ?? "N/A"
+            });
+        }
 
-//            await _context.SaveChangesAsync();
-//            return Json(new { success = true });
-//        }
+        [HttpPost("ToggleSeatStatus")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleSeatStatus(int scheduleId, string seatNumber)
+        {
+            if (!IsAdmin()) return Unauthorized();
 
-//        // =========================
-//        // Flight Seats Management
-//        // =========================
-//        [HttpGet("FlightSeats/{id?}")]
-//        public async Task<IActionResult> FlightSeats(int? id)
-//        {
-//            if (!IsAdmin()) return RedirectIfNotAdmin();
+            var seat = await _context.Seats.FirstOrDefaultAsync(x => x.ScheduleId == scheduleId && x.SeatNumber == seatNumber);
+            if (seat == null) return Json(new { success = false, message = "Seat not found" });
 
-//            if (id == null)
-//            {
-//                var schedules = await _context.FlightSchedules
-//                    .Include(x => x.Flight)
-//                    .OrderByDescending(x => x.DepartureTime)
-//                    .ToListAsync();
-//                return View("~/Views/Admin/FlightSeats.cshtml", schedules);
-//            }
-
-//            var schedule = await _context.FlightSchedules
-//                .Include(x => x.Flight)
-//                .Include(x => x.Bookings)
-//                    .ThenInclude(t => t.Tickets)
-//                        .ThenInclude(t => t.Passenger)
-//                .FirstOrDefaultAsync(x => x.ScheduleId == id.Value);
-
-//            if (schedule == null) return NotFound();
-
-//            return View("~/Views/Admin/FlightSeats.cshtml", schedule);
-//        }
-
-//        [HttpGet("GetSeatDetails")]
-//        public async Task<IActionResult> GetSeatDetails(int scheduleId, string seatNumber)
-//        {
-//            if (!IsAdmin()) return Unauthorized();
-
-//            var ticket = await _context.Tickets
-//                .Include(x => x.Passenger)
-//                .Include(x => x.Booking)
-//                    .ThenInclude(b => b.User)
-//                .FirstOrDefaultAsync(x => x.Booking.ScheduleId == scheduleId && x.SeatNumber == seatNumber);
-
-//            if (ticket == null) return NotFound();
-
-//            return Json(new
-//            {
-//                success = true,
-//                seatNumber = ticket.SeatNumber,
-//                passengerName = ticket.Passenger?.FullName ?? "Unknown",
-//                passengerType = ticket.Passenger?.PassengerType ?? "N/A",
-//                status = ticket.Status,
-//                bookingDate = ticket.Booking?.BookingDate?.ToString("dd/MM/yyyy HH:mm") ?? "N/A",
-//                username = ticket.Booking?.User?.Username ?? "Guest"
-//            });
-//        }
-
-//        [HttpPost("ToggleSeatStatus")]
-//        [ValidateAntiForgeryToken]
-//        public async Task<IActionResult> ToggleSeatStatus(int scheduleId, string seatNumber)
-//        {
-//            if (!IsAdmin()) return Unauthorized();
-
-//            var schedule = await _context.FlightSchedules.FirstOrDefaultAsync(x => x.ScheduleId == scheduleId);
-//            if (schedule == null) return Json(new { success = false, message = "Schedule not found" });
-
-//            // Check if there is an existing ticket
-//            var existingTicket = await _context.Tickets
-//                .Include(x => x.Booking)
-//                .FirstOrDefaultAsync(x => x.Booking.ScheduleId == scheduleId && x.SeatNumber == seatNumber);
-
-//            if (existingTicket != null)
-//            {
-//                if (existingTicket.Status == "BLOCKED")
-//                {
-//                    // Unblock: remove the placeholder ticket
-//                    _context.Tickets.Remove(existingTicket);
-                    
-//                    schedule.AvailableSeats++;
-//                    await _context.SaveChangesAsync();
-//                    return Json(new { success = true, action = "unblocked" });
-//                }
-//                else
-//                {
-//                    return Json(new { success = false, message = "Cannot toggle status of an active reservation." });
-//                }
-//            }
-//            else
-//            {
-//                // Block: create a placeholder booking and ticket
-//                var systemUser = await _context.Users.FirstOrDefaultAsync(x => x.Role == "ADMIN");
-//                if (systemUser == null) return Json(new { success = false, message = "No admin user found for blocking." });
-
-//                var booking = new Booking
-//                {
-//                    UserId = systemUser.UserId,
-//                    ScheduleId = scheduleId,
-//                    BookingDate = DateTime.Now,
-//                    BookingType = "ADMIN_BLOCK",
-//                    Status = "BLOCKED"
-//                };
-//                _context.Bookings.Add(booking);
-//                await _context.SaveChangesAsync();
-
-//                var ticket = new Ticket
-//                {
-//                    BookingId = booking.BookingId,
-//                    SeatNumber = seatNumber,
-//                    Status = "BLOCKED",
-//                    ClassId = (await _context.TicketClasses.FirstOrDefaultAsync())?.ClassId ?? 1
-//                };
-                
-//                var passenger = new Passenger
-//                {
-//                    BookingId = booking.BookingId,
-//                    FullName = "ADMIN BLOCK",
-//                    PassengerType = "SYSTEM"
-//                };
-//                _context.Passengers.Add(passenger);
-//                await _context.SaveChangesAsync();
-
-//                ticket.PassengerId = passenger.PassengerId;
-//                _context.Tickets.Add(ticket);
-
-//                schedule.AvailableSeats--;
-//                await _context.SaveChangesAsync();
-//                return Json(new { success = true, action = "blocked" });
-//            }
-//        }
-//    }
-//}
+            if (seat.SeatStatus == "AVAILABLE")
+            {
+                seat.SeatStatus = "BLOCKED";
+                await _context.SaveChangesAsync();
+                return Json(new { success = true, action = "blocked" });
+            }
+            else if (seat.SeatStatus == "BLOCKED")
+            {
+                seat.SeatStatus = "AVAILABLE";
+                await _context.SaveChangesAsync();
+                return Json(new { success = true, action = "unblocked" });
+            }
+            else
+            {
+                return Json(new { success = false, message = "Cannot toggle status of an active reservation." });
+            }
+        }
+    }
+}

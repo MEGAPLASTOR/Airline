@@ -1,0 +1,303 @@
+@model Airline.Models.BookingViewModel
+@{
+    ViewData["Title"] = "Thông tin Hành khách";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="passenger-info-container">
+    <div class="selection-header">
+        <a href="javascript:history.back()" class="btn-back"><i class="fas fa-chevron-left"></i> Quay lại chọn chỗ</a>
+        <h1 class="premium-title">Thông tin <span class="highlight">Hành khách</span></h1>
+        <p class="premium-subtitle">Vui lòng nhập tên đúng như trong CMND/CCCD hoặc Hộ chiếu</p>
+    </div>
+
+    <div class="form-layout">
+        <!-- Main Form -->
+        <div class="main-form-section">
+            <div class="glass-card">
+                <form asp-action="ConfirmBooking" method="post" class="passenger-form">
+                    <div asp-validation-summary="All" class="text-danger"></div>
+                    <input type="hidden" asp-for="ScheduleId" />
+                    <input type="hidden" asp-for="SeatId" />
+                    <input type="hidden" asp-for="ClassId" />
+                    <input type="hidden" asp-for="SeatNumber" />
+                    <input type="hidden" asp-for="Origin" />
+                    <input type="hidden" asp-for="Destination" />
+                    <input type="hidden" asp-for="FlightNumber" />
+                    <input type="hidden" asp-for="Price" />
+                    <input type="hidden" asp-for="DepartureTime" />
+
+                    <div class="form-header">
+                        <i class="fas fa-user-edit"></i>
+                        <span>Thông tin Hành khách 1</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="FullName">Họ và Tên (Tiếng Việt có dấu)</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-user"></i>
+                            <input asp-for="FullName" class="form-control" placeholder="Ví dụ: NGUYỄN VĂN AN" required />
+                        </div>
+                        <span asp-validation-for="FullName" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label asp-for="PassengerType">Loại hành khách</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-users"></i>
+                                <select asp-for="PassengerType" class="form-control">
+                                    <option value="Người lớn">Người lớn (Trên 12 tuổi)</option>
+                                    <option value="Trẻ em">Trẻ em (2 - 12 tuổi)</option>
+                                    <option value="Em bé">Em bé (Dưới 2 tuổi)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label>Quốc tịch</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-globe"></i>
+                                <select class="form-control">
+                                    <option value="VN">Việt Nam</option>
+                                    <option value="US">Hoa Kỳ</option>
+                                    <option value="FR">Pháp</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-notice">
+                        <i class="fas fa-info-circle"></i>
+                        <p>Tên hành khách phải trùng khớp hoàn toàn với giấy tờ tùy thân.</p>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button type="submit" class="btn-confirm-final">
+                            Xác nhận Đặt vé <i class="fas fa-check-circle"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Order Summary Sidebar -->
+        <div class="order-summary-sidebar">
+            <div class="glass-card sticky-card">
+                <h3 class="card-title">Tóm tắt đơn hàng</h3>
+                
+                <div class="flight-summary-card">
+                    <div class="flight-header">
+                        <span class="flight-num">@Model.FlightNumber</span>
+                        <span class="date">@(Model.DepartureTime?.ToString("MM/dd/yyyy") ?? "--/--/----")</span>
+                    </div>
+                    
+                    <div class="route-display">
+                        <div class="node">
+                            <strong>@Model.Origin</strong>
+                            <span>Điểm đi</span>
+                        </div>
+                        <div class="sep"><i class="fas fa-long-arrow-alt-right"></i></div>
+                        <div class="node">
+                            <strong>@Model.Destination</strong>
+                            <span>Điểm đến</span>
+                        </div>
+                    </div>
+
+                    <div class="seat-badge-mini">
+                        <i class="fas fa-couch"></i>
+                        <span>Ghế <strong>@Model.SeatNumber</strong></span>
+                    </div>
+                </div>
+
+                <div class="price-breakdown">
+                    <div class="breakdown-row">
+                        <span>Giá cơ bản</span>
+                        <span>@(Model.Price?.ToString("N0") ?? "0") VND</span>
+                    </div>
+                    <div class="breakdown-row">
+                        <span>Thuế & Phí</span>
+                        <span>@((Model.Price * 0.1m)?.ToString("N0") ?? "0") VND</span>
+                    </div>
+                    <div class="total-row">
+                        <span>Tổng thanh toán</span>
+                        <span>@((Model.Price * 1.1m)?.ToString("N0") ?? "0") VND</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .passenger-info-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding-bottom: 5rem;
+        }
+
+        .selection-header {
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .premium-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+
+        .premium-title .highlight { color: var(--ocean-aqua); }
+
+        .form-layout {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 2.5rem;
+            align-items: start;
+        }
+
+        .glass-card {
+            background: rgba(255,255,255,0.04);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px;
+            padding: 2rem;
+        }
+
+        .form-header {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            color: #fff;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .form-header i { color: var(--ocean-aqua); }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .input-with-icon {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-with-icon i {
+            position: absolute;
+            left: 1rem;
+            color: rgba(255,255,255,0.3);
+            font-size: 0.95rem;
+        }
+
+        .form-control {
+            width: 100%;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 0.85rem 1rem 0.85rem 2.8rem;
+            color: #fff;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            background: rgba(255,255,255,0.08);
+            border-color: var(--ocean-aqua);
+            outline: none;
+            box-shadow: 0 0 15px rgba(23,170,184,0.2);
+        }
+
+        .form-row { display: flex; gap: 1.5rem; }
+        .flex-1 { flex: 1; }
+
+        .form-notice {
+            background: rgba(240,180,41,0.1);
+            border-left: 4px solid var(--accent-gold);
+            padding: 1rem;
+            display: flex;
+            gap: 0.8rem;
+            margin: 2rem 0;
+            border-radius: 8px;
+        }
+
+        .form-notice i { color: var(--accent-gold); margin-top: 3px; }
+        .form-notice p { color: rgba(255,255,255,0.7); font-size: 0.85rem; line-height: 1.4; }
+
+        .btn-confirm-final {
+            width: 100%;
+            background: linear-gradient(135deg, var(--ocean-aqua), var(--ocean-teal));
+            border: none;
+            border-radius: 16px;
+            padding: 1.2rem;
+            color: #fff;
+            font-weight: 800;
+            font-size: 1.1rem;
+            box-shadow: 0 10px 25px rgba(23,170,184,0.35);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex; align-items: center; justify-content: center; gap: 0.8rem;
+        }
+
+        .btn-confirm-final:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 30px rgba(23,170,184,0.45);
+        }
+
+        /* Sidebar summary */
+        .flight-summary-card {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 1.2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .flight-header {
+            display: flex; justify-content: space-between;
+            margin-bottom: 1rem; font-size: 0.8rem; font-weight: 700; color: rgba(255,255,255,0.4);
+        }
+
+        .route-display {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;
+        }
+
+        .node { display: flex; flex-direction: column; }
+        .node strong { font-size: 1.1rem; color: #fff; }
+        .node span { font-size: 0.7rem; color: rgba(255,255,255,0.4); text-transform: uppercase; }
+
+        .seat-badge-mini {
+            background: var(--ocean-aqua);
+            color: #fff;
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            display: inline-flex; align-items: center; gap: 0.6rem;
+        }
+
+        .price-breakdown {
+            display: flex; flex-direction: column; gap: 0.8rem;
+            padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .breakdown-row { display: flex; justify-content: space-between; font-size: 0.85rem; color: rgba(255,255,255,0.5); }
+        .total-row { display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 1.2rem; font-weight: 700; color: var(--accent-gold); }
+
+        .sticky-card { position: sticky; top: 100px; }
+    </style>
+}

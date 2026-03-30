@@ -424,8 +424,8 @@ public partial class DataContext : DbContext
                 FlightId = 1,
                 DepartureTime = new DateTime(2026, 04, 01, 8, 0, 0),
                 ArrivalTime = new DateTime(2026, 04, 01, 10, 0, 0),
-                TotalSeats = 40,
-                AvailableSeats = 39,
+                TotalSeats = 180,
+                AvailableSeats = 180,
                 Status = "SCHEDULED"
             },
             new FlightSchedule
@@ -434,8 +434,8 @@ public partial class DataContext : DbContext
                 FlightId = 2,
                 DepartureTime = new DateTime(2026, 04, 02, 9, 30, 0),
                 ArrivalTime = new DateTime(2026, 04, 02, 11, 0, 0),
-                TotalSeats = 40,
-                AvailableSeats = 39,
+                TotalSeats = 180,
+                AvailableSeats = 180,
                 Status = "SCHEDULED"
             },
             new FlightSchedule
@@ -444,8 +444,8 @@ public partial class DataContext : DbContext
                 FlightId = 3,
                 DepartureTime = new DateTime(2026, 04, 03, 13, 0, 0),
                 ArrivalTime = new DateTime(2026, 04, 03, 16, 30, 0),
-                TotalSeats = 40,
-                AvailableSeats = 39,
+                TotalSeats = 180,
+                AvailableSeats = 180,
                 Status = "SCHEDULED"
             },
             new FlightSchedule
@@ -454,8 +454,8 @@ public partial class DataContext : DbContext
                 FlightId = 4,
                 DepartureTime = new DateTime(2026, 04, 04, 7, 15, 0),
                 ArrivalTime = new DateTime(2026, 04, 04, 8, 45, 0),
-                TotalSeats = 40,
-                AvailableSeats = 39,
+                TotalSeats = 180,
+                AvailableSeats = 180,
                 Status = "SCHEDULED"
             },
             new FlightSchedule
@@ -464,8 +464,8 @@ public partial class DataContext : DbContext
                 FlightId = 5,
                 DepartureTime = new DateTime(2026, 04, 05, 18, 0, 0),
                 ArrivalTime = new DateTime(2026, 04, 05, 19, 30, 0),
-                TotalSeats = 40,
-                AvailableSeats = 39,
+                TotalSeats = 180,
+                AvailableSeats = 180,
                 Status = "SCHEDULED"
             }
         );

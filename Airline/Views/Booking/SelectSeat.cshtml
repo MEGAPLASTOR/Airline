@@ -1,0 +1,483 @@
+@model Airline.Models.FlightSchedule
+@{
+    ViewData["Title"] = "Select Your Seat";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var prices = Model.TicketPrices.ToDictionary(p => p.ClassId, p => p.Price ?? 0m);
+    var seatsByClass = Model.Seats.GroupBy(s => s.ClassId).OrderByDescending(g => g.Key).ToList();
+}
+
+<div class="seat-selection-container">
+    <div class="selection-header">
+        <a asp-action="BookFlight" class="btn-back"><i class="fas fa-chevron-left"></i> Back to search</a>
+        <h1 class="premium-title">Select Your <span class="highlight">Luxury Seat</span></h1>
+        <div class="flight-summary-mini">
+            <span class="route">@Model.Flight.Route.DepartureCityNavigation.CityName <i class="fas fa-arrow-right"></i> @Model.Flight.Route.ArrivalCityNavigation.CityName</span>
+            <span class="divider">|</span>
+            <span class="date">@Model.DepartureTime.ToString("MM/dd/yyyy HH:mm")</span>
+        </div>
+    </div>
+
+    <div class="selection-layout">
+        <!-- Seat Map Section -->
+        <div class="seat-map-wrapper">
+            <div class="airplane-body">
+                <div class="cockpit">
+                    <div class="window"></div>
+                    <div class="window"></div>
+                </div>
+
+                <div class="cabin-scroll-area">
+                    <div class="cabin-container">
+                    @foreach (var classGroup in seatsByClass)
+                    {
+                        var className = classGroup.First().Class.ClassName;
+                        var classPrice = prices.ContainsKey(classGroup.Key) ? prices[classGroup.Key] : 0m;
+                        var classColorClass = "class-" + classGroup.Key;
+
+                        <div class="cabin-section @classColorClass">
+                            <div class="cabin-divider">
+                                <span>@className</span>
+                                <small>@classPrice.ToString("N0") VND</small>
+                            </div>
+                            
+                            <div class="seat-grid">
+                                @{
+                                    var rows = classGroup.GroupBy(s => s.SeatNumber.Substring(1)).OrderBy(r => r.Key);
+                                    foreach (var row in rows)
+                                    {
+                                        <div class="seat-row">
+                                            @foreach (var seat in row.OrderBy(s => s.SeatNumber[0]))
+                                            {
+                                                var status = seat.SeatStatus.ToLower();
+                                                bool isAvailable = status == "available";
+                                                
+                                                <div class="seat-item @status" 
+                                                     data-id="@seat.SeatId" 
+                                                     data-number="@seat.SeatNumber" 
+                                                     data-price="@classPrice"
+                                                     data-class="@className"
+                                                     onclick="selectSeat(this)">
+                                                    <span class="seat-icon"><i class="fas fa-couch"></i></span>
+                                                    <span class="seat-num">@seat.SeatNumber</span>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    }
+                    </div>
+                </div>
+
+                <div class="airplane-tail"></div>
+            </div>
+        </div>
+
+        <!-- Checkout Sidebar -->
+        <div class="checkout-sidebar">
+            <div class="glass-card sticky-card">
+                <h3 class="card-title">Selection Details</h3>
+                
+                <div class="selection-details">
+                    <div class="detail-item" id="selected-seat-info">
+                        <div class="empty-selection">
+                            <i class="fas fa-mouse-pointer"></i>
+                            <p>Please select a seat from the airplane map</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="price-summary" id="price-summary" style="display:none;">
+                    <div class="summary-row">
+                        <span>Base Price</span>
+                        <span id="base-price">0 VND</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Tax & Fees (10%)</span>
+                        <span id="tax-price">0 VND</span>
+                    </div>
+                    <div class="summary-total">
+                        <span>Total</span>
+                        <span id="total-price">0 VND</span>
+                    </div>
+                </div>
+
+                <form asp-action="PassengerInfo" method="post" id="booking-form">
+                    <input type="hidden" name="scheduleId" value="@Model.ScheduleId" />
+                    <input type="hidden" name="seatId" id="hidden-seat-id" />
+                    <button type="submit" class="btn-confirm-booking" id="btn-continue" disabled>
+                        Next: Passenger Information <i class="fas fa-arrow-right"></i>
+                    </button>
+                </form>
+
+                <div class="legend">
+                    <div class="legend-item"><span class="box available"></span> Available</div>
+                    <div class="legend-item"><span class="box selected"></span> Selected</div>
+                    <div class="legend-item"><span class="box booked"></span> Booked</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .seat-selection-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding-bottom: 5rem;
+        }
+
+        .selection-header {
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .btn-back {
+            color: rgba(255,255,255,0.5);
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            transition: color 0.3s;
+        }
+
+        .btn-back:hover { color: var(--ocean-aqua); }
+
+        .premium-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+
+        .premium-title .highlight { color: var(--accent-gold); }
+
+        .flight-summary-mini {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            color: rgba(255,255,255,0.4);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .flight-summary-mini .route { color: var(--ocean-foam); }
+
+        .selection-layout {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 3rem;
+            align-items: start;
+        }
+
+        /* Airplane Visualization */
+        .seat-map-wrapper {
+            background: rgba(255,255,255,0.02);
+            border-radius: 40px;
+            padding: 4rem 2rem;
+            display: flex;
+            justify-content: center;
+            animation: zoomIn 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .airplane-body {
+            background: #fff;
+            width: 440px;
+            border-radius: 200px 200px 50px 50px;
+            position: relative;
+            padding: 120px 0 60px; /* Reduced side padding for scroll */
+            box-shadow: 0 0 50px rgba(255,255,255,0.05);
+            border: 8px solid #e0e6ed;
+            overflow: hidden; /* Contain the scroll area */
+        }
+
+        .cabin-scroll-area {
+            max-height: 600px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 0 20px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--ocean-aqua) transparent;
+        }
+
+        .cabin-scroll-area::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .cabin-scroll-area::-webkit-scrollbar-thumb {
+            background-color: var(--ocean-aqua);
+            border-radius: 10px;
+        }
+
+        .cockpit {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+        }
+
+        .cockpit .window {
+            width: 45px; height: 35px;
+            background: #23395d;
+            border-radius: 30px 10px 10px 5px;
+        }
+
+        .cockpit .window:last-child { border-radius: 10px 30px 5px 10px; }
+
+        .cabin-section {
+            margin-bottom: 2.5rem;
+            position: relative;
+        }
+
+        .cabin-divider {
+            border-bottom: 1px dashed #d1d9e6;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding-bottom: 0.3rem;
+        }
+
+        .cabin-divider span {
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #7f8c8d;
+        }
+
+        .cabin-divider small { color: #bdc3c7; font-weight: 700; }
+
+        .seat-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem; /* Compact row gap */
+        }
+
+        .seat-row {
+            display: flex;
+            justify-content: center;
+            gap: 0.8rem;
+        }
+
+        /* Seat Styling */
+        .seat-item {
+            width: 42px;
+            height: 48px;
+            background: #f1f4f8;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .seat-item.booked { cursor: not-allowed; background: #e2e8f0; border-color: #cbd5e0; }
+        .seat-item.booked i { color: #a0aec0; }
+        .seat-item.booked .seat-num { color: #a0aec0; }
+
+        .seat-icon { font-size: 1.1rem; color: var(--ocean-teal); transition: color 0.2s; }
+        .seat-num { font-size: 0.6rem; font-weight: 700; color: #7f8c8d; margin-top: -2px; }
+
+        /* Class Colors */
+        .class-4 .seat-icon { color: var(--accent-gold); } /* First */
+        .class-3 .seat-icon { color: var(--ocean-aqua); } /* Business */
+        .class-2 .seat-icon { color: #a55eea; } /* Premium */
+        .class-1 .seat-icon { color: #4b6584; } /* Economy */
+
+        .seat-item:not(.booked):hover {
+            border-color: var(--ocean-aqua);
+            transform: scale(1.15) translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            background: #fff;
+        }
+
+        .seat-item.active-selection {
+            background: var(--ocean-aqua) !important;
+            border-color: var(--ocean-teal) !important;
+            transform: scale(1.1);
+        }
+
+        .seat-item.active-selection i { color: #fff; }
+        .seat-item.active-selection .seat-num { color: #fff; }
+
+        /* Sidebar Glass Card */
+        .glass-card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 24px;
+            padding: 1.8rem;
+        }
+
+        .sticky-card { position: sticky; top: 100px; }
+
+        .card-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            color: #fff;
+            margin-bottom: 1.5rem;
+        }
+
+        .empty-selection {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: rgba(255,255,255,0.3);
+        }
+
+        .empty-selection i { font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.5; }
+        .empty-selection p { font-size: 0.85rem; line-height: 1.5; }
+
+        .selected-seat-badge {
+            background: rgba(23,170,184,0.15);
+            border: 1px solid var(--ocean-aqua);
+            padding: 1rem;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .big-seat-icon {
+            width: 48px; height: 48px;
+            background: var(--ocean-aqua);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; color: #fff;
+        }
+
+        .seat-text h4 { margin: 0; color: #fff; font-size: 1.1rem; }
+        .seat-text p { margin: 0; font-size: 0.75rem; color: var(--ocean-aqua); font-weight: 700; text-transform: uppercase; }
+
+        .price-summary {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.5);
+        }
+
+        .summary-total {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--accent-gold);
+        }
+
+        .btn-confirm-booking {
+            width: 100%;
+            background: linear-gradient(135deg, var(--ocean-aqua), var(--ocean-teal));
+            border: none;
+            border-radius: 16px;
+            padding: 1.1rem;
+            color: #fff;
+            font-weight: 700;
+            margin-top: 2rem;
+            box-shadow: 0 8px 20px rgba(23,170,184,0.3);
+            transition: all 0.3s ease;
+            display: flex; align-items: center; justify-content: center; gap: 0.7rem;
+        }
+
+        .btn-confirm-booking:disabled {
+            background: rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.3);
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        .btn-confirm-booking:not(:disabled):hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(23,170,184,0.4);
+        }
+
+        .legend {
+            margin-top: 2rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.5);
+        }
+
+        .box { width: 14px; height: 14px; border-radius: 3px; }
+        .box.available { background: #f1f4f8; border: 1px solid #d1d9e6; }
+        .box.selected { background: var(--ocean-aqua); }
+        .box.booked { background: #cbd5e0; }
+
+        @@keyframes zoomIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @@keyframes bounceIn { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        function selectSeat(element) {
+            if (element.classList.contains('booked')) return;
+
+            // Clear previous selection
+            document.querySelectorAll('.seat-item').forEach(s => s.classList.remove('active-selection'));
+            
+            // Add current selection
+            element.classList.add('active-selection');
+
+            const seatId = element.dataset.id;
+            const seatNum = element.dataset.number;
+            const price = parseFloat(element.dataset.price);
+            const className = element.dataset.class;
+
+            // Update Sidebar
+            const infoContainer = document.getElementById('selected-seat-info');
+            infoContainer.innerHTML = `
+                <div class="selected-seat-badge">
+                    <div class="big-seat-icon"><i class="fas fa-couch"></i></div>
+                    <div class="seat-text">
+                        <p>${className}</p>
+                        <h4>Seat ${seatNum}</h4>
+                    </div>
+                </div>
+            `;
+
+            // Update Prices
+            const tax = price * 0.1;
+            const total = price + tax;
+
+            document.getElementById('base-price').textContent = price.toLocaleString() + ' VND';
+            document.getElementById('tax-price').textContent = tax.toLocaleString() + ' VND';
+            document.getElementById('total-price').textContent = total.toLocaleString() + ' VND';
+            
+            document.getElementById('price-summary').style.display = 'flex';
+
+            // Enable Button
+            document.getElementById('hidden-seat-id').value = seatId;
+            document.getElementById('btn-continue').disabled = false;
+        }
+    </script>
+}

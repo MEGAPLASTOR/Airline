@@ -1,0 +1,140 @@
+@model int
+@{
+    ViewData["Title"] = "Booking Success";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="success-container">
+    <div class="success-card">
+        <div class="success-icon">
+            <div class="check-wrap">
+                <i class="fas fa-check"></i>
+            </div>
+            <div class="confetti"></div>
+        </div>
+
+        <h1 class="premium-title">Booking <span class="highlight">Successful!</span></h1>
+        <p class="subtitle">Your confirmation code is: <strong class="booking-code">#@Model</strong></p>
+
+        <div class="success-info-grid">
+            <div class="info-item">
+                <i class="fas fa-envelope"></i>
+                <div class="text">
+                    <strong>Confirmation Email</strong>
+                    <span>Ticket information has been sent to your email.</span>
+                </div>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-credit-card"></i>
+                <div class="text">
+                    <strong>Payment Status</strong>
+                    <span>Pending payment (Please pay within 24 hours).</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <a asp-controller="Payment" asp-action="CreatePayment" asp-route-id="@Model" class="btn-pay-now">
+                Pay Now <i class="fas fa-credit-card"></i>
+            </a>
+            <a asp-controller="Ticket" asp-action="ViewConfirmation" class="btn-view-tickets">
+                View My Tickets <i class="fas fa-ticket-alt"></i>
+            </a>
+            <a asp-controller="Home" asp-action="Index" class="btn-back-home">
+                Back to home page
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .success-container {
+            min-height: 70vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .success-card {
+            max-width: 600px;
+            width: 100%;
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 40px;
+            padding: 3.5rem 2rem;
+            text-align: center;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+            animation: bounceIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .success-icon {
+            position: relative;
+            margin-bottom: 2rem;
+            display: inline-block;
+        }
+
+        .check-wrap {
+            width: 80px; height: 80px;
+            background: linear-gradient(135deg, var(--ocean-aqua), var(--ocean-teal));
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.2rem; color: #fff;
+            box-shadow: 0 10px 30px rgba(23,170,184,0.4);
+            animation: scaleIn 0.5s ease-out 0.4s both;
+        }
+
+        .premium-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            color: #fff;
+            margin-bottom: 1rem;
+        }
+
+        .premium-title .highlight { color: var(--ocean-aqua); }
+
+        .subtitle { color: rgba(255,255,255,0.6); font-size: 1.1rem; margin-bottom: 2.5rem; }
+        .booking-code { color: var(--accent-gold); font-size: 1.3rem; }
+
+        .success-info-grid {
+            display: flex; flex-direction: column; gap: 1rem;
+            text-align: left; margin-bottom: 3rem;
+            background: rgba(255,255,255,0.03);
+            padding: 1.5rem; border-radius: 20px;
+        }
+
+        .info-item { display: flex; gap: 1rem; align-items: center; }
+        .info-item i { font-size: 1.2rem; color: var(--ocean-aqua); width: 30px; text-align: center; }
+        .info-item .text strong { display: block; color: #fff; font-size: 0.95rem; }
+        .info-item .text span { color: rgba(255,255,255,0.45); font-size: 0.8rem; }
+
+        .action-buttons { display: flex; flex-direction: column; gap: 1rem; }
+
+        .btn-pay-now {
+            background: linear-gradient(135deg, var(--accent-gold), #f39c12);
+            color: var(--ocean-deep);
+            padding: 1rem; border-radius: 12px;
+            font-weight: 800; font-size: 1.05rem;
+            box-shadow: 0 5px 15px rgba(240,180,41,0.3);
+            text-transform: uppercase; letter-spacing: 0.05em;
+        }
+
+        .btn-view-tickets {
+            background: rgba(23,170,184,0.15);
+            border: 1px solid var(--ocean-aqua);
+            color: var(--ocean-aqua);
+            padding: 1rem; border-radius: 12px;
+            font-weight: 700;
+        }
+
+        .btn-view-tickets:hover { background: var(--ocean-aqua); color: #fff; }
+
+        .btn-back-home { color: rgba(255,255,255,0.4); font-size: 0.9rem; margin-top: 0.5rem; }
+        .btn-back-home:hover { color: #fff; }
+
+        @@keyframes scaleIn { from { transform: scale(0); } to { transform: scale(1); } }
+        @@keyframes bounceIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+    </style>
+}
