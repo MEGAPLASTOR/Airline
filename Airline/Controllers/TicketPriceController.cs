@@ -125,7 +125,7 @@ namespace Airline.Controllers
 
             if (dup)
             {
-                TempData["tp_err"] = "Error";
+                TempData["tp_err"] = "A ticket price for this schedule and class already exists.";
                 return RedirectToAction(nameof(TicketPrice));
             }
 
@@ -149,11 +149,12 @@ namespace Airline.Controllers
             }
 
             await _db.SaveChangesAsync();
-            TempData["tp_ok"] = "Saved";
+            TempData["tp_ok"] = "Ticket price saved successfully.";
             return RedirectToAction(nameof(TicketPrice));
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
             var e = await _db.TicketPrices.FindAsync(id);
@@ -162,6 +163,7 @@ namespace Airline.Controllers
             _db.Remove(e);
             await _db.SaveChangesAsync();
 
+            TempData["tp_ok"] = "Ticket price deleted successfully.";
             return RedirectToAction(nameof(TicketPrice));
         }
     }

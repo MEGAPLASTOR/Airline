@@ -142,7 +142,8 @@
                                     <button type="button"
                                             class="icon-btn delete-btn"
                                             title="Delete city"
-                                            onclick="openDeleteModal(@city.CityId, '@city.CityName')"
+                                            data-city-name="@city.CityName"
+                                            onclick="openDeleteModal(@city.CityId, this.dataset.cityName)"
                                             disabled="@(routesCount > 0)">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>

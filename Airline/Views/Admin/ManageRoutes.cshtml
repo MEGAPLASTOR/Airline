@@ -1,4 +1,4 @@
-@model IEnumerable<Airline.Models.Route>
+﻿@model IEnumerable<Airline.Models.Route>
 @{
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
     ViewData["Title"] = "Manage Routes";
@@ -154,7 +154,9 @@
                                     <button type="button"
                                             class="icon-btn delete-btn"
                                             title="Delete route"
-                                            onclick="openDeleteModal(@route.RouteId, '@dep', '@arr')"
+                                            data-departure="@dep"
+                                            data-arrival="@arr"
+                                            onclick="openDeleteModal(@route.RouteId, this.dataset.departure, this.dataset.arrival)"
                                             disabled="@(flightCount > 0)">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
@@ -262,3 +264,4 @@
 @section Scripts {
     <script src="~/js/admin-routes.js" asp-append-version="true"></script>
 }
+

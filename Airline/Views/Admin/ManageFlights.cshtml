@@ -1,4 +1,4 @@
-@model IEnumerable<Airline.Models.Flight>
+﻿@model IEnumerable<Airline.Models.Flight>
 @{
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
     ViewData["Title"] = "Manage Flights";
@@ -151,7 +151,8 @@
                                     <button type="button"
                                             class="icon-btn delete-btn"
                                             title="Delete flight"
-                                            onclick="openDeleteModal(@flight.FlightId, '@flight.FlightNumber')"
+                                            data-flight-number="@flight.FlightNumber"
+                                            onclick="openDeleteModal(@flight.FlightId, this.dataset.flightNumber)"
                                             disabled="@(scheduleCount > 0)">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
@@ -255,3 +256,4 @@
 @section Scripts {
     <script src="~/js/admin-flights.js" asp-append-version="true"></script>
 }
+
