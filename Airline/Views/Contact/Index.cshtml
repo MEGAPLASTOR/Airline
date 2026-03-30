@@ -3,6 +3,7 @@
     Layout = "_Layout";
 }
 
+@*
 @section Styles {
 <style>
     /* ── Breadcrumb ── */
@@ -151,7 +152,9 @@
     }
 </style>
 }
+*@
 
+<div class="public-page public-page-contact">
 <!-- Breadcrumb -->
 <div class="breadcrumb">
     <a href="/"><i class="fa-solid fa-house"></i> Home</a>
@@ -373,41 +376,46 @@
         </div>
 
         <!-- Social / channels -->
-        <div class="card" style="padding:1.4rem;">
-            <div style="font-size:0.75rem;font-weight:700;color:#7a96a8;text-transform:uppercase;letter-spacing:0.09em;margin-bottom:0.9rem;">
-                <i class="fa-solid fa-share-nodes" style="color:var(--ocean-aqua);margin-right:5px;"></i>Follow Us
+        <div class="card summary-card">
+            <div class="summary-head">
+                <div class="summary-icon"><i class="fa-solid fa-share-nodes"></i></div>
+                <div class="summary-title">Follow Us</div>
             </div>
-            <div style="display:flex;flex-direction:column;gap:0.6rem;">
-                <a href="#" style="display:flex;align-items:center;gap:0.6rem;padding:0.55rem 0.8rem;border-radius:9px;background:#f0f8fa;border:1px solid #dce8ef;text-decoration:none;transition:background 0.2s;" onmouseover="this.style.background='#e2f0f5'" onmouseout="this.style.background='#f0f8fa'">
-                    <i class="fa-brands fa-facebook" style="color:#1877f2;width:18px;text-align:center;"></i>
-                    <span style="font-size:0.82rem;font-weight:500;color:var(--ocean-deep);">The Airlinespan>
+            <div class="social-links">
+                <a href="#" class="social-link">
+                    <i class="fa-brands fa-facebook" style="color:#1877f2;"></i>
+                    <span>The Airline</span>
                 </a>
-                <a href="#" style="display:flex;align-items:center;gap:0.6rem;padding:0.55rem 0.8rem;border-radius:9px;background:#f0f8fa;border:1px solid #dce8ef;text-decoration:none;transition:background 0.2s;" onmouseover="this.style.background='#e2f0f5'" onmouseout="this.style.background='#f0f8fa'">
-                    <i class="fa-brands fa-instagram" style="color:#e1306c;width:18px;text-align:center;"></i>
-                    <span style="font-size:0.82rem;font-weight:500;color:var(--ocean-deep);">@@theairline.vn</span>
+                <a href="#" class="social-link">
+                    <i class="fa-brands fa-instagram" style="color:#e1306c;"></i>
+                    <span>@@theairline.vn</span>
                 </a>
-                <a href="#" style="display:flex;align-items:center;gap:0.6rem;padding:0.55rem 0.8rem;border-radius:9px;background:#f0f8fa;border:1px solid #dce8ef;text-decoration:none;transition:background 0.2s;" onmouseover="this.style.background='#e2f0f5'" onmouseout="this.style.background='#f0f8fa'">
-                    <i class="fa-brands fa-tiktok" style="color:#010101;width:18px;text-align:center;"></i>
-                    <span style="font-size:0.82rem;font-weight:500;color:var(--ocean-deep);">@@theairline_official</span>
+                <a href="#" class="social-link">
+                    <i class="fa-brands fa-tiktok" style="color:#010101;"></i>
+                    <span>@@theairline_official</span>
                 </a>
             </div>
         </div>
 
         <!-- About link -->
-        <div class="card" style="padding:1.2rem;background:linear-gradient(135deg,#f0f8fa,#e8f4f8);border-color:#cde8ef;">
-            <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.6rem;">
-                <i class="fa-solid fa-plane-circle-check" style="color:var(--ocean-teal);"></i>
-                <span style="font-size:0.78rem;font-weight:700;color:var(--ocean-deep);">Learn About The Airline</span>
+        <div class="card callout-card">
+            <div class="callout-head">
+                <div class="callout-icon"><i class="fa-solid fa-plane-circle-check"></i></div>
+                <div class="callout-title">Learn About The Airline</div>
             </div>
-            <p style="font-size:0.78rem;color:#5a8295;line-height:1.6;margin-bottom:1rem;">
+            <p>
                 Discover our story, mission, and the team dedicated to making your journey exceptional.
             </p>
-            <a href="/About" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.55rem 1.1rem;border-radius:9px;background:linear-gradient(135deg,var(--ocean-aqua),var(--ocean-teal));color:#fff;font-size:0.8rem;font-weight:600;text-decoration:none;box-shadow:0 3px 12px rgba(23,170,184,0.3);">
-                <i class="fa-solid fa-arrow-right"></i> About Us
-            </a>
+            <div class="status-actions" style="justify-content:flex-start;margin-top:1rem;">
+                <a href="/About" class="btn-primary">
+                    <i class="fa-solid fa-arrow-right"></i> About Us
+                </a>
+            </div>
         </div>
 
     </div>
+</div>
+
 </div>
 
 @section Scripts {

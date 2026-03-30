@@ -3,23 +3,37 @@
     ViewData["Title"] = "Error";
 }
 
-<h1 class="text-danger">Error.</h1>
-<h2 class="text-danger">An error occurred while processing your request.</h2>
+<div class="status-page">
+    <div class="status-card">
+        <div class="status-icon icon-error">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
 
-@if (Model.ShowRequestId)
-{
-    <p>
-        <strong>Request ID:</strong> <code>@Model.RequestId</code>
-    </p>
-}
+        <h1 class="status-title">Something Went Wrong</h1>
+        <p class="status-message">The request could not be completed. The issue may be temporary, but if it continues the support team should review the related booking, account, or admin action.</p>
 
-<h3>Development Mode</h3>
-<p>
-    Swapping to <strong>Development</strong> environment will display more detailed information about the error that occurred.
-</p>
-<p>
-    <strong>The Development environment shouldn't be enabled for deployed applications.</strong>
-    It can result in displaying sensitive information from exceptions to end users.
-    For local debugging, enable the <strong>Development</strong> environment by setting the <strong>ASPNETCORE_ENVIRONMENT</strong> environment variable to <strong>Development</strong>
-    and restarting the app.
-</p>
+        @if (Model.ShowRequestId)
+        {
+            <div class="status-actions" style="margin-top:1.1rem;">
+                <span class="request-chip">
+                    <i class="fa-solid fa-hashtag"></i>
+                    Request ID
+                </span>
+                <span class="request-code">@Model.RequestId</span>
+            </div>
+        }
+
+        <p class="status-meta">For local debugging, enable the <strong>Development</strong> environment only when you need detailed exception data. Do not expose that environment in production because it can reveal sensitive application details.</p>
+
+        <div class="status-actions">
+            <a href="/" class="btn-primary">
+                <i class="fa-solid fa-house"></i>
+                Return Home
+            </a>
+            <a href="/Contact" class="btn-ghost">
+                <i class="fa-solid fa-headset"></i>
+                Contact Support
+            </a>
+        </div>
+    </div>
+</div>

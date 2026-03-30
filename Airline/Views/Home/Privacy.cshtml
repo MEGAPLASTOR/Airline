@@ -1,6 +1,68 @@
 ﻿@{
     ViewData["Title"] = "Privacy Policy";
+    Layout = "_Layout";
 }
-<h1>@ViewData["Title"]</h1>
+<div class="public-page public-page-privacy">
+    <div class="breadcrumb">
+        <a href="/"><i class="fa-solid fa-house"></i> Home</a>
+        <i class="fa-solid fa-chevron-right"></i>
+        <span>Privacy Policy</span>
+    </div>
 
-<p>Use this page to detail your site's privacy policy.</p>
+    <div class="page-header">
+        <div class="page-header-icon"><i class="fa-solid fa-shield-halved"></i></div>
+        <div class="page-header-text">
+            <h1>Privacy Policy</h1>
+            <p>Understand how customer data, payment information, and service activity are handled across the airline platform.</p>
+        </div>
+    </div>
+
+    <div class="privacy-grid">
+        <div class="card privacy-card">
+            <div class="value-icon"><i class="fa-solid fa-database"></i></div>
+            <h3>Information We Collect</h3>
+            <p>We collect booking details, passenger information, account profile data, and support requests so flights can be managed accurately and securely.</p>
+            <ul>
+                <li>Account name, email, phone number, and profile details</li>
+                <li>Passenger manifests and reservation references</li>
+                <li>Payment status and transaction metadata</li>
+            </ul>
+        </div>
+
+        <div class="card privacy-card">
+            <div class="value-icon"><i class="fa-solid fa-lock"></i></div>
+            <h3>How We Protect Data</h3>
+            <p>Operational and customer data is kept behind authenticated access, monitored within the admin system, and protected using secure transport and controlled workflows.</p>
+            <ul>
+                <li>Role-based access for sensitive management screens</li>
+                <li>Protected payment and booking confirmation flows</li>
+                <li>Audit-friendly data handling for support and operations</li>
+            </ul>
+        </div>
+
+        <div class="card privacy-card">
+            <div class="value-icon"><i class="fa-solid fa-user-check"></i></div>
+            <h3>Your Choices</h3>
+            <p>You can review, update, or request corrections to your account information at any time from the customer account area.</p>
+            <ul>
+                <li>Edit contact details from your account profile</li>
+                <li>Change your password whenever needed</li>
+                <li>Contact support for booking or privacy questions</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="card callout-card">
+        <div class="callout-head">
+            <div class="callout-icon"><i class="fa-solid fa-headset"></i></div>
+            <div class="callout-title">Need Clarification?</div>
+        </div>
+        <p>If you need details about how a booking, payment, or passenger record is stored, contact the support team and include your booking reference for faster assistance.</p>
+        <div class="status-actions" style="justify-content:flex-start;margin-top:1rem;">
+            <a href="/Contact" class="btn-primary">
+                <i class="fa-solid fa-paper-plane"></i>
+                Contact Support
+            </a>
+        </div>
+    </div>
+</div>
