@@ -403,11 +403,11 @@ namespace Airline.Controllers
 
         private static string FormatCurrency(decimal amount)
         {
-            if (amount >= 1_000_000_000m) return $"{amount / 1_000_000_000m:0.##}B đ";
-            if (amount >= 1_000_000m) return $"{amount / 1_000_000m:0.##}M đ";
-            if (amount >= 1_000m) return $"{amount / 1_000m:0.##}K đ";
+            if (amount >= 1_000_000_000m) return $"{amount / 1_000_000_000m:0.##}B VND";
+            if (amount >= 1_000_000m) return $"{amount / 1_000_000m:0.##}M VND";
+            if (amount >= 1_000m) return $"{amount / 1_000m:0.##}K VND";
 
-            return $"{amount.ToString("#,0", ViCulture)} đ";
+            return $"{amount.ToString("#,0", ViCulture)} VND";
         }
 
         private static int ToPercent(decimal numerator, decimal denominator)

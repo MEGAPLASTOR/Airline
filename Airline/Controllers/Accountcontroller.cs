@@ -146,7 +146,7 @@ namespace Airline.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
-            return View("~/Views/Admin/AdminDashboard.cshtml");
+            return RedirectToAction("Dashboard", "AdminDashboard");
         }
 
         [HttpGet("Logout")]
