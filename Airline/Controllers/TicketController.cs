@@ -1,4 +1,7 @@
 using Airline.Models;
+using Airline.Services;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -8,11 +11,13 @@ namespace Airline.Controllers
     public class TicketController : Controller
     {
         private const string BaggageTransactionPrefix = "BAG_";
+        private readonly BookingPaymentService _bookingPaymentService;
         private readonly DataContext _context;
 
-        public TicketController(DataContext context)
+        public TicketController(DataContext context, BookingPaymentService bookingPaymentService)
         {
             _context = context;
+            _bookingPaymentService = bookingPaymentService;
         }
 
         // ==============================================================
@@ -21,10 +26,15 @@ namespace Airline.Controllers
         public async Task<IActionResult> ViewConfirmation()
         {
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdStr)) 
+            if (string.IsNullOrEmpty(userIdStr))
                 return RedirectToAction("Login", "Account");
 
             int userId = int.Parse(userIdStr);
+            var reconciliationResult = await _bookingPaymentService.ReconcileSkyMilesAsync(userId);
+            if (reconciliationResult.IsHandled && reconciliationResult.WasUpdated)
+            {
+                await RefreshAuthenticatedUserClaimsAsync(reconciliationResult);
+            }
 
             var tickets = await _context.Tickets
                 .Include(t => t.Booking)
@@ -41,6 +51,33 @@ namespace Airline.Controllers
                 .ToListAsync();
 
             return View(tickets);
+        }
+
+        private async Task RefreshAuthenticatedUserClaimsAsync(BookingPaymentResult paymentResult)
+        {
+            if (User?.Identity?.IsAuthenticated != true || !paymentResult.UserId.HasValue)
+            {
+                return;
+            }
+
+            var authResult = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, paymentResult.UserId.Value.ToString()),
+                new Claim(ClaimTypes.Name, paymentResult.Username),
+                new Claim("FirstName", paymentResult.FirstName),
+                new Claim("LastName", paymentResult.LastName),
+                new Claim("SkyMiles", paymentResult.CurrentSkyMiles.ToString()),
+                new Claim(ClaimTypes.Role, paymentResult.Role)
+            };
+
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new ClaimsPrincipal(identity);
+
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                principal,
+                authResult.Properties ?? new AuthenticationProperties());
         }
 
         // ==============================================================
