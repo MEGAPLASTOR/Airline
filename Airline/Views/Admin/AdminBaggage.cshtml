@@ -2,6 +2,7 @@
 @{
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
     ViewData["Title"] = "Manage Baggage";
+    var hasAvailableTickets = Model.AvailableTickets.Any();
 }
 
 @section Styles {
@@ -100,12 +101,22 @@
                 <strong>Rule:</strong> ticket phai ton tai, ticket phai hop le, va moi ticket chi co 1 ban ghi hanh ly.
             </div>
 
-            <button type="submit" class="btn-primary" @(Model.AvailableTickets.Any() ? null : "disabled")>
-                <i class="fa-solid fa-plus"></i>
-                Tao hanh ly
-            </button>
+            @if (hasAvailableTickets)
+            {
+                <button type="submit" class="btn-primary">
+                    <i class="fa-solid fa-plus"></i>
+                    Tao hanh ly
+                </button>
+            }
+            else
+            {
+                <button type="submit" class="btn-primary" disabled>
+                    <i class="fa-solid fa-plus"></i>
+                    Tao hanh ly
+                </button>
+            }
 
-            @if (!Model.AvailableTickets.Any())
+            @if (!hasAvailableTickets)
             {
                 <p class="empty-helper">Khong con ticket phu hop de tao moi.</p>
             }

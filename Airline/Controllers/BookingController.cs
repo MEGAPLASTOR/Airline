@@ -137,20 +137,34 @@ namespace Airline.Controllers
 
         // POST: Confirm and Save Booking
         [HttpPost]
-        [IgnoreAntiforgeryToken] // Rule out Antiforgery issues for now
+        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> ConfirmBooking([FromForm] BookingViewModel model)
         {
             if (model == null) return BadRequest("Model is null");
+
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdStr)) return Redirect("/");
+            int userId = int.Parse(userIdStr);
+
+            if (!await PopulatePassengerInfoStateAsync(model))
+            {
+                return NotFound();
+            }
+
+            Promotion? appliedPromotion = null;
+            if (!string.IsNullOrWhiteSpace(model.PromoCode))
+            {
+                appliedPromotion = await _promotionService.GetPromotionByCodeAsync(model.PromoCode);
+                if (appliedPromotion == null)
+                {
+                    ModelState.AddModelError(nameof(model.PromoCode), "Promotion code is invalid or expired.");
+                }
+            }
 
             if (!ModelState.IsValid)
             {
                 return View("PassengerInfo", model);
             }
-
-            // Authentication check - Redirect to "/" if not logged in
-            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdStr)) return Redirect("/"); 
-            int userId = int.Parse(userIdStr);
 
             using (var transaction = await _context.Database.BeginTransactionAsync())
             {
