@@ -91,7 +91,8 @@ namespace Airline.Controllers
                         Amount = totalAmount,
                         PaymentDate = DateTime.Now,
                         PaymentMethod = "MANUAL_ADMIN", // Đánh dấu xác nhận bởi Admin
-                        PaymentStatus = "SUCCESS"
+                        PaymentStatus = "SUCCESS",
+                        TransactionNo = "MANUAL_APPROVAL"
                     };
                     _context.Payments.Add(payment);
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace Airline.Models;
@@ -16,6 +16,7 @@ public partial class Payment
     public string? PaymentStatus { get; set; }
 
     public DateTime? PaymentDate { get; set; }
+    public string? TransactionNo { get; set; }
 
     public virtual Booking Booking { get; set; } = null!;
 }

@@ -218,6 +218,9 @@ public partial class DataContext : DbContext
             entity.Property(e => e.PaymentStatus)
                 .HasMaxLength(20)
                 .HasColumnName("payment_status");
+            entity.Property(e => e.TransactionNo)
+                .HasMaxLength(100)
+                .HasColumnName("transaction_no");
 
             entity.HasOne(d => d.Booking).WithMany(p => p.Payments)
                 .HasForeignKey(d => d.BookingId)

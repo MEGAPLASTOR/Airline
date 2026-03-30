@@ -177,7 +177,8 @@ namespace Airline.Controllers
                             Amount = totalAmount,
                             PaymentDate = DateTime.Now,
                             PaymentMethod = "VNPAY",
-                            PaymentStatus = "SUCCESS"
+                            PaymentStatus = "SUCCESS",
+                            TransactionNo = transactionNo
                         };
                         _context.Payments.Add(payment);
 
