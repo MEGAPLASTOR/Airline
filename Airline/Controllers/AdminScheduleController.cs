@@ -578,6 +578,14 @@ namespace Airline.Controllers
             }
 
             var classId = await ResolveSeatClassIdAsync();
+            if (classId <= 0)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "No ticket class is configured for seat blocking."
+                });
+            }
 
             if (seat == null)
             {
@@ -597,7 +605,7 @@ namespace Airline.Controllers
                 seat.SeatStatus = "BLOCKED";
             }
 
-            var booking = new Booking
+            var blockedBooking = new Booking
             {
                 UserId = systemUser.UserId,
                 ScheduleId = scheduleId,
@@ -605,22 +613,22 @@ namespace Airline.Controllers
                 BookingType = "ADMIN_BLOCK",
                 Status = "BLOCKED"
             };
-            _context.Bookings.Add(booking);
+            _context.Bookings.Add(blockedBooking);
             await _context.SaveChangesAsync();
 
-            var passenger = new Passenger
+            var blockedPassenger = new Passenger
             {
-                BookingId = booking.BookingId,
+                BookingId = blockedBooking.BookingId,
                 FullName = "ADMIN BLOCK",
                 PassengerType = "SYSTEM"
             };
-            _context.Passengers.Add(passenger);
+            _context.Passengers.Add(blockedPassenger);
             await _context.SaveChangesAsync();
 
             var ticket = new Ticket
             {
-                BookingId = booking.BookingId,
-                PassengerId = passenger.PassengerId,
+                BookingId = blockedBooking.BookingId,
+                PassengerId = blockedPassenger.PassengerId,
                 ClassId = classId,
                 SeatId = seat.SeatId,
                 Status = "BLOCKED"
