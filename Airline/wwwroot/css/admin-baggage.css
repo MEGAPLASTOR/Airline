@@ -49,6 +49,34 @@
     outline: none;
 }
 
+.baggage-form .form-group input.form-control,
+.baggage-form .form-group select.form-control {
+    min-height: 3.1rem;
+    padding: 0.85rem 0.95rem;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+    box-shadow: none;
+}
+
+.baggage-form .form-group select.form-control {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 2.4rem;
+}
+
+.baggage-form .form-group input.form-control:focus,
+.baggage-form .form-group select.form-control:focus,
+.inline-weight-input:focus {
+    border-color: rgba(23,170,184,0.42);
+    background: rgba(255,255,255,0.08);
+}
+
+.baggage-form .form-group select.form-control option {
+    color: #061525;
+    background: #f7fbfd;
+}
+
 .admin-note-box {
     padding: 0.95rem 1rem;
     border-radius: 16px;

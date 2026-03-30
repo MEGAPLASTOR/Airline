@@ -25,7 +25,7 @@ namespace Airline.Controllers
 
         [HttpPost("CreateBaggage")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateBaggage(BaggageRegisterInputModel model)
+        public async Task<IActionResult> CreateBaggage([Bind(Prefix = "CreateForm")] BaggageRegisterInputModel model)
         {
             if (!IsAdmin()) return RedirectIfNotAdmin();
 

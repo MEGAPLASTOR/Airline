@@ -195,6 +195,38 @@
     outline: none;
 }
 
+.register-form .form-group input.form-control,
+.register-form .form-group select.form-control {
+    min-height: 3.35rem;
+    padding: 0.95rem 1rem;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.06);
+    color: #fff;
+    box-shadow: none;
+}
+
+.register-form .form-group select.form-control {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 2.8rem;
+}
+
+.register-form .form-group input.form-control::placeholder,
+.register-form .form-group select.form-control::placeholder {
+    color: rgba(255,255,255,0.42);
+}
+
+.register-form .form-group input.form-control:focus,
+.register-form .form-group select.form-control:focus {
+    border-color: rgba(23,170,184,0.42);
+    background: rgba(255,255,255,0.1);
+}
+
+.register-form .form-group select.form-control option {
+    color: #061525;
+    background: #f7fbfd;
+}
+
 .form-control:disabled {
     opacity: 0.6;
     cursor: not-allowed;

@@ -28,7 +28,7 @@ namespace Airline.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ProcessRegister(BaggageRegisterInputModel model)
+        public async Task<IActionResult> ProcessRegister([Bind(Prefix = "Form")] BaggageRegisterInputModel model)
         {
             var userId = GetCurrentUserId();
             if (userId == null) return Redirect("/");
