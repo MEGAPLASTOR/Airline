@@ -75,7 +75,22 @@ namespace Airline.Controllers
         [HttpPost]
         public async Task<IActionResult> ConfirmBooking(BookingViewModel model)
         {
-            if (!ModelState.IsValid) return View("PassengerInfo", model);
+            ModelState.Remove(nameof(model.Destination));
+            ModelState.Remove(nameof(model.Origin));
+            ModelState.Remove(nameof(model.FlightNumber));
+            ModelState.Remove(nameof(model.DepartureTime));
+            ModelState.Remove(nameof(model.Price));
+
+            if (!ModelState.IsValid)
+            {
+                var errors = string.Join("; ", ModelState.Values
+                                        .SelectMany(x => x.Errors)
+                                        .Select(x => x.ErrorMessage));
+                Console.WriteLine($"[ConfirmBooking] ModelState is INVALID. Errors: {errors}");
+                
+                RehydrateBookingModel(model);
+                return View("PassengerInfo", model);
+            }
 
             // Authentication check
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -113,11 +128,19 @@ namespace Airline.Controllers
                     await _context.SaveChangesAsync();
 
                     // 3. Create Ticket
+                    var ticketClass = await _context.TicketClasses.FirstOrDefaultAsync();
+                    if (ticketClass == null)
+                    {
+                        ticketClass = new TicketClass { ClassName = "Economy" };
+                        _context.TicketClasses.Add(ticketClass);
+                        await _context.SaveChangesAsync();
+                    }
+
                     var ticket = new Ticket
                     {
                         BookingId = booking.BookingId,
                         PassengerId = passenger.PassengerId,
-                        ClassId = (await _context.TicketClasses.FirstOrDefaultAsync())?.ClassId ?? 1,
+                        ClassId = ticketClass.ClassId,
                         SeatNumber = model.SeatNumber,
                         Status = "ACTIVE"
                     };
@@ -133,10 +156,30 @@ namespace Airline.Controllers
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine($"[ConfirmBooking] Exception occurred: {ex.Message}\n{ex.StackTrace}");
                     await transaction.RollbackAsync();
                     ModelState.AddModelError("", "Booking failed: " + ex.Message);
+                    RehydrateBookingModel(model);
                     return View("PassengerInfo", model);
                 }
+            }
+        }
+        private void RehydrateBookingModel(BookingViewModel model)
+        {
+            var schedule = _context.FlightSchedules
+                .Include(s => s.Flight)
+                    .ThenInclude(f => f.Route)
+                        .ThenInclude(r => r.DepartureCityNavigation)
+                .Include(s => s.Flight.Route.ArrivalCityNavigation)
+                .FirstOrDefault(s => s.ScheduleId == model.ScheduleId);
+
+            if (schedule != null)
+            {
+                model.FlightNumber = schedule.Flight?.FlightNumber ?? "Unknown";
+                model.Origin = schedule.Flight?.Route?.DepartureCityNavigation?.CityName ?? "Unknown";
+                model.Destination = schedule.Flight?.Route?.ArrivalCityNavigation?.CityName ?? "Unknown";
+                model.DepartureTime = schedule.DepartureTime;
+                model.Price = 1500000;
             }
         }
     }
