@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Collections.Generic;
 
 namespace Airline.Models
 {
@@ -21,5 +22,20 @@ namespace Airline.Models
         public DateTime? DepartureTime { get; set; }
         public string? FlightNumber { get; set; }
         public decimal? Price { get; set; }
+
+        [StringLength(50)]
+        public string? PromoCode { get; set; }
+
+        public int? AppliedPromotionId { get; set; }
+
+        public int DiscountPercent { get; set; }
+
+        public decimal TaxAmount { get; set; }
+
+        public decimal DiscountAmount { get; set; }
+
+        public decimal FinalPrice { get; set; }
+
+        public List<Promotion> AvailablePromotions { get; set; } = new();
     }
 }

@@ -61,7 +61,7 @@
 
     var isCommerceGroup = IsAny(
         ("Admin", "ManagePromotions"),
-        ("Admin", "ManageBaggage")
+        ("AdminBaggage", "ManageBaggage")
     );
 }
 
@@ -695,8 +695,8 @@
                     <a class="@(IsActive("Admin", "ManagePromotions") ? "active-sub-link" : "")"
                        asp-controller="Admin" asp-action="ManagePromotions">Manage Promotions</a>
 
-                    <a class="@(IsActive("Admin", "ManageBaggage") ? "active-sub-link" : "")"
-                       asp-controller="Admin" asp-action="ManageBaggage">Manage Baggage</a>
+                    <a class="@(IsActive("AdminBaggage", "ManageBaggage") ? "active-sub-link" : "")"
+                       asp-controller="AdminBaggage" asp-action="ManageBaggage">Manage Baggage</a>
                 </div>
             </div>
         </nav>

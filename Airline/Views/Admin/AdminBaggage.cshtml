@@ -1,4 +1,212 @@
-﻿@page
-@model Airline.Views.Admin.AdminBaggageModel
+﻿@model Airline.Models.AdminBaggagePageViewModel
 @{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Manage Baggage";
 }
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin-unified.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin-baggage.css" asp-append-version="true" />
+}
+
+<div class="page-header">
+    <div class="page-title-block">
+        <div class="page-greeting">Commerce Operations</div>
+        <h1 class="page-title">Manage <span>Baggage</span></h1>
+        <p class="page-subtitle">Admin co the tao, cap nhat va xoa hanh ly theo tung ticket hop le.</p>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert-box alert-success">
+        <i class="fa-solid fa-circle-check"></i>
+        <span>@TempData["SuccessMessage"]</span>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert-box alert-error">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span>@TempData["ErrorMessage"]</span>
+    </div>
+}
+
+<div class="kpi-grid">
+    <div class="kpi-card" style="--kpi-accent:#17aab8">
+        <div class="kpi-top">
+            <div class="kpi-icon-wrap"><i class="fa-solid fa-suitcase-rolling"></i></div>
+        </div>
+        <div class="kpi-value">@Model.TotalBaggages</div>
+        <div class="kpi-label">Registered Baggage</div>
+    </div>
+
+    <div class="kpi-card" style="--kpi-accent:#5de8a8">
+        <div class="kpi-top">
+            <div class="kpi-icon-wrap"><i class="fa-solid fa-users"></i></div>
+        </div>
+        <div class="kpi-value">@Model.TotalCustomers</div>
+        <div class="kpi-label">Customers Covered</div>
+    </div>
+
+    <div class="kpi-card" style="--kpi-accent:#f0b429">
+        <div class="kpi-top">
+            <div class="kpi-icon-wrap"><i class="fa-solid fa-weight-hanging"></i></div>
+        </div>
+        <div class="kpi-value">@Model.TotalWeight.ToString("N2")</div>
+        <div class="kpi-label">Total Weight (kg)</div>
+    </div>
+
+    <div class="kpi-card" style="--kpi-accent:#ff6b6b">
+        <div class="kpi-top">
+            <div class="kpi-icon-wrap"><i class="fa-solid fa-money-bill-wave"></i></div>
+        </div>
+        <div class="kpi-value">@Model.TotalRevenue.ToString("N0")</div>
+        <div class="kpi-label">Baggage Revenue (VND)</div>
+    </div>
+</div>
+
+<div class="baggage-admin-grid">
+    <section class="table-card baggage-create-card">
+        <div class="section-head">
+            <div>
+                <h2>Create Baggage</h2>
+                <p>Chi co the tao cho ticket chua co hanh ly va khong bi huy.</p>
+            </div>
+        </div>
+
+        <form asp-controller="AdminBaggage" asp-action="CreateBaggage" method="post" class="baggage-form">
+            @Html.AntiForgeryToken()
+            <div class="form-group">
+                <label asp-for="CreateForm.TicketId">Ticket</label>
+                <select asp-for="CreateForm.TicketId" class="form-control">
+                    <option value="">Chon ticket</option>
+                    @foreach (var ticket in Model.AvailableTickets)
+                    {
+                        <option value="@ticket.TicketId">
+                            @ticket.DisplayText | @ticket.CustomerName (@ticket.Username)
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="CreateForm.Weight">Weight (kg)</label>
+                <input asp-for="CreateForm.Weight" type="number" min="1" max="99.99" step="0.01" class="form-control" />
+            </div>
+
+            <div class="admin-note-box">
+                <strong>Rule:</strong> ticket phai ton tai, ticket phai hop le, va moi ticket chi co 1 ban ghi hanh ly.
+            </div>
+
+            <button type="submit" class="btn-primary" @(Model.AvailableTickets.Any() ? null : "disabled")>
+                <i class="fa-solid fa-plus"></i>
+                Tao hanh ly
+            </button>
+
+            @if (!Model.AvailableTickets.Any())
+            {
+                <p class="empty-helper">Khong con ticket phu hop de tao moi.</p>
+            }
+        </form>
+    </section>
+
+    <section class="table-card baggage-list-card">
+        <div class="section-head">
+            <div>
+                <h2>Baggage Records</h2>
+                <p>Cap nhat khoi luong se dong bo lai gia theo cong thuc 10,000 VND/kg.</p>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Ticket</th>
+                        <th>Customer</th>
+                        <th>Flight</th>
+                        <th>Weight</th>
+                        <th>Price</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Baggages.Any())
+                    {
+                        @foreach (var baggage in Model.Baggages)
+                        {
+                            <tr>
+                                <td class="td-mono">#BG-@baggage.BaggageId</td>
+                                <td>
+                                    <div class="detail-stack">
+                                        <span class="detail-primary">Ticket #@baggage.TicketId</span>
+                                        <span class="detail-secondary">Booking #@baggage.BookingId</span>
+                                        <span class="detail-secondary">@baggage.PassengerName</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="detail-stack">
+                                        <span class="detail-primary">@baggage.CustomerName</span>
+                                        <span class="detail-secondary">@@@baggage.Username</span>
+                                        <span class="detail-secondary">User ID: @baggage.UserId</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="detail-stack">
+                                        <span class="detail-primary">@baggage.FlightNumber</span>
+                                        <span class="detail-secondary">@baggage.RouteLabel</span>
+                                        <span class="detail-secondary">@(baggage.DepartureTime?.ToString("dd/MM/yyyy HH:mm") ?? "-")</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="status-pill pill-green">@baggage.Weight.ToString("N2") kg</span>
+                                </td>
+                                <td class="amount-text">@baggage.Price.ToString("N0") VND</td>
+                                <td class="text-center">
+                                    <div class="row-actions">
+                                        <form asp-controller="AdminBaggage" asp-action="UpdateBaggage" method="post" class="inline-action-form">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="BaggageId" value="@baggage.BaggageId" />
+                                            <input type="number"
+                                                   name="Weight"
+                                                   min="1"
+                                                   max="99.99"
+                                                   step="0.01"
+                                                   value="@baggage.Weight.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
+                                                   class="inline-weight-input" />
+                                            <button type="submit" class="btn-success">
+                                                <i class="fa-solid fa-floppy-disk"></i>
+                                                Save
+                                            </button>
+                                        </form>
+
+                                        <form asp-controller="AdminBaggage" asp-action="DeleteBaggage" method="post" class="inline-action-form danger">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="baggageId" value="@baggage.BaggageId" />
+                                            <button type="submit" class="btn-danger">
+                                                <i class="fa-solid fa-trash"></i>
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="empty-state">
+                                <i class="fa-solid fa-suitcase-rolling"></i>
+                                Chua co ban ghi hanh ly nao.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>

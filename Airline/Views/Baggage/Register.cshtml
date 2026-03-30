@@ -1,0 +1,214 @@
+@model Airline.Models.UserBaggagePageViewModel
+@{
+    ViewData["Title"] = "Dang Ky Hanh Ly";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/baggage-register.css" asp-append-version="true" />
+}
+
+<div class="baggage-page">
+    <section class="baggage-hero">
+        <div>
+            <span class="baggage-kicker">Baggage Service</span>
+            <h1>Dang ky hanh ly theo <span>ticket cua ban</span></h1>
+            <p>
+                He thong chi cho phep dang ky hanh ly khi ban da co ticket hop le.
+                Moi ticket chi dang ky mot lan de dam bao du lieu dong bo voi CSDL.
+            </p>
+        </div>
+
+        <a asp-controller="Ticket" asp-action="ViewConfirmation" class="hero-link">
+            <i class="fa-solid fa-ticket"></i>
+            Xem ticket cua toi
+        </a>
+    </section>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="message-banner success">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>@TempData["SuccessMessage"]</span>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="message-banner error">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <span>@TempData["ErrorMessage"]</span>
+        </div>
+    }
+
+    <section class="baggage-stats">
+        <article class="stat-card">
+            <span class="stat-label">Tong ticket hop le</span>
+            <strong>@Model.TotalOwnedTickets</strong>
+        </article>
+        <article class="stat-card">
+            <span class="stat-label">Ticket chua dang ky</span>
+            <strong>@Model.EligibleTicketCount</strong>
+        </article>
+        <article class="stat-card">
+            <span class="stat-label">Da dang ky</span>
+            <strong>@Model.RegisteredBaggages.Count</strong>
+        </article>
+        <article class="stat-card">
+            <span class="stat-label">Tong phi hanh ly</span>
+            <strong>@Model.TotalRegisteredPrice.ToString("N0") VND</strong>
+        </article>
+    </section>
+
+    <section class="baggage-content">
+        <div class="register-card">
+            <div class="card-head">
+                <h2>Dang ky hanh ly moi</h2>
+                <p>Chon mot ticket chua co hanh ly, nhap so kg va he thong se tu tinh gia.</p>
+            </div>
+
+            @if (Model.TotalOwnedTickets == 0)
+            {
+                <div class="empty-callout">
+                    <i class="fa-solid fa-plane-circle-xmark"></i>
+                    <div>
+                        <h3>Ban chua co ticket</h3>
+                        <p>Phai co ticket truoc thi moi dang ky duoc hanh ly.</p>
+                    </div>
+                    <a asp-controller="Booking" asp-action="BookFlight" class="primary-btn">
+                        Dat ve ngay
+                    </a>
+                </div>
+            }
+            else
+            {
+                <form asp-action="ProcessRegister" method="post" class="register-form">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+
+                    <div class="form-group">
+                        <label asp-for="Form.TicketId">Ticket duoc phep dang ky</label>
+                        <select asp-for="Form.TicketId" class="form-control" @(Model.AvailableTickets.Any() ? null : "disabled")>
+                            <option value="">Chon ticket</option>
+                            @foreach (var ticket in Model.AvailableTickets)
+                            {
+                                <option value="@ticket.TicketId">@ticket.DisplayText</option>
+                            }
+                        </select>
+                        <span asp-validation-for="Form.TicketId" class="field-error"></span>
+                        @if (!Model.AvailableTickets.Any())
+                        {
+                            <p class="field-note">Tat ca ticket hop le cua ban da co hanh ly hoac khong con du dieu kien dang ky.</p>
+                        }
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Form.Weight">Khoi luong (kg)</label>
+                        <input asp-for="Form.Weight" class="form-control" type="number" min="1" max="99.99" step="0.01" id="baggageWeightInput" />
+                        <span asp-validation-for="Form.Weight" class="field-error"></span>
+                    </div>
+
+                    <div class="price-preview">
+                        <span>Gia tam tinh</span>
+                        <strong id="pricePreview">0 VND</strong>
+                        <small>Cong thuc hien tai: 10,000 VND / kg</small>
+                    </div>
+
+                    <div class="rule-box">
+                        <h3>Rang buoc bat buoc</h3>
+                        <ul>
+                            <li>Phai dang nhap va co ticket thuoc tai khoan hien tai.</li>
+                            <li>Ticket bi huy/blocked se khong duoc dang ky hanh ly.</li>
+                            <li>Moi ticket chi dang ky mot ban ghi hanh ly.</li>
+                        </ul>
+                    </div>
+
+                    <button type="submit" class="primary-btn" @(Model.AvailableTickets.Any() ? null : "disabled")>
+                        <i class="fa-solid fa-suitcase-rolling"></i>
+                        Dang ky hanh ly
+                    </button>
+                </form>
+            }
+        </div>
+
+        <div class="registered-card">
+            <div class="card-head">
+                <h2>Danh sach hanh ly da dang ky</h2>
+                <p>Ban co the huy dang ky de tao lai mot ticket khac neu can.</p>
+            </div>
+
+            @if (Model.RegisteredBaggages.Any())
+            {
+                <div class="registered-list">
+                    @foreach (var baggage in Model.RegisteredBaggages)
+                    {
+                        <article class="registered-item">
+                            <div class="item-main">
+                                <div class="item-route">
+                                    <strong>@baggage.RouteLabel</strong>
+                                    <span>@baggage.FlightNumber</span>
+                                </div>
+                                <div class="item-meta">
+                                    <span>Ticket #@baggage.TicketId</span>
+                                    <span>Booking #@baggage.BookingId</span>
+                                    <span>@baggage.PassengerName</span>
+                                    <span>@(baggage.DepartureTime?.ToString("dd/MM/yyyy HH:mm") ?? "-")</span>
+                                </div>
+                            </div>
+
+                            <div class="item-side">
+                                <div class="metric-pill">
+                                    <span>Khoi luong</span>
+                                    <strong>@baggage.Weight.ToString("N2") kg</strong>
+                                </div>
+                                <div class="metric-pill">
+                                    <span>Phi</span>
+                                    <strong>@baggage.Price.ToString("N0") VND</strong>
+                                </div>
+                                <div class="metric-pill status">
+                                    <span>Trang thai ticket</span>
+                                    <strong>@baggage.TicketStatus</strong>
+                                </div>
+                            </div>
+
+                            <form asp-action="DeleteRegistration" method="post" class="inline-delete-form">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="baggageId" value="@baggage.BaggageId" />
+                                <button type="submit" class="ghost-danger-btn">
+                                    <i class="fa-solid fa-trash"></i>
+                                    Huy dang ky
+                                </button>
+                            </form>
+                        </article>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="empty-panel">
+                    <i class="fa-solid fa-suitcase"></i>
+                    <p>Chua co dang ky hanh ly nao duoc tao tren tai khoan nay.</p>
+                </div>
+            }
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const weightInput = document.getElementById('baggageWeightInput');
+            const preview = document.getElementById('pricePreview');
+            if (!weightInput || !preview) return;
+
+            const updatePreview = () => {
+                const weight = Number.parseFloat(weightInput.value || '0');
+                const price = Number.isFinite(weight) && weight > 0 ? weight * 10000 : 0;
+                preview.textContent = `${price.toLocaleString('vi-VN')} VND`;
+            };
+
+            updatePreview();
+            weightInput.addEventListener('input', updatePreview);
+        })();
+    </script>
+}

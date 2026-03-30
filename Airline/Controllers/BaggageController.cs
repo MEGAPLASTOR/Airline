@@ -113,7 +113,10 @@ namespace Airline.Controllers
                 .AsNoTracking()
                 .Where(t =>
                     t.Booking.UserId == userId &&
-                    CanRegisterForTicket(t.Status, t.Booking.Status))
+                    t.Status != "CANCELLED" &&
+                    t.Status != "BLOCKED" &&
+                    t.Booking.Status != "CANCELLED" &&
+                    t.Booking.Status != "BLOCKED")
                 .OrderByDescending(t => t.Booking.BookingDate)
                 .ThenByDescending(t => t.TicketId)
                 .Select(t => new
