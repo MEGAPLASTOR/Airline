@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Dang Ky Hanh Ly";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    var hasAvailableTickets = Model.AvailableTickets.Any();
 }
 
 @section Styles {
@@ -88,15 +89,24 @@
 
                     <div class="form-group">
                         <label asp-for="Form.TicketId">Ticket duoc phep dang ky</label>
-                        <select asp-for="Form.TicketId" class="form-control" @(Model.AvailableTickets.Any() ? null : "disabled")>
-                            <option value="">Chon ticket</option>
-                            @foreach (var ticket in Model.AvailableTickets)
-                            {
-                                <option value="@ticket.TicketId">@ticket.DisplayText</option>
-                            }
-                        </select>
+                        @if (hasAvailableTickets)
+                        {
+                            <select asp-for="Form.TicketId" class="form-control">
+                                <option value="">Chon ticket</option>
+                                @foreach (var ticket in Model.AvailableTickets)
+                                {
+                                    <option value="@ticket.TicketId">@ticket.DisplayText</option>
+                                }
+                            </select>
+                        }
+                        else
+                        {
+                            <select asp-for="Form.TicketId" class="form-control" disabled>
+                                <option value="">Khong co ticket phu hop</option>
+                            </select>
+                        }
                         <span asp-validation-for="Form.TicketId" class="field-error"></span>
-                        @if (!Model.AvailableTickets.Any())
+                        @if (!hasAvailableTickets)
                         {
                             <p class="field-note">Tat ca ticket hop le cua ban da co hanh ly hoac khong con du dieu kien dang ky.</p>
                         }
@@ -123,10 +133,20 @@
                         </ul>
                     </div>
 
-                    <button type="submit" class="primary-btn" @(Model.AvailableTickets.Any() ? null : "disabled")>
-                        <i class="fa-solid fa-suitcase-rolling"></i>
-                        Dang ky hanh ly
-                    </button>
+                    @if (hasAvailableTickets)
+                    {
+                        <button type="submit" class="primary-btn">
+                            <i class="fa-solid fa-suitcase-rolling"></i>
+                            Dang ky hanh ly
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="primary-btn" disabled>
+                            <i class="fa-solid fa-suitcase-rolling"></i>
+                            Dang ky hanh ly
+                        </button>
+                    }
                 </form>
             }
         </div>

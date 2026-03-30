@@ -10,11 +10,16 @@ namespace Airline.Controllers
     {
         private readonly DataContext _context;
         private readonly SeatService _seatService;
+        private readonly PromotionService _promotionService;
 
-        public BookingController(DataContext context, SeatService seatService)
+        public BookingController(
+            DataContext context,
+            SeatService seatService,
+            PromotionService promotionService)
         {
             _context = context;
             _seatService = seatService;
+            _promotionService = promotionService;
         }
 
         // 1. Search and Select Flight
@@ -72,37 +77,55 @@ namespace Airline.Controllers
         [HttpPost]
         public async Task<IActionResult> PassengerInfo(int scheduleId, int seatId)
         {
-            var schedule = await _context.FlightSchedules
-                .Include(s => s.Flight)
-                    .ThenInclude(f => f.Route)
-                        .ThenInclude(r => r.DepartureCityNavigation)
-                .Include(s => s.Flight.Route.ArrivalCityNavigation)
-                .FirstOrDefaultAsync(s => s.ScheduleId == scheduleId);
-
-            var seat = await _context.Seats
-                .Include(s => s.Class)
-                .FirstOrDefaultAsync(s => s.SeatId == seatId);
-
-            if (schedule == null || seat == null) return NotFound();
-
-            // Fetch price for this cabin class
-            var priceEntry = await _context.TicketPrices
-                .FirstOrDefaultAsync(p => p.ScheduleId == scheduleId && p.ClassId == seat.ClassId);
-
-            var model = new BookingViewModel
-            {
-                ScheduleId = scheduleId,
-                SeatId = seatId,
-                ClassId = seat.ClassId,
-                SeatNumber = seat.SeatNumber,
-                FlightNumber = schedule.Flight?.FlightNumber ?? "Unknown",
-                DepartureTime = schedule.DepartureTime,
-                Origin = schedule.Flight?.Route?.DepartureCityNavigation?.CityName ?? "Unknown",
-                Destination = schedule.Flight?.Route?.ArrivalCityNavigation?.CityName ?? "Unknown",
-                Price = priceEntry?.Price ?? 1500000 // Fallback price
-            };
+            var model = await BuildPassengerInfoModelAsync(scheduleId, seatId);
+            if (model == null) return NotFound();
 
             return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ApplyPromotion()
+        {
+            var promotions = await _context.Promotions
+                .AsNoTracking()
+                .OrderByDescending(p => p.DiscountPercent ?? 0)
+                .ThenBy(p => p.StartDate)
+                .ToListAsync();
+
+            return View(promotions);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ValidatePromotion(int scheduleId, int seatId, string code)
+        {
+            var seat = await _context.Seats
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.SeatId == seatId && s.ScheduleId == scheduleId);
+
+            if (seat == null)
+            {
+                return Json(new { success = false, message = "Seat or schedule not found." });
+            }
+
+            var promotion = await _promotionService.GetPromotionByCodeAsync(code);
+            if (promotion == null)
+            {
+                return Json(new { success = false, message = "Promotion code is invalid or expired." });
+            }
+
+            var pricing = await _promotionService.CalculateSingleTicketAsync(scheduleId, seat.ClassId, code);
+
+            return Json(new
+            {
+                success = true,
+                promoId = pricing.AppliedPromotionId,
+                promoCode = pricing.AppliedPromotionCode,
+                discountPercent = pricing.DiscountPercent,
+                baseFare = pricing.BaseFare,
+                taxAmount = pricing.TaxAmount,
+                discountAmount = pricing.DiscountAmount,
+                finalAmount = pricing.FinalAmount
+            });
         }
 
         // GET: ConfirmBooking (Redirect back if hit directly or refreshed)
