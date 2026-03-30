@@ -294,6 +294,8 @@ namespace Airline.Controllers
             schedule.Status = NormalizeStatus(status, "SCHEDULED", ScheduleStatuses);
 
             await _context.SaveChangesAsync();
+            await _seatService.GenerateSeatsAsync(id);
+
             return Json(new { success = true });
         }
 
