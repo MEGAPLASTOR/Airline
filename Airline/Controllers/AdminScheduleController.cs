@@ -1,4 +1,5 @@
 using Airline.Models;
+using Airline.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,6 +8,7 @@ namespace Airline.Controllers
     [Route("Admin")]
     public class AdminScheduleController : AdminBaseController
     {
+        private readonly SeatService _seatService;
         private static readonly HashSet<string> ScheduleStatuses = new(StringComparer.OrdinalIgnoreCase)
         {
             "SCHEDULED",
@@ -21,8 +23,9 @@ namespace Airline.Controllers
             "DELAYED"
         };
 
-        public AdminScheduleController(DataContext context) : base(context)
+        public AdminScheduleController(DataContext context, SeatService seatService) : base(context)
         {
+            _seatService = seatService;
         }
 
         [HttpGet("FlightSchedules")]
@@ -200,6 +203,8 @@ namespace Airline.Controllers
 
             _context.FlightSchedules.Add(schedule);
             await _context.SaveChangesAsync();
+
+            await _seatService.GenerateSeatsAsync(schedule.ScheduleId);
 
             return Json(new { success = true });
         }
