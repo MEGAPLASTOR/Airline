@@ -8,11 +8,16 @@ namespace Airline.Controllers
     [Route("Admin")]
     public class AdminBookingController : AdminBaseController
     {
+        private readonly BookingPaymentService _bookingPaymentService;
         private readonly PromotionService _promotionService;
 
-        public AdminBookingController(DataContext context, PromotionService promotionService) : base(context)
+        public AdminBookingController(
+            DataContext context,
+            PromotionService promotionService,
+            BookingPaymentService bookingPaymentService) : base(context)
         {
             _promotionService = promotionService;
+            _bookingPaymentService = bookingPaymentService;
         }
 
         // ==============================================================
@@ -62,59 +67,30 @@ namespace Airline.Controllers
             if (!IsAdmin()) return Unauthorized();
 
             var booking = await _context.Bookings
-                .Include(b => b.Tickets)
-                .Include(b => b.BookingPromotions)
-                    .ThenInclude(bp => bp.Promo)
+                .AsNoTracking()
                 .FirstOrDefaultAsync(b => b.BookingId == bookingId);
 
             if (booking == null) return NotFound();
-            if (booking.Status == "PAID") 
+            if (booking.Status == "PAID")
             {
                 TempData["ErrorMessage"] = "This booking is already paid.";
                 return RedirectToAction(nameof(ConfirmTicket));
             }
 
-            using (var transaction = await _context.Database.BeginTransactionAsync())
+            var paymentResult = await _bookingPaymentService.FinalizeSuccessfulBookingPaymentAsync(
+                bookingId,
+                "MANUAL_ADMIN",
+                $"MANUAL_APPROVAL_{bookingId}_{DateTime.Now.Ticks}");
+
+            if (!paymentResult.IsHandled)
             {
-                try
-                {
-                    // 1. Update the booking status.
-                    booking.Status = "PAID";
-
-                    decimal totalAmount = 0;
-                    // 2. Update each related ticket.
-                    foreach (var ticket in booking.Tickets)
-                    {
-                        ticket.Status = "PAID";
-                        
-                        // Use the actual ticket price when available.
-                        var priceEntry = await _context.TicketPrices
-                            .FirstOrDefaultAsync(p => p.ScheduleId == booking.ScheduleId && p.ClassId == ticket.ClassId);
-                        totalAmount += priceEntry?.Price ?? 1500000;
-                    }
-
-                    // 3. Create a payment record for the admin confirmation.
-                    var payment = new Payment
-                    {
-                        BookingId = bookingId,
-                        Amount = (await _promotionService.CalculateBookingAsync(booking)).FinalAmount,
-                        PaymentDate = DateTime.Now,
-                        PaymentMethod = "MANUAL_ADMIN", // Marked as confirmed by an admin.
-                        PaymentStatus = "SUCCESS",
-                        TransactionNo = "MANUAL_APPROVAL"
-                    };
-                    _context.Payments.Add(payment);
-
-                    await _context.SaveChangesAsync();
-                    await transaction.CommitAsync();
-
-                    TempData["SuccessMessage"] = $"Successfully confirmed Booking #{bookingId}.";
-                }
-                catch (Exception ex)
-                {
-                    await transaction.RollbackAsync();
-                    TempData["ErrorMessage"] = $"Error confirming booking: {ex.Message}";
-                }
+                TempData["ErrorMessage"] = $"Error confirming booking #{bookingId}.";
+            }
+            else
+            {
+                TempData["SuccessMessage"] = paymentResult.SkyMilesAwarded > 0
+                    ? $"Successfully confirmed Booking #{bookingId} and awarded {paymentResult.SkyMilesAwarded:N0} SkyMiles."
+                    : $"Successfully confirmed Booking #{bookingId}.";
             }
 
             return RedirectToAction(nameof(ConfirmTicket));

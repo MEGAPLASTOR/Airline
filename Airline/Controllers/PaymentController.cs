@@ -1,7 +1,10 @@
 ﻿using Airline.Models;
 using Airline.Services;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace Airline.Controllers
 {
@@ -11,13 +14,19 @@ namespace Airline.Controllers
         private const string BaggageTransactionPrefix = "BAG_";
         private readonly DataContext _context;
         private readonly IConfiguration _configuration;
+        private readonly BookingPaymentService _bookingPaymentService;
         private readonly PromotionService _promotionService;
 
-        public PaymentController(DataContext context, IConfiguration configuration, PromotionService promotionService)
+        public PaymentController(
+            DataContext context,
+            IConfiguration configuration,
+            PromotionService promotionService,
+            BookingPaymentService bookingPaymentService)
         {
             _context = context;
             _configuration = configuration;
             _promotionService = promotionService;
+            _bookingPaymentService = bookingPaymentService;
         }
 
         public async Task<IActionResult> CreatePayment(int id)
@@ -117,9 +126,22 @@ namespace Airline.Controllers
                     var bookingId = ParseBookingId(txnRef);
                     if (responseCode == "00")
                     {
-                        await UpdateBookingStatus(bookingId, "PAID", transactionNo);
-                        ViewBag.Message = "Payment was successful.";
-                        ViewBag.Success = true;
+                        var paymentResult = await _bookingPaymentService.FinalizeSuccessfulBookingPaymentAsync(
+                            bookingId,
+                            "VNPAY",
+                            transactionNo);
+
+                        if (paymentResult.IsHandled)
+                        {
+                            await RefreshAuthenticatedUserClaimsAsync(paymentResult);
+                            ViewBag.Message = BuildBookingPaymentSuccessMessage(paymentResult);
+                            ViewBag.Success = true;
+                        }
+                        else
+                        {
+                            ViewBag.Message = "Payment was accepted, but we could not update your booking. Please contact support.";
+                            ViewBag.Success = false;
+                        }
                     }
                     else
                     {
@@ -159,7 +181,15 @@ namespace Airline.Controllers
                     }
                     else
                     {
-                        await UpdateBookingStatus(ParseBookingId(txnRef), "PAID", transactionNo);
+                        var paymentResult = await _bookingPaymentService.FinalizeSuccessfulBookingPaymentAsync(
+                            ParseBookingId(txnRef),
+                            "VNPAY",
+                            transactionNo);
+
+                        if (!paymentResult.IsHandled)
+                        {
+                            return Json(new { RspCode = "01", Message = "Booking update failed" });
+                        }
                     }
 
                     return Json(new { RspCode = "00", Message = "Confirm Success" });
@@ -204,44 +234,57 @@ namespace Airline.Controllers
             return vnpay;
         }
 
-        private async Task UpdateBookingStatus(int bookingId, string status, string transactionNo)
+        private async Task RefreshAuthenticatedUserClaimsAsync(BookingPaymentResult paymentResult)
         {
-            var booking = await _context.Bookings
-                .Include(b => b.Tickets)
-                .Include(b => b.BookingPromotions)
-                    .ThenInclude(bp => bp.Promo)
-                .FirstOrDefaultAsync(b => b.BookingId == bookingId);
-
-            if (booking != null && booking.Status != "PAID")
+            if (User?.Identity?.IsAuthenticated != true || !paymentResult.UserId.HasValue)
             {
-                using var transaction = await _context.Database.BeginTransactionAsync();
-                try
-                {
-                    booking.Status = status;
-                    foreach (var ticket in booking.Tickets)
-                    {
-                        ticket.Status = status;
-                    }
-
-                    var payment = new Payment
-                    {
-                        BookingId = bookingId,
-                        Amount = (await _promotionService.CalculateBookingAsync(booking)).FinalAmount,
-                        PaymentDate = DateTime.Now,
-                        PaymentMethod = "VNPAY",
-                        PaymentStatus = "SUCCESS",
-                        TransactionNo = transactionNo
-                    };
-                    _context.Payments.Add(payment);
-
-                    await _context.SaveChangesAsync();
-                    await transaction.CommitAsync();
-                }
-                catch
-                {
-                    await transaction.RollbackAsync();
-                }
+                return;
             }
+
+            var authenticatedUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var canRefreshByUserId =
+                int.TryParse(authenticatedUserId, out var currentUserId) &&
+                currentUserId == paymentResult.UserId.Value;
+            var canRefreshByUsername = string.Equals(User.Identity?.Name, paymentResult.Username, StringComparison.OrdinalIgnoreCase);
+
+            if (!canRefreshByUserId && !canRefreshByUsername)
+            {
+                return;
+            }
+
+            var authResult = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, paymentResult.UserId.Value.ToString()),
+                new Claim(ClaimTypes.Name, paymentResult.Username),
+                new Claim("FirstName", paymentResult.FirstName),
+                new Claim("LastName", paymentResult.LastName),
+                new Claim("SkyMiles", paymentResult.CurrentSkyMiles.ToString()),
+                new Claim(ClaimTypes.Role, paymentResult.Role)
+            };
+
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new ClaimsPrincipal(identity);
+
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                principal,
+                authResult.Properties ?? new AuthenticationProperties());
+        }
+
+        private static string BuildBookingPaymentSuccessMessage(BookingPaymentResult paymentResult)
+        {
+            if (paymentResult.SkyMilesAwarded > 0)
+            {
+                return $"Payment was successful. {paymentResult.SkyMilesAwarded:N0} SkyMiles have been added to your account. Current balance: {paymentResult.CurrentSkyMiles:N0} miles.";
+            }
+
+            if (!paymentResult.WasUpdated)
+            {
+                return "Payment was successful. Your booking had already been confirmed earlier.";
+            }
+
+            return "Payment was successful.";
         }
 
         private async Task UpdateBaggagePaymentStatus(int baggageId, string transactionNo)
