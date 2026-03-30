@@ -38,7 +38,7 @@
 
     var isTicketingGroup = IsAny(
         ("Admin", "TicketStatuses"),
-        ("Admin", "ConfirmTicket"),
+        ("AdminBooking", "ConfirmTicket"),
         ("ManageTicketClass", "TicketClasses"),
         ("TicketPrice", "TicketPrice")
     );
@@ -74,7 +74,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
     <style>
@@ -598,7 +598,7 @@
 </head>
 <body>
     <aside class="sidebar" id="sidebar">
-        <a class="sidebar-brand" asp-controller="Admin" asp-action="Dashboard">
+        <a class="sidebar-brand" asp-controller="AdminDashboard" asp-action="Dashboard">
             <div class="brand-icon"><i class="fa-solid fa-shield-halved"></i></div>
             <div class="brand-text">
                 <span class="brand-name">The Airline</span>
@@ -623,8 +623,8 @@
                     <a class="@(IsActive("Admin", "TicketStatuses") ? "active-sub-link" : "")"
                        asp-controller="Admin" asp-action="TicketStatuses">Manage Ticket Statuses</a>
 
-                    <a class="@(IsActive("Admin", "ConfirmTicket") ? "active-sub-link" : "")"
-                       asp-controller="Admin" asp-action="ConfirmTicket">Confirm Ticket</a>
+                    <a class="@(IsActive("AdminBooking", "ConfirmTicket") ? "active-sub-link" : "")"
+                       asp-controller="AdminBooking" asp-action="ConfirmTicket">Confirm Ticket</a>
 
                     <a class="@(IsActive("TicketPrice", "TicketPrice") ? "active-sub-link" : "")"
                        asp-controller="TicketPrice" asp-action="TicketPrice">Manage Ticket Prices</a>

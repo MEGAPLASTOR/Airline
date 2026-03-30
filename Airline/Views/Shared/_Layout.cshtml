@@ -1,4 +1,4 @@
-﻿@{
+@{
     Layout = null;
 
     /*
@@ -36,35 +36,33 @@
         }
 
         :root {
-            --ocean-deep: #0a2342;
-            --ocean-mid: #0e3a6e;
+            --ocean-deep: #061525;
+            --ocean-mid: #0a223c;
             --ocean-teal: #0d7f8f;
             --ocean-aqua: #17aab8;
-            --ocean-foam: #a8e6ef;
-            --ocean-pearl: #f0f8fa;
+            --ocean-foam: #c8f5fa;
             --accent-gold: #f0b429;
             --accent-coral: #ff6b6b;
-            --text-dark: #0d1f2d;
+            --text-light: rgba(255,255,255,0.9);
             --sidebar-w: 260px;
-            --header-h: 64px;
+            --header-h: 74px;
             --radius-sm: 8px;
             --radius-md: 12px;
             --radius-lg: 18px;
-            --transition: 0.2s ease;
+            --transition: 0.24s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         html, body {
             min-height: 100%;
-        }
-
-        html {
-            font-size: 16px;
+            background: #061525;
         }
 
         body {
             font-family: 'DM Sans', sans-serif;
-            background: var(--ocean-pearl);
-            color: var(--text-dark);
+            background: radial-gradient(circle at top right, rgba(23,170,184,0.1), transparent 40%), 
+                        radial-gradient(circle at bottom left, rgba(13,127,143,0.1), transparent 40%),
+                        #061525;
+            color: var(--text-light);
             min-height: 100vh;
             display: flex;
             flex-direction: column;

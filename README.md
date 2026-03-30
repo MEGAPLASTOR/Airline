@@ -1,95 +1,90 @@
-# SkyWave Airlines Reservation System
+﻿# SkyWave Airlines Reservation System
 
 ## Giới thiệu
 
 Dự án **Airline** là hệ thống quản lý đặt vé máy bay hiện đại, được xây dựng trên nền tảng .NET 8/9, cung cấp đầy đủ các tính năng cho cả hành khách và quản trị viên. Hệ thống được thiết kế với giao diện cao cấp, chuyên nghiệp và tối ưu trải nghiệm người dùng.
 
-## Kiến trúc và Cấu trúc tệp tin
+## Cấu trúc thư mục định danh
 
-Dưới đây là cấu trúc chính của dự án:
-
-- `Airline/`: Mã nguồn chính của ứng dụng ASP.NET Core MVC.
-  - `Controllers/`: Chứa logic điều hướng và xử lý yêu cầu.
-    - `AdminBaseController.cs`: Controller cơ sở cho các chức năng quản trị.
-    - `AdminDashboardController.cs`: Bảng điều khiển trung tâm dành cho Admin.
-    - `AdminAccountController.cs`: Quản lý danh sách tài khoản người dùng và quản trị viên.
-    - `AdminCityController.cs`: Quản lý thông tin điểm đi/đến (Cities).
-    - `AdminRouteController.cs`: Quản lý các tuyến đường bay (Routes).
-    - `AdminFlightController.cs`: Quản lý thông tin các chuyến bay (Flights).
-    - `AdminScheduleController.cs`: Quản lý lịch trình bay và chỗ ngồi. **[sang-fix + Thêm FlightSeats, GetSeatDetails, ToggleSeatStatus]**
-    - `ManageTicketClassController.cs`: Quản lý các hạng vé (Business, Economy...).
-    - `Accountcontroller.cs`: Xử lý đăng nhập, đăng ký và xác thực Cookie. **[sang-fix + Sửa tên file bỏ khoảng trắng]**
-    - `ProfileController.cs`: Cập nhật thông tin cá nhân và mật khẩu cho người dùng.
-    - `BookingController.cs`: Xử lý quy trình đặt chuyến bay. **[sang]**
-    - `TicketController.cs`: Quản lý thông tin, xác nhận vé và đổi chỗ ngồi. **[sang]**
-    - `BaggageController.cs`: Đăng ký hành lý ký gửi kèm theo vé. **[sang-fix]**
-    - `PaymentController.cs`: Tích hợp cổng thanh toán VNPay để xử lý giao dịch vé. **[sang-fix + Tích hợp VNPay]**
-  - `Models/`: Chứa các thực thể cơ sở dữ liệu và ViewModels.
-    - `BookingViewModel.cs`: Lớp trung gian xử lý quy trình đặt vé. **[sang]**
-    - `User.cs`: Thông tin người dùng (Admin/User).
-    - `Flight.cs`, `FlightSchedule.cs`: Thông tin chuyến bay và lịch trình.
-    - `Route.cs`, `Cities.cs`: Quản lý hành trình và các thành phố điểm đi/đến.
-    - `Booking.cs`, `Ticket.cs`, `Passenger.cs`: Thông tin đơn đặt chỗ, vé và hành khách.
-    - `Baggage.cs`, `Payment.cs`: Dịch vụ hành lý và thanh toán.
-  - `Views/`: Chứa các giao diện Razor (.cshtml).
-    - `Home/Index.cshtml`: Trang chủ với thiết kế hiện đại, các lộ trình phổ biến.
-    - `Admin/AdminDashboard.cshtml`: Giao diện quản trị hệ thống.
-    - `Admin/FlightSeats.cshtml`: Giao diện quản lý sơ đồ ghế cho Admin. **[sang]**
-    - `Booking/`: Chứa các trang đặt vé (BookFlight, SelectSeat, PassengerInfo, Success). **[sang]**
-    - `Account/`: Các trang đăng nhập, đăng ký, chỉnh sửa tài khoản.
-  - `DataContext.cs`: Cấu hình Entity Framework Core. **[sang-fix + Gỡ bỏ Hardcoded Connection String]**
-  - `Program.cs`: Nơi cấu hình Services, Pipeline và Dependency Injection.
-  - `wwwroot/`: Tài nguyên tĩnh như CSS, JavaScript, hình ảnh và biểu tượng.
-- `Airline.slnx`: Tệp giải pháp thực thi dự án.
-- `.git/` & `.gitignore`: Quản lý phiên bản mã nguồn.
-- `README.md`: Tài liệu hướng dẫn và cấu trúc dự án. **[sang]**
-- `payment.md`: Tài liệu chi tiết về tích hợp cổng thanh toán VNPay. **[sang]**
-- `problem.md`: Theo dõi nợ kỹ thuật và các vấn đề tồn đọng. **[sang]**
+- Airline/: Mã nguồn chính của ứng dụng ASP.NET Core MVC.
+  - Controllers/: Chứa logic điều hướng và xử lý yêu cầu.
+    - AdminBaseController.cs: Controller cơ sở cho các chức năng quản trị.
+    - AdminDashboardController.cs: Bảng điều khiển trung tâm dành cho Admin.
+    - AdminBookingController.cs: Xử lý xác thực và xác nhận thanh toán vé thủ công. **[SANG]**
+    - AdminAccountController.cs: Quản lý danh sách tài khoản người dùng và quản trị viên.
+    - AdminCityController.cs: Quản lý thông tin điểm đi/đến (Cities).
+    - AdminRouteController.cs: Quản lý các tuyến đường bay (Routes).
+    - AdminFlightController.cs: Quản lý thông tin các chuyến bay (Flights).
+    - AdminScheduleController.cs: Quản lý lịch trình bay, thay đổi lịch và sơ đồ ghế.
+    - TicketPriceController.cs: Quản lý giá vé linh hoạt theo lịch trình và hạng ghế.
+    - ManageTicketClassController.cs: Quản lý các hạng vé (Business, Economy...).
+    - Accountcontroller.cs: Xử lý đăng nhập, đăng ký và xác thực Cookie.
+    - ProfileController.cs: Cập nhật thông tin cá nhân và mật khẩu cho người dùng.
+    - BookingController.cs: Xử lý quy trình đặt chuyến bay.
+    - TicketController.cs: Quản lý thông tin, xác nhận vé và đổi chỗ ngồi.
+    - BaggageController.cs: Đăng ký hành lý ký gửi kèm theo vé.
+    - PaymentController.cs: Tích hợp cổng thanh toán VNPay để xử lý giao dịch vé.
+  - Models/: Chứa các thực thể cơ sở dữ liệu và ViewModels.
+    - BookingViewModel.cs: Lớp trung gian xử lý quy trình đặt vé.
+    - User.cs: Thông tin người dùng (Admin/User).
+    - Flight.cs, FlightSchedule.cs: Thông tin chuyến bay và lịch trình.
+    - Route.cs, Cities.cs: Quản lý hành trình và các thành phố điểm đi/đến.
+    - Booking.cs, Ticket.cs, Passenger.cs: Thông tin đơn đặt chỗ, vé và hành khách.
+    - Baggage.cs, Payment.cs: Dịch vụ hành lý và thanh toán.
+    - TicketPrice.cs: Thực thể lưu trữ cấu hình giá vé.
+  - Views/: Chứa các giao diện Razor (.cshtml).
+    - Home/Index.cshtml: Trang chủ với thiết kế hiện đại.
+    - Admin/ConfirmTicket.cshtml: Giao diện xác nhận vé cho Admin (Premium). **[SANG]**
+    - Admin/: Các giao diện quản trị Dashboard, Flights, Schedules, Seats và Prices.
+    - Booking/: Chứa các trang đặt vé (BookFlight, SelectSeat, PassengerInfo, Success). **[SANG-FIX]**
+    - Shared/\_Layout.cshtml: Layout khách hàng với giao diện Dark Mode cao cấp. **[SANG-FIX]**
+    - Shared/\_AdminLayout.cshtml: Layout quản trị với hệ thống điều hướng đồng bộ. **[SANG-FIX]**
+    - Account/: Các trang đăng nhập, đăng ký, chỉnh sửa tài khoản.
+  - DataContext.cs: Cấu hình Entity Framework Core.
+  - Program.cs: Cấu hình Services và Pipeline.
+  - wwwroot/: Chứa tài nguyên tĩnh (CSS/JS).
+    - css/admin-confirm-ticket.css, js/admin-confirm-ticket.js: Tài nguyên Admin. **[SANG]**
+    - css/booking/, js/booking/: Bộ tài nguyên riêng biệt cho quy trình đặt vé. **[SANG]**
+    - css/site.css, js/site.js: Tài nguyên chung của hệ thống.
+- Airline.slnx: Tệp giải pháp thực thi dự án.
+- .git/ & .gitignore: Quản lý phiên bản mã nguồn.
+- README.md: Tài liệu hướng dẫn và cấu trúc dự án. **[SANG-FIX]**
+- payment.md: Tài liệu chi tiết về tích hợp VNPay.
+- booking.md: Tài liệu quy trình đặt vé khách hàng.
 
 ## Các chức năng chính
 
 ### 1. Dành cho Hành khách (Customer)
 
 - **Đăng ký & Đăng nhập**: Hệ thống xác thực bằng Cookie an toàn.
-- **Quản lý Tài khoản**: Chỉnh sửa thông tin cá nhân (Họ tên, Email, SĐT, CCCD, Địa chỉ, Giới tính, Tuổi) và đổi mật khẩu.
-- **SkyMiles**: Hệ thống điểm thưởng tích lũy cho khách hàng thân thiết.
-- **Tìm kiếm & Đặt vé**: Quy trình đặt vé nhanh chóng, hỗ trợ chọn hành trình linh hoạt.
-- **Dịch vụ Hành lý**: Đăng ký và tính phí hành lý theo trọng lượng (Gói 20-40kg). **[sang-fix + Khôi phục RegisterBaggage]**
-- **Thanh toán trực tuyến**: Tích hợp cổng VNPay (Sandbox), hỗ trợ thanh toán qua QR Code, Thẻ nội địa và Quốc tế. **[sang-fix + Tích hợp VNPay]**
-- **Khuyến mãi**: Áp dụng mã giảm giá trực tiếp vào đơn đặt vé.
-- **Quản lý vé**: Xem lại các vé đã đặt, xác nhận thông tin và đổi chỗ ngồi linh hoạt. **[sang-fix + Khôi phục ViewConfirmation & ChangeSeat]**
+- **Quản lý Tài khoản**: Chỉnh sửa thông tin cá nhân và đổi mật khẩu.
+- **SkyMiles**: Hệ thống điểm thưởng tích lũy cho hành khách thân thiết.
+- **Tìm kiếm & Đặt vé**: Quy trình 4 bước tối ưu (Tìm kiếm -> Chọn ghế -> Thông tin hành khách -> Thành công).
+- **Thanh toán trực tuyến**: Tích hợp VNPay (Sandbox) hỗ trợ thanh toán vé nhanh chóng.
+- **Quản lý vé**: Xem ticket confirmation và thực hiện đổi chỗ ngồi (Change Seat). **[sang-fix]**
 
 ### 2. Dành cho Quản trị viên (Admin)
 
-- **Bảng điều khiển (Dashboard)**: Tổng quan trạng thái hệ thống.
-- **Quản lý Tài khoản**: Xem, tạo, cập nhật và xóa tài khoản người dùng hoặc quản trị viên khác.
-- **Quản lý Địa lý**: Thêm/Sửa/Xóa các thành phố (Cities) và lộ trình (Routes).
-- **Quản lý Chuyến bay**: Thiết lập các chuyến bay cụ thể gắn liền với lộ trình.
-- **Lập lịch trình (Scheduling)**: Quản lý thời gian bay (Departure/Arrival) và số lượng ghế trống.
-- **Thay đổi lịch trình (Reschedule)**: Cập nhật lại thời gian bay cho các chuyến bay hiện có.
-- **Quản lý Hạng vé**: Thiết lập các loại hạng vé (Business, Economy...) và giá vé tương ứng cho từng lịch trình.
+- **Xác nhận vé (Confirm Ticket)**: Phê duyệt các đơn đặt chỗ thanh toán thủ công. **[SANG]**
+- **Dashboard Premium**: Biểu đồ và thống kê tổng quan trạng thái hệ thống.
+- **Quản lý Toàn diện**: Tài khoản, Thành phố, Tuyến bay, Chuyến bay và Lịch trình.
+- **Sơ đồ Ghế Động**: Đóng/Mở chỗ ngồi trực tiếp trên sơ đồ trực quan.
+- **Giá vé Linh hoạt**: Cấu hình giá theo hạng ghế (Business/Economy) và lịch trình cụ thể.
 
 ## Công nghệ sử dụng
 
 - **Backend**: .NET 8/9, ASP.NET Core MVC.
-- **Database**: SQL Server, Entity Framework Core (Code First/Database First).
-- **Frontend**: Razor Pages, Vanilla CSS (Modern design), JavaScript, FontAwesome.
-- **Authentication**: Cookie-based Authentication.
+- **Database**: SQL Server, EF Core.
+- **Frontend**: Razor Pages, Vanilla CSS, JS, JetBrains Mono & Playfair Display fonts.
+- **Authentication**: Cookie-based Auth.
 
 ## Hướng dẫn chạy dự án
 
-1. **Cấu hình SQL Server**: Cập nhật chuỗi kết nối (Connection String) trong `Airline/DataContext.cs` hoặc `appsettings.json`.
-2. **Khởi tạo Database**: Chạy Migrations (nếu có) hoặc thực thi SQL script để tạo bảng.
-3. **Chạy ứng dụng**: Mở `Airline.slnx` bằng Visual Studio hoặc sử dụng lệnh:
-   ```bash
-   dotnet run --project Airline
-   ```
-4. **Cấu hình VNPay**: Cập nhật `TmnCode` và `HashSecret` của Sandbox trong tệp `appsettings.json`.
-5. **Đăng nhập Admin**: Sử dụng tài khoản có thuộc tính `Role = 'ADMIN'`.
-6. **Lưu ý Quan trọng**: 
-    - Toàn bộ quan hệ Model đã được đồng bộ để tránh lỗi truy cập trực tiếp từ `FlightSchedule` sang `Tickets` (đi qua `Bookings`).
-    - Hệ thống điều hướng (Navigation) đã được đồng bộ hóa hoàn toàn trong `_Layout.cshtml` và `_AdminLayout.cshtml`, đảm bảo các liên kết trỏ đúng vào các Controller và Action thực tế thay vì Controller `Admin` dùng chung.
+1. **Cấu hình SQL Server**: Cập nhật chuỗi kết nối trong appsettings.json.
+2. **Khởi tạo Database**: Chạy Migrations hoặc thực thi script SQL đi kèm.
+3. **VNPay**: Cập nhật thông số Sandbox trong cấu hình hệ thống.
+4. **Chạy ứng dụng**: dotnet run --project Airline.
 
 ---
 
-_Dự án được phát triển với mục tiêu cung cấp giải pháp đặt vé máy bay hiện đại và toàn diện nhất._
+_Cập nhật bởi Antigravity v1.0 - 2026-03-30_

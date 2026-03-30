@@ -1,0 +1,31 @@
+.success-container {
+    text-align: center;
+    max-width: 600px;
+    margin: 80px auto;
+    padding: 40px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    color: #fff;
+}
+
+.success-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: var(--accent-green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    color: #fff;
+    margin: 0 auto 30px;
+    box-shadow: 0 0 30px rgba(93, 232, 168, 0.3);
+}
+
+.booking-id {
+    font-size: 1.2rem;
+    color: var(--ocean-aqua);
+    margin: 15px 0;
+    letter-spacing: 2px;
+}

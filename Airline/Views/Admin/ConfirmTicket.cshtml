@@ -1,0 +1,114 @@
+@model IEnumerable<Airline.Models.Booking>
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Confirm Tickets";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin-confirm-ticket.css" />
+}
+
+<div class="page-header">
+    <div class="page-title-block">
+        <div class="page-greeting">Ticketing Operations</div>
+        <h1 class="page-title">Confirm <span>Guest Tickets</span></h1>
+        <p class="page-subtitle">Verify and manually confirm pending bookings</p>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">
+        <i class="fa-solid fa-circle-check"></i>
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-error">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+<div class="table-card">
+    @if (Model != null && Model.Any())
+    {
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Customer</th>
+                    <th>Flight Details</th>
+                    <th>Passengers</th>
+                    <th>Total Price</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var booking in Model)
+                {
+                    var totalAmount = ViewData[$"Total_{booking.BookingId}"] as decimal? ?? 0;
+                    <tr>
+                        <td><span class="id-badge">#BK-@booking.BookingId</span></td>
+                        <td>
+                            <div class="user-info">
+                                <div class="user-avatar">
+                                    @((booking.User?.FirstName?.FirstOrDefault().ToString() ?? "G").ToUpper())
+                                </div>
+                                <div>
+                                    <div style="font-weight: 700; color: #fff;">@booking.User?.FirstName @booking.User?.LastName</div>
+                                    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.4);">@@@booking.User?.Username</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="flight-info">
+                                <span class="flight-number">@booking.Schedule?.Flight?.FlightNumber</span>
+                                <span class="flight-date">@(booking.Schedule?.DepartureTime.ToString("dd MMM yyyy, HH:mm") ?? "N/A")</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div style="font-size: 0.8rem;">
+                                @foreach (var p in booking.Passengers)
+                                {
+                                    <div style="margin-bottom: 2px;">• @p.FullName <span style="color:rgba(255,255,255,0.3); font-size: 0.7rem;">(@p.PassengerType)</span></div>
+                                }
+                            </div>
+                        </td>
+                        <td>
+                            <div class="amount-text">@totalAmount.ToString("N0") <span style="font-size: 0.7rem; font-weight: 400;">VND</span></div>
+                        </td>
+                        <td>
+                            <span class="status-pill">
+                                <i class="fa-solid fa-clock"></i> @booking.Status
+                            </span>
+                        </td>
+                        <td style="text-align: right;">
+                            <form asp-controller="AdminBooking" asp-action="ProcessConfirm" method="post" onsubmit="return confirmPayment('@booking.BookingId')">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="bookingId" value="@booking.BookingId" />
+                                <button type="submit" class="btn-confirm">
+                                    <i class="fa-solid fa-check"></i> Confirm
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div class="empty-state">
+            <i class="fa-solid fa-ticket-simple"></i>
+            <p>No pending bookings found.</p>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="~/js/admin-confirm-ticket.js"></script>
+}
