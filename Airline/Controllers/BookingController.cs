@@ -229,7 +229,7 @@ namespace Airline.Controllers
 
                     // 4. Update Seat & Schedule
                     seat.SeatStatus = "BOOKED";
-                    schedule.AvailableSeats = (schedule.AvailableSeats ?? 0) - 1;
+                    schedule.AvailableSeats = Math.Max(0, (schedule.AvailableSeats ?? 0) - 1);
                     
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
@@ -240,9 +240,95 @@ namespace Airline.Controllers
                 {
                     await transaction.RollbackAsync();
                     ModelState.AddModelError("", "Đặt vé thất bại: " + ex.Message);
+                    await PopulatePassengerInfoStateAsync(model);
                     return View("PassengerInfo", model);
                 }
             }
+        }
+
+        private async Task<BookingViewModel?> BuildPassengerInfoModelAsync(int scheduleId, int seatId)
+        {
+            var schedule = await _context.FlightSchedules
+                .AsNoTracking()
+                .Include(s => s.Flight)
+                    .ThenInclude(f => f.Route)
+                        .ThenInclude(r => r.DepartureCityNavigation)
+                .Include(s => s.Flight.Route.ArrivalCityNavigation)
+                .FirstOrDefaultAsync(s => s.ScheduleId == scheduleId);
+
+            var seat = await _context.Seats
+                .AsNoTracking()
+                .Include(s => s.Class)
+                .FirstOrDefaultAsync(s => s.SeatId == seatId && s.ScheduleId == scheduleId);
+
+            if (schedule == null || seat == null)
+            {
+                return null;
+            }
+
+            var pricing = await _promotionService.CalculateSingleTicketAsync(scheduleId, seat.ClassId);
+            var promotions = await _promotionService.GetActivePromotionsAsync();
+
+            return new BookingViewModel
+            {
+                ScheduleId = scheduleId,
+                SeatId = seatId,
+                ClassId = seat.ClassId,
+                SeatNumber = seat.SeatNumber,
+                FlightNumber = schedule.Flight?.FlightNumber ?? "Unknown",
+                DepartureTime = schedule.DepartureTime,
+                Origin = schedule.Flight?.Route?.DepartureCityNavigation?.CityName ?? "Unknown",
+                Destination = schedule.Flight?.Route?.ArrivalCityNavigation?.CityName ?? "Unknown",
+                Price = pricing.BaseFare,
+                TaxAmount = pricing.TaxAmount,
+                DiscountAmount = pricing.DiscountAmount,
+                DiscountPercent = pricing.DiscountPercent,
+                FinalPrice = pricing.FinalAmount,
+                AvailablePromotions = promotions
+            };
+        }
+
+        private async Task<bool> PopulatePassengerInfoStateAsync(BookingViewModel model)
+        {
+            if (model.SeatId == null)
+            {
+                return false;
+            }
+
+            var hydratedModel = await BuildPassengerInfoModelAsync(model.ScheduleId, model.SeatId.Value);
+            if (hydratedModel == null)
+            {
+                return false;
+            }
+
+            model.ClassId = hydratedModel.ClassId;
+            model.SeatNumber = hydratedModel.SeatNumber;
+            model.Origin = hydratedModel.Origin;
+            model.Destination = hydratedModel.Destination;
+            model.DepartureTime = hydratedModel.DepartureTime;
+            model.FlightNumber = hydratedModel.FlightNumber;
+            model.Price = hydratedModel.Price;
+            model.TaxAmount = hydratedModel.TaxAmount;
+            model.DiscountAmount = hydratedModel.DiscountAmount;
+            model.DiscountPercent = hydratedModel.DiscountPercent;
+            model.FinalPrice = hydratedModel.FinalPrice;
+            model.AvailablePromotions = hydratedModel.AvailablePromotions;
+
+            if (!string.IsNullOrWhiteSpace(model.PromoCode) && model.ClassId.HasValue)
+            {
+                var pricing = await _promotionService.CalculateSingleTicketAsync(
+                    model.ScheduleId,
+                    model.ClassId.Value,
+                    model.PromoCode);
+
+                model.AppliedPromotionId = pricing.AppliedPromotionId;
+                model.DiscountPercent = pricing.DiscountPercent;
+                model.TaxAmount = pricing.TaxAmount;
+                model.DiscountAmount = pricing.DiscountAmount;
+                model.FinalPrice = pricing.FinalAmount;
+            }
+
+            return true;
         }
     }
 }
