@@ -140,6 +140,7 @@
                         <th>Customer</th>
                         <th>Flight</th>
                         <th>Weight</th>
+                        <th>Payment</th>
                         <th>Price</th>
                         <th class="text-center">Action</th>
                     </tr>
@@ -175,6 +176,12 @@
                                 <td>
                                     <span class="status-pill pill-green">@baggage.Weight.ToString("N2") kg</span>
                                 </td>
+                                <td>
+                                    <span class="status-pill @(baggage.IsPaid ? "pill-green" : "pill-gold")">
+                                        <i class="fa-solid @(baggage.IsPaid ? "fa-circle-check" : "fa-clock")"></i>
+                                        @(baggage.IsPaid ? "PAID" : "UNPAID")
+                                    </span>
+                                </td>
                                 <td class="amount-text">@baggage.Price.ToString("N0") VND</td>
                                 <td class="text-center">
                                     <div class="row-actions">
@@ -194,14 +201,17 @@
                                             </button>
                                         </form>
 
-                                        <form asp-controller="AdminBaggage" asp-action="DeleteBaggage" method="post" class="inline-action-form danger">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="baggageId" value="@baggage.BaggageId" />
-                                            <button type="submit" class="btn-danger">
-                                                <i class="fa-solid fa-trash"></i>
-                                                Delete
-                                            </button>
-                                        </form>
+                                        @if (!baggage.IsPaid)
+                                        {
+                                            <form asp-controller="AdminBaggage" asp-action="DeleteBaggage" method="post" class="inline-action-form danger">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="baggageId" value="@baggage.BaggageId" />
+                                                <button type="submit" class="btn-danger">
+                                                    <i class="fa-solid fa-trash"></i>
+                                                    Delete
+                                                </button>
+                                            </form>
+                                        }
                                     </div>
                                 </td>
                             </tr>
@@ -210,7 +220,7 @@
                     else
                     {
                         <tr>
-                            <td colspan="7" class="empty-state">
+                            <td colspan="8" class="empty-state">
                                 <i class="fa-solid fa-suitcase-rolling"></i>
                                 Chua co ban ghi hanh ly nao.
                             </td>
