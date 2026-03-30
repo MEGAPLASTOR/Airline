@@ -170,7 +170,6 @@ namespace Airline.Controllers
             {
                 try
                 {
-                    // Refresh data from DB to ensure integrity and avoid hidden field tampering/formatting issues
                     var schedule = await _context.FlightSchedules
                         .Include(s => s.Flight)
                             .ThenInclude(f => f.Route)
@@ -196,6 +195,16 @@ namespace Airline.Controllers
                     };
                     _context.Bookings.Add(booking);
                     await _context.SaveChangesAsync();
+
+                    if (appliedPromotion != null)
+                    {
+                        _context.BookingPromotions.Add(new BookingPromotion
+                        {
+                            BookingId = booking.BookingId,
+                            PromoId = appliedPromotion.PromoId
+                        });
+                        await _context.SaveChangesAsync();
+                    }
 
                     // 2. Create Passenger
                     var passenger = new Passenger
