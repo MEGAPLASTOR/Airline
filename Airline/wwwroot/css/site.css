@@ -1355,6 +1355,69 @@ select.form-inp,
     margin-top: 1.5rem;
 }
 
+.result-container {
+    width: min(720px, 100%);
+    margin: 0 auto;
+    padding: 2rem 0 0.75rem;
+}
+
+.result-card {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(2rem, 4vw, 2.8rem);
+    border-radius: 34px;
+    background: linear-gradient(140deg, rgba(6, 21, 37, 0.98), rgba(10, 54, 92, 0.94) 58%, rgba(23, 170, 184, 0.82));
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 34px 86px rgba(5, 18, 32, 0.28);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1.15rem;
+}
+
+.result-card::after {
+    content: "";
+    position: absolute;
+    right: -100px;
+    top: -100px;
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.12), transparent 70%);
+}
+
+.result-icon {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.2rem;
+    position: relative;
+    z-index: 1;
+}
+
+.result-title {
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    font-family: "Playfair Display", serif;
+    font-size: clamp(2rem, 4vw, 2.7rem);
+    color: #fff;
+}
+
+.result-msg {
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    max-width: 560px;
+    color: rgba(255, 255, 255, 0.76);
+    font-size: 1rem;
+    line-height: 1.8;
+}
+
 .privacy-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));

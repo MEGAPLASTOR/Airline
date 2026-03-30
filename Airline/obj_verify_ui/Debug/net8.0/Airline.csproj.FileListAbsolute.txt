@@ -1,0 +1,11 @@
+D:\Eproject\Airline\Airline\obj_verify_ui\Debug\net8.0\Airline.csproj.AssemblyReference.cache
+D:\Eproject\Airline\Airline\obj_verify_ui\Debug\net8.0\rpswa.dswa.cache.json
+D:\Eproject\Airline\Airline\obj_verify_ui\Debug\net8.0\Airline.GeneratedMSBuildEditorConfig.editorconfig
+D:\Eproject\Airline\Airline\obj_verify_ui\Debug\net8.0\Airline.AssemblyInfoInputs.cache
+D:\Eproject\Airline\Airline\obj_verify_ui\Debug\net8.0\Airline.AssemblyInfo.cs
+D:\Eproject\Airline\Airline\obj_verify_ui\Debug\net8.0\Airline.csproj.CoreCompileInputs.cache
+D:\Eproject\Airline\Airline\obj_verify_ui\Debug\net8.0\Airline.MvcApplicationPartsAssemblyInfo.cs
+D:\Eproject\Airline\Airline\obj_verify_ui\Debug\net8.0\Airline.MvcApplicationPartsAssemblyInfo.cache
+D:\Eproject\Airline\Airline\obj_verify_ui\Debug\net8.0\Airline.RazorAssemblyInfo.cache
+D:\Eproject\Airline\Airline\obj_verify_ui\Debug\net8.0\Airline.RazorAssemblyInfo.cs
+D:\Eproject\Airline\Airline\obj_verify_ui\Debug\net8.0\Airline.sourcelink.json
