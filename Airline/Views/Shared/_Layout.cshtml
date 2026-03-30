@@ -2,8 +2,8 @@
     Layout = null;
 
     /*
-     * isLoggedIn đọc từ Cookie Authentication
-     * Sau khi tích hợp AccountController + cookie auth thì tự động đúng
+     * isLoggedIn is read from Cookie Authentication.
+     * Once AccountController and cookie auth are wired up, it stays in sync automatically.
      */
     bool isLoggedIn = User?.Identity?.IsAuthenticated == true;
 
@@ -1316,7 +1316,7 @@
 </head>
 <body>
 
-    <!-- Anti-forgery token (dùng cho AJAX) -->
+    <!-- Anti-forgery token for AJAX requests -->
     @Html.AntiForgeryToken()
 
     <!-- ════════════════════ SIDEBAR ════════════════════ -->
@@ -1546,7 +1546,7 @@
     </div>
 
     <!-- ════════════════════════════════════════════════════
-         AUTH MODAL  (nhúng thẳng vào layout)
+         AUTH MODAL (embedded directly in the layout)
     ════════════════════════════════════════════════════ -->
     <div class="auth-overlay" id="authOverlay" onclick="overlayClick(event)">
         <div class="auth-modal" id="authModal">

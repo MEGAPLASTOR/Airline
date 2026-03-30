@@ -15,16 +15,15 @@ namespace Airline.Controllers
             _promotionService = promotionService;
         }
 
-        // ══════════════════════════════════════════════════════════════
+        // ==============================================================
         // GET /Admin/ConfirmTicket
-        // ══════════════════════════════════════════════════════════════
+        // ==============================================================
         [HttpGet("ConfirmTicket")]
         public async Task<IActionResult> ConfirmTicket()
         {
             if (!IsAdmin()) return RedirectIfNotAdmin();
 
-            // Lấy các Booking có trạng thái CONFIRMED (đã đặt nhưng chưa thanh toán/xác nhận)
-            // Loại bỏ các booking đã có bản ghi thanh toán SUCCESS
+            // Load bookings that were created but still need payment or manual confirmation.
             var pendingBookings = await _context.Bookings
                 .Include(b => b.User)
                 .Include(b => b.Schedule)
@@ -43,7 +42,7 @@ namespace Airline.Controllers
                 .OrderByDescending(b => b.BookingDate)
                 .ToListAsync();
 
-            // Tính toán giá vé cho từng booking để hiển thị (do DB không lưu TotalAmount trực tiếp)
+            // Calculate the fare for each booking because TotalAmount is not stored directly.
             foreach (var booking in pendingBookings)
             {
                 var pricing = await _promotionService.CalculateBookingAsync(booking);
@@ -53,9 +52,9 @@ namespace Airline.Controllers
             return View("~/Views/Admin/ConfirmTicket.cshtml", pendingBookings);
         }
 
-        // ══════════════════════════════════════════════════════════════
+        // ==============================================================
         // POST /Admin/ProcessConfirm
-        // ══════════════════════════════════════════════════════════════
+        // ==============================================================
         [HttpPost("ProcessConfirm")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ProcessConfirm(int bookingId)
@@ -79,28 +78,28 @@ namespace Airline.Controllers
             {
                 try
                 {
-                    // 1. Cập nhật trạng thái Booking
+                    // 1. Update the booking status.
                     booking.Status = "PAID";
 
                     decimal totalAmount = 0;
-                    // 2. Cập nhật trạng thái từng Ticket
+                    // 2. Update each related ticket.
                     foreach (var ticket in booking.Tickets)
                     {
                         ticket.Status = "PAID";
                         
-                        // Lấy giá thực tế
+                        // Use the actual ticket price when available.
                         var priceEntry = await _context.TicketPrices
                             .FirstOrDefaultAsync(p => p.ScheduleId == booking.ScheduleId && p.ClassId == ticket.ClassId);
                         totalAmount += priceEntry?.Price ?? 1500000;
                     }
 
-                    // 3. Tạo bản ghi Payment (Xác nhận thủ công bởi Admin)
+                    // 3. Create a payment record for the admin confirmation.
                     var payment = new Payment
                     {
                         BookingId = bookingId,
                         Amount = (await _promotionService.CalculateBookingAsync(booking)).FinalAmount,
                         PaymentDate = DateTime.Now,
-                        PaymentMethod = "MANUAL_ADMIN", // Đánh dấu xác nhận bởi Admin
+                        PaymentMethod = "MANUAL_ADMIN", // Marked as confirmed by an admin.
                         PaymentStatus = "SUCCESS",
                         TransactionNo = "MANUAL_APPROVAL"
                     };

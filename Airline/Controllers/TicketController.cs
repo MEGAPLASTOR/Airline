@@ -14,9 +14,9 @@ namespace Airline.Controllers
             _context = context;
         }
 
-        // ══════════════════════════════════════════════════════════════
+        // ==============================================================
         // GET /Ticket/ViewConfirmation
-        // ══════════════════════════════════════════════════════════════
+        // ==============================================================
         public async Task<IActionResult> ViewConfirmation()
         {
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -42,9 +42,9 @@ namespace Airline.Controllers
             return View(tickets);
         }
 
-        // ══════════════════════════════════════════════════════════════
+        // ==============================================================
         // GET /Ticket/ChangeSeat/{id}
-        // ══════════════════════════════════════════════════════════════
+        // ==============================================================
         public async Task<IActionResult> ChangeSeat(int id)
         {
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -78,9 +78,9 @@ namespace Airline.Controllers
             return View(ticket);
         }
 
-        // ══════════════════════════════════════════════════════════════
+        // ==============================================================
         // POST /Ticket/UpdateSeat
-        // ══════════════════════════════════════════════════════════════
+        // ==============================================================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateSeat(int ticketId, int newSeatId)
