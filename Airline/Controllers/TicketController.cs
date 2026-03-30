@@ -7,6 +7,7 @@ namespace Airline.Controllers
 {
     public class TicketController : Controller
     {
+        private const string BaggageTransactionPrefix = "BAG_";
         private readonly DataContext _context;
 
         public TicketController(DataContext context)
@@ -127,6 +128,122 @@ namespace Airline.Controllers
                     await transaction.RollbackAsync();
                     return Json(new { success = false, message = "Error: " + ex.Message });
                 }
+            }
+        }
+
+        // ==============================================================
+        // POST /Ticket/CancelTicket
+        // ==============================================================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelTicket(int ticketId)
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdStr))
+                return Json(new { success = false, message = "You need to log in to cancel this ticket." });
+
+            int userId = int.Parse(userIdStr);
+
+            var ticket = await _context.Tickets
+                .Include(t => t.Booking)
+                    .ThenInclude(b => b.Schedule)
+                .Include(t => t.Booking)
+                    .ThenInclude(b => b.Tickets)
+                .Include(t => t.Seat)
+                .Include(t => t.Baggages)
+                .FirstOrDefaultAsync(t => t.TicketId == ticketId && t.Booking.UserId == userId);
+
+            if (ticket == null)
+                return Json(new { success = false, message = "The ticket could not be found." });
+
+            if (string.Equals(ticket.Status, "CANCELLED", StringComparison.OrdinalIgnoreCase))
+                return Json(new { success = false, message = "This ticket has already been cancelled." });
+
+            var schedule = ticket.Booking?.Schedule;
+            if (schedule == null)
+                return Json(new { success = false, message = "Flight details could not be loaded for this ticket." });
+
+            if (schedule.DepartureTime <= DateTime.Now)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Tickets can only be cancelled before the departure time."
+                });
+            }
+
+            var baggageIds = ticket.Baggages
+                .Select(b => b.BaggageId)
+                .ToList();
+
+            if (baggageIds.Count > 0)
+            {
+                var paidBaggageTransactionNos = await _context.Payments
+                    .AsNoTracking()
+                    .Where(p =>
+                        p.BookingId == ticket.BookingId &&
+                        p.TransactionNo != null &&
+                        p.TransactionNo.StartsWith(BaggageTransactionPrefix) &&
+                        (p.PaymentStatus == "SUCCESS" || p.PaymentStatus == "PAID"))
+                    .Select(p => p.TransactionNo!)
+                    .ToListAsync();
+
+                var hasPaidBaggage = baggageIds.Any(baggageId =>
+                    paidBaggageTransactionNos.Any(txn =>
+                        txn.StartsWith($"{BaggageTransactionPrefix}{baggageId}_", StringComparison.OrdinalIgnoreCase)));
+
+                if (hasPaidBaggage)
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = "This ticket already has paid baggage. Please contact support to cancel it."
+                    });
+                }
+            }
+
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                if (ticket.Baggages.Count > 0)
+                {
+                    _context.Baggages.RemoveRange(ticket.Baggages);
+                }
+
+                if (ticket.Seat != null)
+                {
+                    ticket.Seat.SeatStatus = "AVAILABLE";
+                    ticket.SeatId = null;
+
+                    schedule.AvailableSeats = Math.Min(
+                        (schedule.AvailableSeats ?? 0) + 1,
+                        schedule.TotalSeats ?? int.MaxValue);
+                }
+
+                ticket.Status = "CANCELLED";
+
+                var hasOtherActiveTickets = ticket.Booking?.Tickets.Any(t =>
+                    t.TicketId != ticket.TicketId &&
+                    !string.Equals(t.Status, "CANCELLED", StringComparison.OrdinalIgnoreCase)) == true;
+
+                if (!hasOtherActiveTickets && ticket.Booking != null)
+                {
+                    ticket.Booking.Status = "CANCELLED";
+                }
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                var message = baggageIds.Count > 0
+                    ? "Ticket cancelled successfully. Any unpaid baggage registrations were removed."
+                    : "Ticket cancelled successfully.";
+
+                return Json(new { success = true, message });
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return Json(new { success = false, message = "Cancellation failed: " + ex.Message });
             }
         }
     }
