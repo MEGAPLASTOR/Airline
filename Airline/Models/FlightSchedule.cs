@@ -24,4 +24,6 @@ public partial class FlightSchedule
     public virtual Flight Flight { get; set; } = null!;
 
     public virtual ICollection<TicketPrice> TicketPrices { get; set; } = new List<TicketPrice>();
+
+    public virtual ICollection<Seat> Seats { get; set; } = new List<Seat>();
 }

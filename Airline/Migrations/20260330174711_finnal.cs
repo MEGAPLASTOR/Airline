@@ -3,10 +3,12 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace Airline.Migrations
 {
     /// <inheritdoc />
-    public partial class FirstMigration : Migration
+    public partial class finnal : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -22,7 +24,7 @@ namespace Airline.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Cities__031491A8108F3ABA", x => x.city_id);
+                    table.PrimaryKey("PK_Cities", x => x.city_id);
                 });
 
             migrationBuilder.CreateTable(
@@ -38,7 +40,7 @@ namespace Airline.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Promotio__84EB4CA580D9F7A0", x => x.promo_id);
+                    table.PrimaryKey("PK_Promotions", x => x.promo_id);
                 });
 
             migrationBuilder.CreateTable(
@@ -51,7 +53,7 @@ namespace Airline.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__TicketCl__FDF47986BADBED47", x => x.class_id);
+                    table.PrimaryKey("PK_TicketClasses", x => x.class_id);
                 });
 
             migrationBuilder.CreateTable(
@@ -69,14 +71,14 @@ namespace Airline.Migrations
                     address = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     gender = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: true),
                     age = table.Column<int>(type: "int", nullable: true),
-                    role = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false, defaultValue: "USER"),
-                    sky_miles = table.Column<int>(type: "int", nullable: true, defaultValue: 0),
-                    created_at = table.Column<DateTime>(type: "datetime", nullable: true, defaultValueSql: "(getdate())"),
+                    role = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
+                    sky_miles = table.Column<int>(type: "int", nullable: true),
+                    created_at = table.Column<DateTime>(type: "datetime", nullable: true),
                     cccd = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Users__B9BE370F99B4C109", x => x.user_id);
+                    table.PrimaryKey("PK_Users", x => x.user_id);
                 });
 
             migrationBuilder.CreateTable(
@@ -90,14 +92,14 @@ namespace Airline.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Routes__28F706FE14AF89ED", x => x.route_id);
+                    table.PrimaryKey("PK_Routes", x => x.route_id);
                     table.ForeignKey(
-                        name: "fk_route_arr",
+                        name: "FK_Routes_Cities_arrival_city",
                         column: x => x.arrival_city,
                         principalTable: "Cities",
                         principalColumn: "city_id");
                     table.ForeignKey(
-                        name: "fk_route_dep",
+                        name: "FK_Routes_Cities_departure_city",
                         column: x => x.departure_city,
                         principalTable: "Cities",
                         principalColumn: "city_id");
@@ -114,9 +116,9 @@ namespace Airline.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Flights__E3705765D5618590", x => x.flight_id);
+                    table.PrimaryKey("PK_Flights", x => x.flight_id);
                     table.ForeignKey(
-                        name: "FK__Flights__route_i__6E01572D",
+                        name: "FK_Flights_Routes_route_id",
                         column: x => x.route_id,
                         principalTable: "Routes",
                         principalColumn: "route_id");
@@ -133,13 +135,13 @@ namespace Airline.Migrations
                     arrival_time = table.Column<DateTime>(type: "datetime", nullable: false),
                     total_seats = table.Column<int>(type: "int", nullable: true),
                     available_seats = table.Column<int>(type: "int", nullable: true),
-                    status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true, defaultValue: "SCHEDULED")
+                    status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__FlightSc__C46A8A6F561D2411", x => x.schedule_id);
+                    table.PrimaryKey("PK_FlightSchedules", x => x.schedule_id);
                     table.ForeignKey(
-                        name: "FK__FlightSch__fligh__74AE54BC",
+                        name: "FK_FlightSchedules_Flights_flight_id",
                         column: x => x.flight_id,
                         principalTable: "Flights",
                         principalColumn: "flight_id");
@@ -154,22 +156,48 @@ namespace Airline.Migrations
                     user_id = table.Column<int>(type: "int", nullable: false),
                     schedule_id = table.Column<int>(type: "int", nullable: false),
                     booking_type = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    booking_date = table.Column<DateTime>(type: "datetime", nullable: true, defaultValueSql: "(getdate())"),
-                    status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true, defaultValue: "ACTIVE")
+                    booking_date = table.Column<DateTime>(type: "datetime", nullable: true),
+                    status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Bookings__5DE3A5B1B40D84DC", x => x.booking_id);
+                    table.PrimaryKey("PK_Bookings", x => x.booking_id);
                     table.ForeignKey(
-                        name: "FK__Bookings__schedu__04E4BC85",
+                        name: "FK_Bookings_FlightSchedules_schedule_id",
                         column: x => x.schedule_id,
                         principalTable: "FlightSchedules",
                         principalColumn: "schedule_id");
                     table.ForeignKey(
-                        name: "FK__Bookings__user_i__03F0984C",
+                        name: "FK_Bookings_Users_user_id",
                         column: x => x.user_id,
                         principalTable: "Users",
                         principalColumn: "user_id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Seats",
+                columns: table => new
+                {
+                    seat_id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    schedule_id = table.Column<int>(type: "int", nullable: false),
+                    class_id = table.Column<int>(type: "int", nullable: false),
+                    seat_number = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
+                    seat_status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false, defaultValue: "AVAILABLE")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Seats", x => x.seat_id);
+                    table.ForeignKey(
+                        name: "FK_Seats_FlightSchedules_schedule_id",
+                        column: x => x.schedule_id,
+                        principalTable: "FlightSchedules",
+                        principalColumn: "schedule_id");
+                    table.ForeignKey(
+                        name: "FK_Seats_TicketClasses_class_id",
+                        column: x => x.class_id,
+                        principalTable: "TicketClasses",
+                        principalColumn: "class_id");
                 });
 
             migrationBuilder.CreateTable(
@@ -184,17 +212,17 @@ namespace Airline.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__TicketPr__1681726D46F72854", x => x.price_id);
+                    table.PrimaryKey("PK_TicketPrices", x => x.price_id);
                     table.ForeignKey(
-                        name: "FK__TicketPri__class__7D439ABD",
-                        column: x => x.class_id,
-                        principalTable: "TicketClasses",
-                        principalColumn: "class_id");
-                    table.ForeignKey(
-                        name: "FK__TicketPri__sched__7C4F7684",
+                        name: "FK_TicketPrices_FlightSchedules_schedule_id",
                         column: x => x.schedule_id,
                         principalTable: "FlightSchedules",
                         principalColumn: "schedule_id");
+                    table.ForeignKey(
+                        name: "FK_TicketPrices_TicketClasses_class_id",
+                        column: x => x.class_id,
+                        principalTable: "TicketClasses",
+                        principalColumn: "class_id");
                 });
 
             migrationBuilder.CreateTable(
@@ -208,14 +236,14 @@ namespace Airline.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__BookingP__3213E83F12FA2D24", x => x.id);
+                    table.PrimaryKey("PK_BookingPromotions", x => x.id);
                     table.ForeignKey(
-                        name: "FK__BookingPr__booki__1BC821DD",
+                        name: "FK_BookingPromotions_Bookings_booking_id",
                         column: x => x.booking_id,
                         principalTable: "Bookings",
                         principalColumn: "booking_id");
                     table.ForeignKey(
-                        name: "FK__BookingPr__promo__1CBC4616",
+                        name: "FK_BookingPromotions_Promotions_promo_id",
                         column: x => x.promo_id,
                         principalTable: "Promotions",
                         principalColumn: "promo_id");
@@ -233,9 +261,9 @@ namespace Airline.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Passenge__037645860F400AFE", x => x.passenger_id);
+                    table.PrimaryKey("PK_Passengers", x => x.passenger_id);
                     table.ForeignKey(
-                        name: "FK__Passenger__booki__08B54D69",
+                        name: "FK_Passengers_Bookings_booking_id",
                         column: x => x.booking_id,
                         principalTable: "Bookings",
                         principalColumn: "booking_id");
@@ -251,13 +279,14 @@ namespace Airline.Migrations
                     amount = table.Column<decimal>(type: "decimal(10,2)", nullable: true),
                     payment_method = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
                     payment_status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
-                    payment_date = table.Column<DateTime>(type: "datetime", nullable: true, defaultValueSql: "(getdate())")
+                    payment_date = table.Column<DateTime>(type: "datetime", nullable: true),
+                    transaction_no = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Payments__ED1FC9EA224FCDD7", x => x.payment_id);
+                    table.PrimaryKey("PK_Payments", x => x.payment_id);
                     table.ForeignKey(
-                        name: "FK__Payments__bookin__14270015",
+                        name: "FK_Payments_Bookings_booking_id",
                         column: x => x.booking_id,
                         principalTable: "Bookings",
                         principalColumn: "booking_id");
@@ -272,27 +301,32 @@ namespace Airline.Migrations
                     booking_id = table.Column<int>(type: "int", nullable: false),
                     passenger_id = table.Column<int>(type: "int", nullable: false),
                     class_id = table.Column<int>(type: "int", nullable: false),
-                    seat_number = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: true),
-                    status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true, defaultValue: "BOOKED")
+                    seat_id = table.Column<int>(type: "int", nullable: true),
+                    status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false, defaultValue: "BOOKED")
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Tickets__D596F96BA4DFBACA", x => x.ticket_id);
+                    table.PrimaryKey("PK_Tickets", x => x.ticket_id);
                     table.ForeignKey(
-                        name: "FK__Tickets__booking__0D7A0286",
+                        name: "FK_Tickets_Bookings_booking_id",
                         column: x => x.booking_id,
                         principalTable: "Bookings",
                         principalColumn: "booking_id");
                     table.ForeignKey(
-                        name: "FK__Tickets__class_i__0F624AF8",
-                        column: x => x.class_id,
-                        principalTable: "TicketClasses",
-                        principalColumn: "class_id");
-                    table.ForeignKey(
-                        name: "FK__Tickets__passeng__0E6E26BF",
+                        name: "FK_Tickets_Passengers_passenger_id",
                         column: x => x.passenger_id,
                         principalTable: "Passengers",
                         principalColumn: "passenger_id");
+                    table.ForeignKey(
+                        name: "FK_Tickets_Seats_seat_id",
+                        column: x => x.seat_id,
+                        principalTable: "Seats",
+                        principalColumn: "seat_id");
+                    table.ForeignKey(
+                        name: "FK_Tickets_TicketClasses_class_id",
+                        column: x => x.class_id,
+                        principalTable: "TicketClasses",
+                        principalColumn: "class_id");
                 });
 
             migrationBuilder.CreateTable(
@@ -307,12 +341,191 @@ namespace Airline.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK__Baggage__A3ADEABD204A8216", x => x.baggage_id);
+                    table.PrimaryKey("PK_Baggage", x => x.baggage_id);
                     table.ForeignKey(
-                        name: "FK__Baggage__ticket___1F98B2C1",
+                        name: "FK_Baggage_Tickets_ticket_id",
                         column: x => x.ticket_id,
                         principalTable: "Tickets",
                         principalColumn: "ticket_id");
+                });
+
+            migrationBuilder.InsertData(
+                table: "Cities",
+                columns: new[] { "city_id", "city_name", "country" },
+                values: new object[,]
+                {
+                    { 1, "Ho Chi Minh City", "Vietnam" },
+                    { 2, "Hanoi", "Vietnam" },
+                    { 3, "Da Nang", "Vietnam" },
+                    { 4, "Singapore", "Singapore" },
+                    { 5, "Bangkok", "Thailand" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Promotions",
+                columns: new[] { "promo_id", "discount_percent", "end_date", "promo_code", "start_date" },
+                values: new object[,]
+                {
+                    { 1, 10, new DateOnly(2026, 4, 30), "NEWUSER10", new DateOnly(2026, 4, 1) },
+                    { 2, 15, new DateOnly(2026, 5, 31), "SUMMER15", new DateOnly(2026, 5, 1) },
+                    { 3, 20, new DateOnly(2026, 6, 10), "VIP20", new DateOnly(2026, 4, 10) },
+                    { 4, 12, new DateOnly(2026, 6, 30), "HOLIDAY12", new DateOnly(2026, 6, 1) },
+                    { 5, 8, new DateOnly(2026, 4, 20), "FLASH8", new DateOnly(2026, 4, 15) }
+                });
+
+            migrationBuilder.InsertData(
+                table: "TicketClasses",
+                columns: new[] { "class_id", "class_name" },
+                values: new object[,]
+                {
+                    { 1, "Economy" },
+                    { 2, "Premium Economy" },
+                    { 3, "Business" },
+                    { 4, "First" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Users",
+                columns: new[] { "user_id", "address", "age", "cccd", "created_at", "email", "first_name", "gender", "last_name", "password", "phone", "role", "sky_miles", "username" },
+                values: new object[,]
+                {
+                    { 1, "Ho Chi Minh City", 25, "079201000001", new DateTime(2026, 3, 1, 8, 0, 0, 0, DateTimeKind.Unspecified), "nguyenan@example.com", "Nguyen", "Male", "An", "123456", "0900000001", "USER", 1200, "nguyenan" },
+                    { 2, "Hanoi", 30, "079201000002", new DateTime(2026, 3, 1, 8, 5, 0, 0, DateTimeKind.Unspecified), "tranbinh@example.com", "Tran", "Male", "Binh", "123456", "0900000002", "USER", 850, "tranbinh" },
+                    { 3, "Da Nang", 27, "079201000003", new DateTime(2026, 3, 1, 8, 10, 0, 0, DateTimeKind.Unspecified), "lechi@example.com", "Le", "Female", "Chi", "123456", "0900000003", "USER", 600, "lechi" },
+                    { 4, "Singapore", 29, "079201000004", new DateTime(2026, 3, 1, 8, 15, 0, 0, DateTimeKind.Unspecified), "phamdung@example.com", "Pham", "Female", "Dung", "123456", "0900000004", "USER", 1500, "phamdung" },
+                    { 5, "Bangkok", 35, "079201000005", new DateTime(2026, 3, 1, 8, 20, 0, 0, DateTimeKind.Unspecified), "voem@example.com", "Vo", "Male", "Em", "123456", "0900000005", "ADMIN", 3000, "voem" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Routes",
+                columns: new[] { "route_id", "arrival_city", "departure_city" },
+                values: new object[,]
+                {
+                    { 1, 2, 1 },
+                    { 2, 3, 2 },
+                    { 3, 4, 1 },
+                    { 4, 5, 4 },
+                    { 5, 1, 3 }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Flights",
+                columns: new[] { "flight_id", "flight_number", "route_id" },
+                values: new object[,]
+                {
+                    { 1, "VN1001", 1 },
+                    { 2, "VN1002", 2 },
+                    { 3, "VN2001", 3 },
+                    { 4, "VN3001", 4 },
+                    { 5, "VN4001", 5 }
+                });
+
+            migrationBuilder.InsertData(
+                table: "FlightSchedules",
+                columns: new[] { "schedule_id", "arrival_time", "available_seats", "departure_time", "flight_id", "status", "total_seats" },
+                values: new object[,]
+                {
+                    { 1, new DateTime(2026, 4, 1, 10, 0, 0, 0, DateTimeKind.Unspecified), 39, new DateTime(2026, 4, 1, 8, 0, 0, 0, DateTimeKind.Unspecified), 1, "SCHEDULED", 40 },
+                    { 2, new DateTime(2026, 4, 2, 11, 0, 0, 0, DateTimeKind.Unspecified), 39, new DateTime(2026, 4, 2, 9, 30, 0, 0, DateTimeKind.Unspecified), 2, "SCHEDULED", 40 },
+                    { 3, new DateTime(2026, 4, 3, 16, 30, 0, 0, DateTimeKind.Unspecified), 39, new DateTime(2026, 4, 3, 13, 0, 0, 0, DateTimeKind.Unspecified), 3, "SCHEDULED", 40 },
+                    { 4, new DateTime(2026, 4, 4, 8, 45, 0, 0, DateTimeKind.Unspecified), 39, new DateTime(2026, 4, 4, 7, 15, 0, 0, DateTimeKind.Unspecified), 4, "SCHEDULED", 40 },
+                    { 5, new DateTime(2026, 4, 5, 19, 30, 0, 0, DateTimeKind.Unspecified), 39, new DateTime(2026, 4, 5, 18, 0, 0, 0, DateTimeKind.Unspecified), 5, "SCHEDULED", 40 }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Bookings",
+                columns: new[] { "booking_id", "booking_date", "booking_type", "schedule_id", "status", "user_id" },
+                values: new object[,]
+                {
+                    { 1, new DateTime(2026, 3, 20, 10, 0, 0, 0, DateTimeKind.Unspecified), "ONEWAY", 1, "ACTIVE", 1 },
+                    { 2, new DateTime(2026, 3, 20, 10, 15, 0, 0, DateTimeKind.Unspecified), "ROUNDTRIP", 2, "ACTIVE", 2 },
+                    { 3, new DateTime(2026, 3, 20, 10, 30, 0, 0, DateTimeKind.Unspecified), "ONEWAY", 3, "ACTIVE", 3 },
+                    { 4, new DateTime(2026, 3, 20, 10, 45, 0, 0, DateTimeKind.Unspecified), "ONEWAY", 4, "ACTIVE", 4 },
+                    { 5, new DateTime(2026, 3, 20, 11, 0, 0, 0, DateTimeKind.Unspecified), "ROUNDTRIP", 5, "ACTIVE", 5 }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Seats",
+                columns: new[] { "seat_id", "class_id", "schedule_id", "seat_number", "seat_status" },
+                values: new object[,]
+                {
+                    { 1, 1, 1, "A01", "BOOKED" },
+                    { 2, 2, 2, "B01", "BOOKED" },
+                    { 3, 3, 3, "C01", "BOOKED" },
+                    { 4, 4, 4, "D01", "BOOKED" },
+                    { 5, 1, 5, "A02", "BOOKED" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "TicketPrices",
+                columns: new[] { "price_id", "class_id", "price", "schedule_id" },
+                values: new object[,]
+                {
+                    { 1, 1, 1200000m, 1 },
+                    { 2, 2, 1800000m, 2 },
+                    { 3, 3, 4500000m, 3 },
+                    { 4, 4, 6500000m, 4 },
+                    { 5, 1, 1500000m, 5 }
+                });
+
+            migrationBuilder.InsertData(
+                table: "BookingPromotions",
+                columns: new[] { "id", "booking_id", "promo_id" },
+                values: new object[,]
+                {
+                    { 1, 1, 1 },
+                    { 2, 2, 2 },
+                    { 3, 3, 3 },
+                    { 4, 4, 4 },
+                    { 5, 5, 5 }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Passengers",
+                columns: new[] { "passenger_id", "booking_id", "full_name", "passenger_type" },
+                values: new object[,]
+                {
+                    { 1, 1, "Nguyen Van An", "ADULT" },
+                    { 2, 2, "Tran Van Binh", "ADULT" },
+                    { 3, 3, "Le Thi Chi", "ADULT" },
+                    { 4, 4, "Pham Thi Dung", "ADULT" },
+                    { 5, 5, "Vo Van Em", "ADULT" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Payments",
+                columns: new[] { "payment_id", "amount", "booking_id", "payment_date", "payment_method", "payment_status", "transaction_no" },
+                values: new object[,]
+                {
+                    { 1, 1400000m, 1, new DateTime(2026, 3, 20, 10, 5, 0, 0, DateTimeKind.Unspecified), "VNPAY", "PAID", "TXN000001" },
+                    { 2, 2050000m, 2, new DateTime(2026, 3, 20, 10, 20, 0, 0, DateTimeKind.Unspecified), "MOMO", "PAID", "TXN000002" },
+                    { 3, 4800000m, 3, new DateTime(2026, 3, 20, 10, 35, 0, 0, DateTimeKind.Unspecified), "CREDIT_CARD", "PAID", "TXN000003" },
+                    { 4, 6850000m, 4, new DateTime(2026, 3, 20, 10, 50, 0, 0, DateTimeKind.Unspecified), "BANKING", "PAID", "TXN000004" },
+                    { 5, 1650000m, 5, new DateTime(2026, 3, 20, 11, 5, 0, 0, DateTimeKind.Unspecified), "CASH", "PAID", "TXN000005" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Tickets",
+                columns: new[] { "ticket_id", "booking_id", "class_id", "passenger_id", "seat_id", "status" },
+                values: new object[,]
+                {
+                    { 1, 1, 1, 1, 1, "BOOKED" },
+                    { 2, 2, 2, 2, 2, "BOOKED" },
+                    { 3, 3, 3, 3, 3, "BOOKED" },
+                    { 4, 4, 4, 4, 4, "BOOKED" },
+                    { 5, 5, 1, 5, 5, "BOOKED" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Baggage",
+                columns: new[] { "baggage_id", "price", "ticket_id", "weight" },
+                values: new object[,]
+                {
+                    { 1, 200000m, 1, 20.00m },
+                    { 2, 250000m, 2, 25.00m },
+                    { 3, 300000m, 3, 30.00m },
+                    { 4, 350000m, 4, 35.00m },
+                    { 5, 150000m, 5, 15.00m }
                 });
 
             migrationBuilder.CreateIndex(
@@ -342,20 +555,15 @@ namespace Airline.Migrations
                 column: "schedule_id");
 
             migrationBuilder.CreateIndex(
-                name: "idx_flight_number",
+                name: "IX_Flights_flight_number",
                 table: "Flights",
-                column: "flight_number");
+                column: "flight_number",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Flights_route_id",
                 table: "Flights",
                 column: "route_id");
-
-            migrationBuilder.CreateIndex(
-                name: "UQ__Flights__340D78BBA1E73FB5",
-                table: "Flights",
-                column: "flight_number",
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "idx_schedule_time",
@@ -378,7 +586,7 @@ namespace Airline.Migrations
                 column: "booking_id");
 
             migrationBuilder.CreateIndex(
-                name: "UQ__Promotio__C07E231504162AE1",
+                name: "IX_Promotions_promo_code",
                 table: "Promotions",
                 column: "promo_code",
                 unique: true,
@@ -395,7 +603,18 @@ namespace Airline.Migrations
                 column: "departure_city");
 
             migrationBuilder.CreateIndex(
-                name: "UQ__TicketCl__7DC4C39DD30DA225",
+                name: "IX_Seats_class_id",
+                table: "Seats",
+                column: "class_id");
+
+            migrationBuilder.CreateIndex(
+                name: "UQ_Seats_Schedule_SeatNumber",
+                table: "Seats",
+                columns: new[] { "schedule_id", "seat_number" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TicketClasses_class_name",
                 table: "TicketClasses",
                 column: "class_name",
                 unique: true);
@@ -427,21 +646,28 @@ namespace Airline.Migrations
                 column: "passenger_id");
 
             migrationBuilder.CreateIndex(
-                name: "UQ__Users__37D42BFAF79CEB57",
+                name: "UX_Tickets_SeatId",
+                table: "Tickets",
+                column: "seat_id",
+                unique: true,
+                filter: "[seat_id] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_cccd",
                 table: "Users",
                 column: "cccd",
                 unique: true,
                 filter: "[cccd] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "UQ__Users__AB6E616469AA4722",
+                name: "IX_Users_email",
                 table: "Users",
                 column: "email",
                 unique: true,
                 filter: "[email] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "UQ__Users__F3DBC572D8273813",
+                name: "IX_Users_username",
                 table: "Users",
                 column: "username",
                 unique: true);
@@ -469,13 +695,16 @@ namespace Airline.Migrations
                 name: "Promotions");
 
             migrationBuilder.DropTable(
-                name: "TicketClasses");
-
-            migrationBuilder.DropTable(
                 name: "Passengers");
 
             migrationBuilder.DropTable(
+                name: "Seats");
+
+            migrationBuilder.DropTable(
                 name: "Bookings");
+
+            migrationBuilder.DropTable(
+                name: "TicketClasses");
 
             migrationBuilder.DropTable(
                 name: "FlightSchedules");
