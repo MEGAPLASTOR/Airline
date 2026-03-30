@@ -70,9 +70,9 @@
             {
                 foreach (var s in Model)
                 {
-                    var depCity = s.Flight?.Route?.DepartureCityNavigation?.CityName ?? "—";
-                    var arrCity = s.Flight?.Route?.ArrivalCityNavigation?.CityName ?? "—";
-                    var flightNum = s.Flight?.FlightNumber ?? "—";
+                    var depCity = s.Flight?.Route?.DepartureCityNavigation?.CityName ?? "-";
+                    var arrCity = s.Flight?.Route?.ArrivalCityNavigation?.CityName ?? "-";
+                    var flightNum = s.Flight?.FlightNumber ?? "-";
 
                     var pillClass = "pill-scheduled";
                     var statusVi = "Scheduled";
@@ -89,7 +89,7 @@
                     <tr>
                         <td>
                             <div class="route-cell">
-                                <span class="route-cities">@depCity → @arrCity</span>
+                                <span class="route-cities">@depCity -> @arrCity</span>
                                 <span class="flight-num"><i class="fa-solid fa-ticket"></i> @flightNum</span>
                             </div>
                         </td>
@@ -166,7 +166,7 @@
                         {
                             var dep = f.Route?.DepartureCityNavigation?.CityName ?? "";
                             var arr = f.Route?.ArrivalCityNavigation?.CityName ?? "";
-                            <option value="@f.FlightId">@f.FlightNumber (@dep → @arr)</option>
+                            <option value="@f.FlightId">@f.FlightNumber (@dep -> @arr)</option>
                         }
                     }
                 </select>

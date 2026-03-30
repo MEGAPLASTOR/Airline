@@ -644,7 +644,7 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        document.getElementById("dashDate").textContent = new Date().toLocaleString("vi-VN", {
+        document.getElementById("dashDate").textContent = new Date().toLocaleString("en-US", {
             weekday: "long",
             year: "numeric",
             month: "long",
@@ -670,7 +670,7 @@
             if (abs >= 1_000_000_000) return (value / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + 'B';
             if (abs >= 1_000_000) return (value / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
             if (abs >= 1_000) return (value / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
-            return new Intl.NumberFormat('vi-VN').format(value);
+            return new Intl.NumberFormat('en-US').format(value);
         }
 
         function formatCurrency(value) {

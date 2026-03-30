@@ -59,9 +59,9 @@
             {
                 foreach (var s in Model)
                 {
-                    var depCity = s.Flight?.Route?.DepartureCityNavigation?.CityName ?? "—";
-                    var arrCity = s.Flight?.Route?.ArrivalCityNavigation?.CityName ?? "—";
-                    var flightNum = s.Flight?.FlightNumber ?? "—";
+                    var depCity = s.Flight?.Route?.DepartureCityNavigation?.CityName ?? "-";
+                    var arrCity = s.Flight?.Route?.ArrivalCityNavigation?.CityName ?? "-";
+                    var flightNum = s.Flight?.FlightNumber ?? "-";
 
                     var isEditable = (s.Status == "SCHEDULED" || s.Status == "DELAYED");
                     var isDelayed = s.Status == "DELAYED";
@@ -75,7 +75,7 @@
                     <tr>
                         <td>
                             <div class="route-cell">
-                                <span class="route-cities">@depCity → @arrCity</span>
+                                <span class="route-cities">@depCity -> @arrCity</span>
                                 <span class="flight-num"><i class="fa-solid fa-plane"></i> @flightNum</span>
                             </div>
                         </td>
