@@ -30,7 +30,8 @@ namespace Airline.Controllers
                     .ThenInclude(f => f.Route)
                         .ThenInclude(r => r.DepartureCityNavigation)
                 .Include(s => s.Flight.Route.ArrivalCityNavigation)
-                .Where(s => s.DepartureTime > DateTime.Now && s.Status == "SCHEDULED")
+                .Include(s => s.TicketPrices)
+                .Where(s => s.DepartureTime > DateTime.Now && s.Status == "SCHEDULED" && s.TicketPrices.Any())
                 .OrderBy(s => s.DepartureTime)
                 .AsQueryable();
 

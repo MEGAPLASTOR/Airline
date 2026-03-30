@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Airline.Models;
+using Airline.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,10 +11,12 @@ namespace Airline.Controllers
     public sealed class TicketPriceController : Controller
     {
         private readonly DataContext _db;
+        private readonly SeatService _seatService;
 
-        public TicketPriceController(DataContext db)
+        public TicketPriceController(DataContext db, SeatService seatService)
         {
             _db = db;
+            _seatService = seatService;
         }
 
         public sealed class TicketPricePageVm
@@ -149,6 +152,8 @@ namespace Airline.Controllers
             }
 
             await _db.SaveChangesAsync();
+            await _seatService.GenerateSeatsAsync(vm.ScheduleId);
+            
             TempData["tp_ok"] = "Ticket price saved successfully.";
             return RedirectToAction(nameof(TicketPrice));
         }
@@ -160,8 +165,10 @@ namespace Airline.Controllers
             var e = await _db.TicketPrices.FindAsync(id);
             if (e == null) return NotFound();
 
+            int scheduleId = e.ScheduleId;
             _db.Remove(e);
             await _db.SaveChangesAsync();
+            await _seatService.GenerateSeatsAsync(scheduleId);
 
             TempData["tp_ok"] = "Ticket price deleted successfully.";
             return RedirectToAction(nameof(TicketPrice));
