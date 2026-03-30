@@ -1,7 +1,23 @@
+@using System.Text.Json
+@model Airline.Models.AdminDashboardViewModel
 @{
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
     ViewData["Title"] = "Dashboard";
-    var firstName = User?.FindFirst("FirstName")?.Value ?? "Admin";
+
+    var dashboard = Model ?? new Airline.Models.AdminDashboardViewModel();
+    var bookingLabelsJson = JsonSerializer.Serialize(dashboard.BookingChartLabels);
+    var bookingValuesJson = JsonSerializer.Serialize(dashboard.BookingChartValues);
+    var revenueLabelsJson = JsonSerializer.Serialize(dashboard.RevenueChartLabels);
+    var revenueValuesJson = JsonSerializer.Serialize(dashboard.RevenueChartValues);
+    var classLabelsJson = JsonSerializer.Serialize(dashboard.TicketClasses.Select(x => x.Label));
+    var classValuesJson = JsonSerializer.Serialize(dashboard.TicketClasses.Select(x => x.Count));
+    var classPercentagesJson = JsonSerializer.Serialize(dashboard.TicketClasses.Select(x => x.Percentage));
+    var routeLabelsJson = JsonSerializer.Serialize(dashboard.TopRoutes.Select(x => x.Label));
+    var routeValuesJson = JsonSerializer.Serialize(dashboard.TopRoutes.Select(x => x.PassengerCount));
+    var spark1Json = JsonSerializer.Serialize(dashboard.TotalUsers.Sparkline);
+    var spark2Json = JsonSerializer.Serialize(dashboard.RevenueThisMonth.Sparkline);
+    var spark3Json = JsonSerializer.Serialize(dashboard.ActiveBookings.Sparkline);
+    var spark4Json = JsonSerializer.Serialize(dashboard.FlightsToday.Sparkline);
 }
 
 @section Styles {
@@ -60,7 +76,7 @@
         }
 
         .kpi-trend {
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 0.25rem;
             font-size: 0.72rem;
@@ -77,6 +93,11 @@
             .kpi-trend.down {
                 background: rgba(255,107,107,0.12);
                 color: var(--accent-coral);
+            }
+
+            .kpi-trend.flat {
+                background: rgba(255,255,255,0.08);
+                color: rgba(255,255,255,0.72);
             }
 
         .kpi-value {
@@ -150,6 +171,17 @@
         .chart-wrap-sm {
             position: relative;
             height: 240px;
+        }
+
+        .chart-empty {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255,255,255,0.45);
+            font-size: 0.84rem;
+            text-align: center;
+            padding: 1rem;
         }
 
         .card-header {
@@ -235,6 +267,12 @@
         .pill-red {
             background: rgba(255,107,107,0.12);
             color: var(--accent-coral);
+        }
+
+        .empty-table {
+            text-align: center;
+            color: rgba(255,255,255,0.45);
+            padding: 1.5rem 0;
         }
 
         .donut-legend {
