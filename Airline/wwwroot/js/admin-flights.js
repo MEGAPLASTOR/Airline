@@ -1,93 +1,176 @@
-/* ManageFlights page-specific logic */
-function showToast(msg, isError = false) {
-    const toast = document.getElementById('toast');
-    toast.style.borderLeftColor = isError ? 'var(--accent-coral)' : 'var(--accent-gold)';
-    const icon = isError
-        ? '<i class="fa-solid fa-circle-exclamation" style="color:var(--accent-coral)"></i>'
-        : '<i class="fa-solid fa-circle-check" style="color:var(--accent-gold)"></i>';
-    toast.innerHTML = icon + ' ' + msg;
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 3000);
+﻿let flightModal;
+let flightDeleteModal;
+
+function openModal(modal) {
+    if (!modal) return;
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
 }
 
-function closeModal(id) {
-    document.getElementById(id).classList.remove('active');
+function closeModalElement(modal) {
+    if (!modal) return;
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+function closeAllFlightModals() {
+    closeModalElement(flightModal);
+    closeModalElement(flightDeleteModal);
+}
+
+function showToast(message, isError = false) {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+
+    toast.style.borderLeftColor = isError ? 'var(--accent-coral)' : 'var(--ocean-aqua)';
+    toast.innerHTML = isError
+        ? '<i class="fa-solid fa-circle-exclamation" style="color:var(--accent-coral)"></i><span>' + message + '</span>'
+        : '<i class="fa-solid fa-circle-check" style="color:var(--accent-green)"></i><span>' + message + '</span>';
+    toast.classList.add('show');
+
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
 }
 
 function openCreateModal() {
-    document.getElementById('mTitle').innerHTML = '<i class="fa-solid fa-plus" style="color:var(--accent-gold);margin-right:6px"></i> Add Flight';
+    document.getElementById('mTitle').textContent = 'Add Flight';
     document.getElementById('fId').value = '0';
     document.getElementById('fNumber').value = '';
     document.getElementById('fRoute').value = '';
-    document.getElementById('flightModal').classList.add('active');
+    openModal(flightModal);
 }
 
 async function openEditModal(id) {
-    const res = await fetch('/Admin/GetFlight/' + id);
-    if (!res.ok) { showToast('Failed to load data', true); return; }
-    const f = await res.json();
-    document.getElementById('mTitle').innerHTML = '<i class="fa-solid fa-pen" style="color:var(--accent-gold);margin-right:6px"></i> Edit Flight';
-    document.getElementById('fId').value = f.flightId;
-    document.getElementById('fNumber').value = f.flightNumber;
-    document.getElementById('fRoute').value = f.routeId;
-    document.getElementById('flightModal').classList.add('active');
+    try {
+        const response = await fetch('/Admin/GetFlight/' + id);
+        if (!response.ok) {
+            throw new Error('Failed to load flight');
+        }
+
+        const data = await response.json();
+        document.getElementById('mTitle').textContent = 'Edit Flight';
+        document.getElementById('fId').value = data.flightId || id;
+        document.getElementById('fNumber').value = data.flightNumber || '';
+        document.getElementById('fRoute').value = data.routeId || '';
+        openModal(flightModal);
+    } catch {
+        showToast('Failed to load flight data.', true);
+    }
+}
+
+function openDeleteModal(id, flightNumber) {
+    document.getElementById('delId').value = id;
+    document.getElementById('deleteTargetText').textContent = flightNumber || 'Selected flight';
+    openModal(flightDeleteModal);
 }
 
 async function submitFlight() {
     const id = document.getElementById('fId').value;
-    const flightNum = document.getElementById('fNumber').value.trim();
+    const flightNumber = document.getElementById('fNumber').value.trim().toUpperCase();
     const routeId = document.getElementById('fRoute').value;
 
-    if (!flightNum || !routeId) {
-        showToast('Please enter flight number and select a route', true);
+    if (!flightNumber || !routeId) {
+        showToast('Please enter a flight number and select a route.', true);
         return;
     }
 
     const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-    const url = id == '0' ? '/Admin/CreateFlight' : '/Admin/EditFlight/' + id;
+    const formData = new FormData();
+    formData.append('flightNumber', flightNumber);
+    formData.append('routeId', routeId);
+    formData.append('__RequestVerificationToken', token);
 
-    const fd = new FormData();
-    if (id != '0') fd.append('id', id);
-    fd.append('flightNumber', flightNum);
-    fd.append('routeId', routeId);
-    fd.append('__RequestVerificationToken', token);
+    const url = id === '0' ? '/Admin/CreateFlight' : '/Admin/EditFlight/' + id;
 
     try {
-        const res = await fetch(url, { method: 'POST', body: fd });
-        const data = await res.json();
-        if (data.success) {
-            location.reload();
-        } else {
-            showToast(data.message, true);
-        }
-    } catch (e) {
-        showToast('A network error occurred', true);
-    }
-}
+        const response = await fetch(url, { method: 'POST', body: formData });
+        const result = await response.json();
 
-function openDeleteModal(id) {
-    document.getElementById('delId').value = id;
-    document.getElementById('deleteModal').classList.add('active');
+        if (result.success) {
+            location.reload();
+            return;
+        }
+
+        showToast(result.message || 'Unable to save flight.', true);
+    } catch {
+        showToast('A network error occurred.', true);
+    }
 }
 
 async function submitDelete() {
     const id = document.getElementById('delId').value;
     const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-
-    const fd = new FormData();
-    fd.append('id', id);
-    fd.append('__RequestVerificationToken', token);
+    const formData = new FormData();
+    formData.append('id', id);
+    formData.append('__RequestVerificationToken', token);
 
     try {
-        const res = await fetch('/Admin/DeleteFlight/' + id, { method: 'POST', body: fd });
-        const data = await res.json();
-        if (data.success) {
+        const response = await fetch('/Admin/DeleteFlight/' + id, { method: 'POST', body: formData });
+        const result = await response.json();
+
+        if (result.success) {
             location.reload();
-        } else {
-            showToast(data.message, true);
+            return;
         }
-    } catch (e) {
-        showToast('A network error occurred', true);
+
+        showToast(result.message || 'Unable to delete flight.', true);
+    } catch {
+        showToast('A network error occurred.', true);
     }
-    closeModal('deleteModal');
 }
+
+function filterFlights() {
+    const keyword = (document.getElementById('flightSearch')?.value || '').trim().toLowerCase();
+    const status = (document.getElementById('flightScheduleFilter')?.value || '').trim().toUpperCase();
+    const rows = document.querySelectorAll('.flight-row');
+    let visible = 0;
+
+    rows.forEach(row => {
+        const matchesKeyword = !keyword || (row.dataset.search || '').toLowerCase().includes(keyword);
+        const matchesStatus = !status || (row.dataset.status || '').toUpperCase() === status;
+        const shouldShow = matchesKeyword && matchesStatus;
+
+        row.style.display = shouldShow ? '' : 'none';
+        if (shouldShow) {
+            visible += 1;
+        }
+    });
+
+    const counter = document.getElementById('flightCount');
+    if (counter) {
+        counter.textContent = visible;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    flightModal = document.getElementById('flightModal');
+    flightDeleteModal = document.getElementById('deleteModal');
+
+    document.querySelectorAll('.js-close-modal').forEach(button => {
+        button.addEventListener('click', closeAllFlightModals);
+    });
+
+    [flightModal, flightDeleteModal].forEach(modal => {
+        if (!modal) return;
+        modal.addEventListener('click', function (event) {
+            if (event.target === modal) {
+                closeModalElement(modal);
+            }
+        });
+    });
+
+    document.getElementById('flightSearch')?.addEventListener('input', filterFlights);
+    document.getElementById('flightScheduleFilter')?.addEventListener('change', filterFlights);
+
+    document.querySelector('.js-refresh-page')?.addEventListener('click', function () {
+        window.location.reload();
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            closeAllFlightModals();
+        }
+    });
+});
+

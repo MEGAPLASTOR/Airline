@@ -1,7 +1,23 @@
+@using System.Text.Json
+@model Airline.Models.AdminDashboardViewModel
 @{
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
     ViewData["Title"] = "Dashboard";
-    var firstName = User?.FindFirst("FirstName")?.Value ?? "Admin";
+
+    var dashboard = Model ?? new Airline.Models.AdminDashboardViewModel();
+    var bookingLabelsJson = JsonSerializer.Serialize(dashboard.BookingChartLabels);
+    var bookingValuesJson = JsonSerializer.Serialize(dashboard.BookingChartValues);
+    var revenueLabelsJson = JsonSerializer.Serialize(dashboard.RevenueChartLabels);
+    var revenueValuesJson = JsonSerializer.Serialize(dashboard.RevenueChartValues);
+    var classLabelsJson = JsonSerializer.Serialize(dashboard.TicketClasses.Select(x => x.Label));
+    var classValuesJson = JsonSerializer.Serialize(dashboard.TicketClasses.Select(x => x.Count));
+    var classPercentagesJson = JsonSerializer.Serialize(dashboard.TicketClasses.Select(x => x.Percentage));
+    var routeLabelsJson = JsonSerializer.Serialize(dashboard.TopRoutes.Select(x => x.Label));
+    var routeValuesJson = JsonSerializer.Serialize(dashboard.TopRoutes.Select(x => x.PassengerCount));
+    var spark1Json = JsonSerializer.Serialize(dashboard.TotalUsers.Sparkline);
+    var spark2Json = JsonSerializer.Serialize(dashboard.RevenueThisMonth.Sparkline);
+    var spark3Json = JsonSerializer.Serialize(dashboard.ActiveBookings.Sparkline);
+    var spark4Json = JsonSerializer.Serialize(dashboard.FlightsToday.Sparkline);
 }
 
 @section Styles {
@@ -60,7 +76,7 @@
         }
 
         .kpi-trend {
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 0.25rem;
             font-size: 0.72rem;
@@ -77,6 +93,11 @@
             .kpi-trend.down {
                 background: rgba(255,107,107,0.12);
                 color: var(--accent-coral);
+            }
+
+            .kpi-trend.flat {
+                background: rgba(255,255,255,0.08);
+                color: rgba(255,255,255,0.72);
             }
 
         .kpi-value {
@@ -150,6 +171,17 @@
         .chart-wrap-sm {
             position: relative;
             height: 240px;
+        }
+
+        .chart-empty {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255,255,255,0.45);
+            font-size: 0.84rem;
+            text-align: center;
+            padding: 1rem;
         }
 
         .card-header {
@@ -235,6 +267,12 @@
         .pill-red {
             background: rgba(255,107,107,0.12);
             color: var(--accent-coral);
+        }
+
+        .empty-table {
+            text-align: center;
+            color: rgba(255,255,255,0.45);
+            padding: 1.5rem 0;
         }
 
         .donut-legend {
@@ -376,52 +414,50 @@
 <div class="page-header">
     <div class="page-title-block">
         <div class="page-greeting">Admin Dashboard</div>
-        <h1 class="page-title">Welcome back, <span>Admin</span></h1>
+        <h1 class="page-title">Welcome back, <span>@dashboard.AdminFirstName</span></h1>
         <p class="page-subtitle" id="dashDate"></p>
     </div>
     <div class="page-actions">
-        <button class="btn-ghost"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
-        <button class="btn-primary"><i class="fa-solid fa-file-export"></i> Export Report</button>
+        <button class="btn-ghost" type="button" onclick="window.location.reload()">
+            <i class="fa-solid fa-arrows-rotate"></i> Refresh
+        </button>
+        <button class="btn-primary" type="button" onclick="window.print()">
+            <i class="fa-solid fa-file-export"></i> Export Report
+        </button>
     </div>
 </div>
 
 <div class="kpi-grid">
-    <div class="kpi-card" style="--kpi-accent:#17aab8">
-        <div class="kpi-top">
-            <div class="kpi-icon-wrap"><i class="fa-solid fa-users"></i></div>
-            <span class="kpi-trend up"><i class="fa-solid fa-arrow-trend-up"></i> +8.3%</span>
+    @{
+        var kpis = new[]
+        {
+            (Accent: "#17aab8", Icon: "fa-users", Data: dashboard.TotalUsers),
+            (Accent: "#f0b429", Icon: "fa-sack-dollar", Data: dashboard.RevenueThisMonth),
+            (Accent: "#5de8a8", Icon: "fa-ticket", Data: dashboard.ActiveBookings),
+            (Accent: "#ff6b6b", Icon: "fa-plane-departure", Data: dashboard.FlightsToday)
+        };
+    }
+    @for (var i = 0; i < kpis.Length; i++)
+    {
+        var kpi = kpis[i];
+        var trendIcon = kpi.Data.TrendDirection == "down"
+            ? "fa-arrow-trend-down"
+            : kpi.Data.TrendDirection == "flat"
+                ? "fa-minus"
+                : "fa-arrow-trend-up";
+
+        <div class="kpi-card" style="--kpi-accent:@kpi.Accent">
+            <div class="kpi-top">
+                <div class="kpi-icon-wrap"><i class="fa-solid @kpi.Icon"></i></div>
+                <span class="kpi-trend @kpi.Data.TrendDirection">
+                    <i class="fa-solid @trendIcon"></i> @kpi.Data.TrendText
+                </span>
+            </div>
+            <div class="kpi-value">@kpi.Data.Value</div>
+            <div class="kpi-label">@kpi.Data.Label</div>
+            <div class="kpi-sparkline"><canvas id="spark@(i + 1)"></canvas></div>
         </div>
-        <div class="kpi-value">124,500</div>
-        <div class="kpi-label">Total Users</div>
-        <div class="kpi-sparkline"><canvas id="spark1"></canvas></div>
-    </div>
-    <div class="kpi-card" style="--kpi-accent:#f0b429">
-        <div class="kpi-top">
-            <div class="kpi-icon-wrap"><i class="fa-solid fa-sack-dollar"></i></div>
-            <span class="kpi-trend up"><i class="fa-solid fa-arrow-trend-up"></i> +12.5%</span>
-        </div>
-        <div class="kpi-value">$1.25M</div>
-        <div class="kpi-label">Revenue (This Month)</div>
-        <div class="kpi-sparkline"><canvas id="spark2"></canvas></div>
-    </div>
-    <div class="kpi-card" style="--kpi-accent:#5de8a8">
-        <div class="kpi-top">
-            <div class="kpi-icon-wrap"><i class="fa-solid fa-ticket"></i></div>
-            <span class="kpi-trend up"><i class="fa-solid fa-arrow-trend-up"></i> +5.1%</span>
-        </div>
-        <div class="kpi-value">8,750</div>
-        <div class="kpi-label">Active Bookings</div>
-        <div class="kpi-sparkline"><canvas id="spark3"></canvas></div>
-    </div>
-    <div class="kpi-card" style="--kpi-accent:#ff6b6b">
-        <div class="kpi-top">
-            <div class="kpi-icon-wrap"><i class="fa-solid fa-plane-departure"></i></div>
-            <span class="kpi-trend down"><i class="fa-solid fa-arrow-trend-down"></i> -2.0%</span>
-        </div>
-        <div class="kpi-value">342</div>
-        <div class="kpi-label">Flights Today</div>
-        <div class="kpi-sparkline"><canvas id="spark4"></canvas></div>
-    </div>
+    }
 </div>
 
 <div class="charts-row">
@@ -429,9 +465,9 @@
         <div class="card-header">
             <div>
                 <div class="card-title">Booking Growth</div>
-                <div class="card-subtitle">Monthly bookings for current year</div>
+                <div class="card-subtitle">Monthly bookings for the current year</div>
             </div>
-            <span class="card-tag">2025</span>
+            <span class="card-tag">@dashboard.CurrentYear</span>
         </div>
         <div class="chart-wrap"><canvas id="bookingChart"></canvas></div>
     </div>
@@ -439,7 +475,7 @@
         <div class="card-header">
             <div>
                 <div class="card-title">Ticket Classes</div>
-                <div class="card-subtitle">Distribution by class</div>
+                <div class="card-subtitle">Distribution by sold ticket class</div>
             </div>
         </div>
         <div class="chart-wrap-sm"><canvas id="classChart"></canvas></div>
@@ -452,9 +488,9 @@
         <div class="card-header">
             <div>
                 <div class="card-title">Revenue Overview</div>
-                <div class="card-subtitle">Monthly revenue in USD</div>
+                <div class="card-subtitle">Monthly revenue in VND</div>
             </div>
-            <span class="card-tag">This Year</span>
+            <span class="card-tag">@dashboard.CurrentYear</span>
         </div>
         <div class="chart-wrap"><canvas id="revenueChart"></canvas></div>
     </div>
@@ -474,9 +510,11 @@
         <div class="card-header">
             <div>
                 <div class="card-title">Recent Ticket Activity</div>
-                <div class="card-subtitle">Latest bookings requiring attention</div>
+                <div class="card-subtitle">Latest customer ticket activity from the database</div>
             </div>
-            <button class="btn-ghost" style="font-size:0.75rem;padding:0.32rem 0.85rem">View All</button>
+            <a class="btn-ghost" style="font-size:0.75rem;padding:0.32rem 0.85rem"
+               asp-controller="AdminBooking"
+               asp-action="ConfirmTicket">View All</a>
         </div>
         <table class="data-table">
             <thead>
@@ -488,7 +526,7 @@
                     <th>Status</th>
                 </tr>
             </thead>
-            <tbody>
+            @* <tbody>
                 <tr>
                     <td class="td-mono">#SKY-00421</td>
                     <td class="td-bold">Nguyen Van A</td>
@@ -510,6 +548,27 @@
                     <td>Premium</td>
                     <td><span class="status-pill pill-red">Cancelled</span></td>
                 </tr>
+            </tbody> *@
+            <tbody>
+                @if (dashboard.RecentTickets.Any())
+                {
+                    foreach (var ticket in dashboard.RecentTickets)
+                    {
+                        <tr>
+                            <td class="td-mono">@ticket.TicketCode</td>
+                            <td class="td-bold">@ticket.PassengerName</td>
+                            <td>@ticket.RouteLabel</td>
+                            <td>@ticket.ClassName</td>
+                            <td><span class="status-pill @ticket.StatusCssClass">@ticket.StatusLabel</span></td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5" class="empty-table">No recent ticket activity found.</td>
+                    </tr>
+                }
             </tbody>
         </table>
     </div>
@@ -517,13 +576,13 @@
     <div class="health-card">
         <div class="card-header">
             <div>
-                <div class="card-title">System Health</div>
-                <div class="card-subtitle">Current platform status</div>
+                <div class="card-title">Operational Snapshot</div>
+                <div class="card-subtitle">Live ratios derived from booking, payment, and schedule data</div>
             </div>
-            <span class="card-tag">Live</span>
+            <span class="card-tag">Live DB</span>
         </div>
 
-        <div class="health-item">
+        @* <div class="health-item">
             <div class="health-top">
                 <span class="health-name">Server Load</span>
                 <span class="health-val">72%</span>
@@ -553,13 +612,31 @@
                 <span class="health-val">38%</span>
             </div>
             <div class="health-bar"><div class="health-fill crit" style="width:38%"></div></div>
-        </div>
+        </div> *@
+        @foreach (var metric in dashboard.OperationalMetrics)
+        {
+            <div class="health-item">
+                <div class="health-top">
+                    <span class="health-name">@metric.Name</span>
+                    <span class="health-val">@metric.ValueText</span>
+                </div>
+                <div class="health-bar"><div class="health-fill @metric.CssClass" style="width:@metric.Percentage%"></div></div>
+            </div>
+        }
 
         <div class="quick-actions">
-            <button class="qa-btn"><i class="fa-solid fa-user-plus"></i> Add Staff</button>
-            <button class="qa-btn"><i class="fa-solid fa-bell"></i> Alerts</button>
-            <button class="qa-btn"><i class="fa-solid fa-plane"></i> Flights</button>
-            <button class="qa-btn"><i class="fa-solid fa-chart-line"></i> Reports</button>
+            <a class="qa-btn" asp-controller="AdminFlight" asp-action="ManageFlights">
+                <i class="fa-solid fa-plane"></i> Manage Flights
+            </a>
+            <a class="qa-btn" asp-controller="AdminSchedule" asp-action="FlightSchedules">
+                <i class="fa-solid fa-calendar-days"></i> Schedules
+            </a>
+            <a class="qa-btn" asp-controller="AdminBooking" asp-action="ConfirmTicket">
+                <i class="fa-solid fa-ticket"></i> Confirm Tickets
+            </a>
+            <a class="qa-btn" asp-controller="AdminAccount" asp-action="ManageAccounts">
+                <i class="fa-solid fa-users-gear"></i> Accounts
+            </a>
         </div>
     </div>
 </div>
@@ -576,11 +653,44 @@
             minute: "2-digit"
         });
 
+        const bookingLabels = @Html.Raw(bookingLabelsJson);
+        const bookingValues = @Html.Raw(bookingValuesJson);
+        const revenueLabels = @Html.Raw(revenueLabelsJson);
+        const revenueValues = @Html.Raw(revenueValuesJson);
+        const classLabels = @Html.Raw(classLabelsJson);
+        const classValues = @Html.Raw(classValuesJson);
+        const classPercentages = @Html.Raw(classPercentagesJson);
+        const routeLabels = @Html.Raw(routeLabelsJson);
+        const routeValues = @Html.Raw(routeValuesJson);
+        const donutPalette = ['#17aab8', '#f0b429', '#5de8a8', '#ff6b6b', '#2cc6d3', '#9beaf0'];
+        const routePalette = ['#17aab8', '#2cc6d3', '#48d4de', '#70e0e7', '#9beaf0'];
+
+        function formatCompactNumber(value) {
+            const abs = Math.abs(value);
+            if (abs >= 1_000_000_000) return (value / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + 'B';
+            if (abs >= 1_000_000) return (value / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+            if (abs >= 1_000) return (value / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
+            return new Intl.NumberFormat('vi-VN').format(value);
+        }
+
+        function formatCurrency(value) {
+            return `${formatCompactNumber(value)} VND`;
+        }
+
+        function renderEmptyState(canvasId, message) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas || !canvas.parentElement) return;
+            canvas.parentElement.innerHTML = `<div class="chart-empty">${message}</div>`;
+        }
+
         function sparkline(id, data, color) {
-            new Chart(document.getElementById(id), {
+            const canvas = document.getElementById(id);
+            if (!canvas || !Array.isArray(data) || data.length === 0) return;
+
+            new Chart(canvas, {
                 type: 'line',
                 data: {
-                    labels: data.map((_, i) => i + 1),
+                    labels: data.map((_, index) => index + 1),
                     datasets: [{
                         data: data,
                         borderColor: color,
@@ -599,115 +709,152 @@
             });
         }
 
-        sparkline('spark1', [16, 22, 19, 28, 25, 31, 36], '#17aab8');
-        sparkline('spark2', [12, 17, 15, 21, 26, 29, 35], '#f0b429');
-        sparkline('spark3', [10, 12, 11, 14, 18, 17, 20], '#5de8a8');
-        sparkline('spark4', [24, 22, 23, 19, 18, 17, 16], '#ff6b6b');
+        sparkline('spark1', @Html.Raw(spark1Json), '#17aab8');
+        sparkline('spark2', @Html.Raw(spark2Json), '#f0b429');
+        sparkline('spark3', @Html.Raw(spark3Json), '#5de8a8');
+        sparkline('spark4', @Html.Raw(spark4Json), '#ff6b6b');
 
-        new Chart(document.getElementById('bookingChart'), {
-            type: 'line',
-            data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                datasets: [{
-                    label: 'Bookings',
-                    data: [4200, 4800, 5300, 5900, 6500, 7200, 7600, 7300, 8100, 8600, 9100, 9750],
-                    borderColor: '#17aab8',
-                    backgroundColor: 'rgba(23,170,184,0.15)',
-                    fill: true,
-                    tension: 0.35,
-                    pointRadius: 3,
-                    pointBackgroundColor: '#17aab8'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { ticks: { color: 'rgba(255,255,255,0.55)' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                    y: { ticks: { color: 'rgba(255,255,255,0.55)' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+        if (bookingLabels.length && bookingValues.length) {
+            new Chart(document.getElementById('bookingChart'), {
+                type: 'line',
+                data: {
+                    labels: bookingLabels,
+                    datasets: [{
+                        label: 'Bookings',
+                        data: bookingValues,
+                        borderColor: '#17aab8',
+                        backgroundColor: 'rgba(23,170,184,0.15)',
+                        fill: true,
+                        tension: 0.35,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#17aab8'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: 'rgba(255,255,255,0.55)' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        y: { ticks: { color: 'rgba(255,255,255,0.55)' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                    }
                 }
-            }
-        });
+            });
+        } else {
+            renderEmptyState('bookingChart', 'No booking data available for the selected year.');
+        }
 
-        const classData = {
-            labels: ['Economy', 'Business', 'Premium', 'First'],
-            values: [58, 18, 16, 8],
-            colors: ['#17aab8', '#f0b429', '#5de8a8', '#ff6b6b']
-        };
+        if (classLabels.length && classValues.some(value => value > 0)) {
+            new Chart(document.getElementById('classChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: classLabels,
+                    datasets: [{
+                        data: classValues,
+                        backgroundColor: classLabels.map((_, index) => donutPalette[index % donutPalette.length]),
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '68%',
+                    plugins: { legend: { display: false } }
+                }
+            });
 
-        new Chart(document.getElementById('classChart'), {
-            type: 'doughnut',
-            data: {
-                labels: classData.labels,
-                datasets: [{
-                    data: classData.values,
-                    backgroundColor: classData.colors,
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '68%',
-                plugins: { legend: { display: false } }
-            }
-        });
-
-        const classLegend = document.getElementById('classLegend');
-        classLegend.innerHTML = classData.labels.map((label, i) => `
-            <div class="legend-item">
-                <div class="legend-left">
-                    <span class="legend-dot" style="background:${classData.colors[i]}"></span>
-                    <span>${label}</span>
+            const classLegend = document.getElementById('classLegend');
+            classLegend.innerHTML = classLabels.map((label, index) => `
+                <div class="legend-item">
+                    <div class="legend-left">
+                        <span class="legend-dot" style="background:${donutPalette[index % donutPalette.length]}"></span>
+                        <span>${label}</span>
+                    </div>
+                    <span class="legend-val">${classPercentages[index]}%</span>
                 </div>
-                <span class="legend-val">${classData.values[i]}%</span>
-            </div>
-        `).join('');
-
-        new Chart(document.getElementById('revenueChart'), {
-            type: 'bar',
-            data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                datasets: [{
-                    label: 'Revenue',
-                    data: [82000, 91000, 97000, 108000, 116000, 124000, 131000, 128000, 139000, 146000, 157000, 169000],
-                    backgroundColor: 'rgba(240,180,41,0.75)',
-                    borderRadius: 8
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { ticks: { color: 'rgba(255,255,255,0.55)' }, grid: { display: false } },
-                    y: { ticks: { color: 'rgba(255,255,255,0.55)' }, grid: { color: 'rgba(255,255,255,0.05)' } }
-                }
+            `).join('');
+        } else {
+            renderEmptyState('classChart', 'No ticket class data available.');
+            const classLegend = document.getElementById('classLegend');
+            if (classLegend) {
+                classLegend.innerHTML = '<div class="chart-empty">No ticket class distribution found.</div>';
             }
-        });
+        }
 
-        new Chart(document.getElementById('routeChart'), {
-            type: 'bar',
-            data: {
-                labels: ['HAN-SGN', 'SGN-DAD', 'HAN-PQC', 'DAD-CXR', 'SGN-HUI'],
-                datasets: [{
-                    label: 'Passengers',
-                    data: [9800, 8600, 7100, 5400, 4900],
-                    backgroundColor: ['#17aab8', '#2cc6d3', '#48d4de', '#70e0e7', '#9beaf0'],
-                    borderRadius: 8
-                }]
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { ticks: { color: 'rgba(255,255,255,0.55)' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                    y: { ticks: { color: 'rgba(255,255,255,0.7)' }, grid: { display: false } }
+        if (revenueLabels.length && revenueValues.length) {
+            new Chart(document.getElementById('revenueChart'), {
+                type: 'bar',
+                data: {
+                    labels: revenueLabels,
+                    datasets: [{
+                        label: 'Revenue',
+                        data: revenueValues,
+                        backgroundColor: 'rgba(240,180,41,0.75)',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    return formatCurrency(context.raw ?? 0);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { ticks: { color: 'rgba(255,255,255,0.55)' }, grid: { display: false } },
+                        y: {
+                            ticks: {
+                                color: 'rgba(255,255,255,0.55)',
+                                callback: function (value) {
+                                    return formatCurrency(value);
+                                }
+                            },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        }
+                    }
                 }
-            }
-        });
+            });
+        } else {
+            renderEmptyState('revenueChart', 'No revenue data available for the selected year.');
+        }
+
+        if (routeLabels.length && routeValues.length) {
+            new Chart(document.getElementById('routeChart'), {
+                type: 'bar',
+                data: {
+                    labels: routeLabels,
+                    datasets: [{
+                        label: 'Passengers',
+                        data: routeValues,
+                        backgroundColor: routeLabels.map((_, index) => routePalette[index % routePalette.length]),
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: {
+                            ticks: { color: 'rgba(255,255,255,0.55)' },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        },
+                        y: {
+                            ticks: { color: 'rgba(255,255,255,0.7)' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        } else {
+            renderEmptyState('routeChart', 'No route activity data available.');
+        }
     </script>
 }

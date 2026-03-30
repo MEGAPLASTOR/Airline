@@ -40,6 +40,8 @@ namespace Airline.Controllers
             }
 
             var ticketClasses = await query
+                .Include(x => x.Tickets)
+                .Include(x => x.TicketPrices)
                 .OrderBy(x => x.ClassName)
                 .ToListAsync();
 

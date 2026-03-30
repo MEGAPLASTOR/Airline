@@ -3,6 +3,7 @@
     Layout = "_Layout";
 }
 
+@*
 @section Styles {
 <style>
     /* ── Breadcrumb ── */
@@ -189,7 +190,9 @@
     }
 </style>
 }
+*@
 
+<div class="public-page public-page-about">
 <!-- Breadcrumb -->
 <div class="breadcrumb">
     <a href="/"><i class="fa-solid fa-house"></i> Home</a>
@@ -382,18 +385,21 @@
         </div>
 
         <!-- Quick link to contact -->
-        <div class="card" style="padding:1.4rem; background:linear-gradient(135deg,#f0f8fa,#e8f4f8); border-color:#cde8ef;">
-            <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.6rem;">
-                <i class="fa-solid fa-envelope" style="color:var(--ocean-teal);"></i>
-                <span style="font-size:0.78rem;font-weight:700;color:var(--ocean-deep);">Get In Touch</span>
+        <div class="card callout-card">
+            <div class="callout-head">
+                <div class="callout-icon"><i class="fa-solid fa-envelope"></i></div>
+                <div class="callout-title">Get In Touch</div>
             </div>
-            <p style="font-size:0.78rem;color:#5a8295;line-height:1.6;margin-bottom:1rem;">
+            <p>
                 Have questions about The Airline? Our team is always happy to hear from you.
             </p>
-            <a href="/Contact" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.55rem 1.1rem;border-radius:9px;background:linear-gradient(135deg,var(--ocean-aqua),var(--ocean-teal));color:#fff;font-size:0.8rem;font-weight:600;text-decoration:none;box-shadow:0 3px 12px rgba(23,170,184,0.3);">
-                <i class="fa-solid fa-paper-plane"></i> Contact Us
-            </a>
+            <div class="status-actions" style="justify-content:flex-start;margin-top:1rem;">
+                <a href="/Contact" class="btn-primary">
+                    <i class="fa-solid fa-paper-plane"></i> Contact Us
+                </a>
+            </div>
         </div>
 
     </div>
+</div>
 </div>
