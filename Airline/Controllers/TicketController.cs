@@ -63,7 +63,7 @@ namespace Airline.Controllers
                             .ThenInclude(f => f.Route)
                 .FirstOrDefaultAsync(t => t.TicketId == id && t.Booking.UserId == userId);
 
-            if (ticket == null || ticket.Booking?.Schedule == null) return NotFound("Không tìm thấy thông tin vé hoặc lịch trình");
+            if (ticket == null || ticket.Booking?.Schedule == null) return NotFound("Ticket or schedule details could not be found.");
 
             // Get all available seats for this schedule and class
             var availableSeats = await _context.Seats
@@ -73,7 +73,7 @@ namespace Airline.Controllers
                 .ToListAsync();
 
             ViewBag.AvailableSeats = availableSeats;
-            ViewBag.CurrentSeatNumber = ticket.Seat?.SeatNumber ?? "Chưa có";
+            ViewBag.CurrentSeatNumber = ticket.Seat?.SeatNumber ?? "Not assigned";
 
             return View(ticket);
         }
@@ -87,7 +87,7 @@ namespace Airline.Controllers
         {
             var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdStr)) 
-                return Json(new { success = false, message = "Không có quyền truy cập" });
+                return Json(new { success = false, message = "You do not have access to this ticket." });
 
             int userId = int.Parse(userIdStr);
 
@@ -97,11 +97,11 @@ namespace Airline.Controllers
                 .FirstOrDefaultAsync(t => t.TicketId == ticketId && t.Booking.UserId == userId);
 
             if (ticket == null)
-                return Json(new { success = false, message = "Vé không tồn tại" });
+                return Json(new { success = false, message = "The ticket does not exist." });
 
             var newSeat = await _context.Seats.FindAsync(newSeatId);
             if (newSeat == null || newSeat.SeatStatus != "AVAILABLE")
-                return Json(new { success = false, message = "Ghế mới không còn sẵn" });
+                return Json(new { success = false, message = "The selected seat is no longer available." });
 
             using (var transaction = await _context.Database.BeginTransactionAsync())
             {
@@ -120,12 +120,12 @@ namespace Airline.Controllers
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
 
-                    return Json(new { success = true, message = "Đổi chỗ ngồi thành công!" });
+                    return Json(new { success = true, message = "Seat changed successfully." });
                 }
                 catch (Exception ex)
                 {
                     await transaction.RollbackAsync();
-                    return Json(new { success = false, message = "Lỗi: " + ex.Message });
+                    return Json(new { success = false, message = "Error: " + ex.Message });
                 }
             }
         }

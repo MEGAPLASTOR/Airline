@@ -71,7 +71,7 @@ namespace Airline.Controllers
                 {
                     ScheduleId = s.ScheduleId,
                     Label = (s.Flight != null ? s.Flight.FlightNumber : "") +
-                            " • " + s.DepartureTime.ToString("dd/MM/yyyy HH:mm")
+                            " - " + s.DepartureTime.ToString("dd/MM/yyyy HH:mm")
                 }).ToArrayAsync();
 
             var classes = await _db.TicketClasses

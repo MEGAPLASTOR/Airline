@@ -27,7 +27,7 @@ namespace Airline.Controllers
                 return Ok(new
                 {
                     success = false,
-                    message = "Thiếu dữ liệu"
+                    message = "Missing required data."
                 });
             }
 
@@ -38,7 +38,7 @@ namespace Airline.Controllers
                 return Ok(new
                 {
                     success = false,
-                    message = "Sai tài khoản hoặc mật khẩu"
+                    message = "Invalid username or password."
                 });
             }
 
@@ -66,7 +66,7 @@ namespace Airline.Controllers
                     return Ok(new
                     {
                         success = false,
-                        message = "Thiếu dữ liệu"
+                        message = "Missing required data."
                     });
                 }
 
@@ -75,7 +75,7 @@ namespace Airline.Controllers
                     return Ok(new
                     {
                         success = false,
-                        message = "Username đã tồn tại"
+                        message = "Username already exists."
                     });
                 }
 
@@ -85,7 +85,7 @@ namespace Airline.Controllers
                     return Ok(new
                     {
                         success = false,
-                        message = "Email đã tồn tại"
+                        message = "Email already exists."
                     });
                 }
 
@@ -95,7 +95,7 @@ namespace Airline.Controllers
                     return Ok(new
                     {
                         success = false,
-                        message = "CCCD đã tồn tại"
+                        message = "CCCD already exists."
                     });
                 }
 

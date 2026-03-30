@@ -1,6 +1,6 @@
 @model IEnumerable<Airline.Models.Ticket>
 @{
-    ViewData["Title"] = "Vé Của Tôi";
+    ViewData["Title"] = "My Tickets";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
@@ -224,15 +224,15 @@
 </style>
 
 <div class="ticket-container">
-    <h1 class="page-title"><i class="fa-solid fa-ticket"></i> Vé Của <span>Tôi</span></h1>
+    <h1 class="page-title"><i class="fa-solid fa-ticket"></i> My <span>Tickets</span></h1>
 
     @if (!Model.Any())
     {
         <div class="empty-state">
             <div class="empty-icon"><i class="fa-solid fa-plane-slash"></i></div>
-            <div class="empty-text">Bạn chưa có đặt vé nào. Hãy bắt đầu hành trình của mình ngay!</div>
+            <div class="empty-text">You do not have any bookings yet. Start your journey now.</div>
             <a asp-controller="Booking" asp-action="BookFlight" class="btn-action btn-pay" style="padding: 1.2rem 2.5rem;">
-                <i class="fa-solid fa-paper-plane"></i> Tìm chuyến bay ngay
+                <i class="fa-solid fa-paper-plane"></i> Find flights now
             </a>
         </div>
     }
@@ -249,7 +249,7 @@
                     <div class="flight-info">
                         <div class="city-group">
                             <div class="city-name">@route.DepartureCityNavigation.CityName</div>
-                            <div class="city-label">Điểm đi</div>
+                            <div class="city-label">Origin</div>
                         </div>
                         <div class="flight-divider">
                             <div class="flight-line"><i class="fa-solid fa-plane"></i></div>
@@ -257,7 +257,7 @@
                         </div>
                         <div class="city-group">
                             <div class="city-name">@route.ArrivalCityNavigation.CityName</div>
-                            <div class="city-label">Điểm đến</div>
+                            <div class="city-label">Destination</div>
                         </div>
                     </div>
                     <div class="status-badge status-@(ticket.Status.ToLower())">
@@ -267,23 +267,23 @@
 
                 <div class="flight-details">
                     <div class="detail-item">
-                        <span class="detail-label">Hành khách</span>
+                        <span class="detail-label">Passenger</span>
                         <span class="detail-value">@(ticket.Passenger?.FullName ?? "N/A")</span>
                     </div>
                     <div class="detail-item">
-                        <span class="detail-label">Thời gian khởi hành</span>
+                        <span class="detail-label">Departure Time</span>
                         <span class="detail-value">@schedule.DepartureTime.ToString("dd/MM/yyyy HH:mm")</span>
                     </div>
                     <div class="detail-item">
-                        <span class="detail-label">Chỗ ngồi</span>
-                        <span class="detail-value" style="color: var(--ocean-aqua); font-weight: 800;">@(ticket.Seat?.SeatNumber ?? "Chưa có")</span>
+                        <span class="detail-label">Seat</span>
+                        <span class="detail-value" style="color: var(--ocean-aqua); font-weight: 800;">@(ticket.Seat?.SeatNumber ?? "Not assigned")</span>
                     </div>
                     <div class="detail-item">
-                        <span class="detail-label">Hạng vé</span>
+                        <span class="detail-label">Fare Class</span>
                         <span class="detail-value">@ticket.Class.ClassName</span>
                     </div>
                     <div class="detail-item">
-                        <span class="detail-label">Mã đặt chỗ</span>
+                        <span class="detail-label">Booking Reference</span>
                         <span class="detail-value">#@ticket.BookingId</span>
                     </div>
                 </div>
@@ -292,17 +292,17 @@
                     @if (ticket.Status != "PAID" && ticket.Status != "CANCELLED")
                     {
                         <a asp-controller="Payment" asp-action="CreatePayment" asp-route-id="@ticket.BookingId" class="btn-action btn-pay">
-                            <i class="fa-solid fa-credit-card"></i> Thanh toán ngay
+                            <i class="fa-solid fa-credit-card"></i> Pay now
                         </a>
 
                         <a asp-controller="Ticket" asp-action="ChangeSeat" asp-route-id="@ticket.TicketId" class="btn-action btn-secondary">
-                            <i class="fa-solid fa-chair"></i> Đổi chỗ ngồi
+                            <i class="fa-solid fa-chair"></i> Change seat
                         </a>
                     }
                     else if (ticket.Status == "PAID")
                     {
                         <div class="btn-action" style="background: rgba(23, 184, 120, 0.1); color: #5de8a8; border: 1px solid rgba(23, 184, 120, 0.2); cursor: default;">
-                            <i class="fa-solid fa-check-double"></i> Đã thanh toán
+                            <i class="fa-solid fa-check-double"></i> Paid
                         </div>
                     }
                 </div>

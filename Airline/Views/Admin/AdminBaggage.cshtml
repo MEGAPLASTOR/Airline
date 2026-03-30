@@ -14,7 +14,7 @@
     <div class="page-title-block">
         <div class="page-greeting">Commerce Operations</div>
         <h1 class="page-title">Manage <span>Baggage</span></h1>
-        <p class="page-subtitle">Admin co the tao, cap nhat va xoa hanh ly theo tung ticket hop le.</p>
+        <p class="page-subtitle">Create, update, and delete baggage records for eligible tickets.</p>
     </div>
 </div>
 
@@ -73,7 +73,7 @@
         <div class="section-head">
             <div>
                 <h2>Create Baggage</h2>
-                <p>Chi co the tao cho ticket chua co hanh ly va khong bi huy.</p>
+                <p>You can only create baggage for tickets that do not already have baggage and are not cancelled.</p>
             </div>
         </div>
 
@@ -82,7 +82,7 @@
             <div class="form-group">
                 <label asp-for="CreateForm.TicketId">Ticket</label>
                 <select asp-for="CreateForm.TicketId" class="form-control">
-                    <option value="">Chon ticket</option>
+                    <option value="">Select a ticket</option>
                     @foreach (var ticket in Model.AvailableTickets)
                     {
                         <option value="@ticket.TicketId">
@@ -98,27 +98,27 @@
             </div>
 
             <div class="admin-note-box">
-                <strong>Rule:</strong> ticket phai ton tai, ticket phai hop le, va moi ticket chi co 1 ban ghi hanh ly.
+                <strong>Rule:</strong> the ticket must exist, be eligible, and each ticket can only have one baggage record.
             </div>
 
             @if (hasAvailableTickets)
             {
                 <button type="submit" class="btn-primary">
                     <i class="fa-solid fa-plus"></i>
-                    Tao hanh ly
+                    Create baggage
                 </button>
             }
             else
             {
                 <button type="submit" class="btn-primary" disabled>
                     <i class="fa-solid fa-plus"></i>
-                    Tao hanh ly
+                    Create baggage
                 </button>
             }
 
             @if (!hasAvailableTickets)
             {
-                <p class="empty-helper">Khong con ticket phu hop de tao moi.</p>
+                <p class="empty-helper">There are no eligible tickets left for new baggage records.</p>
             }
         </form>
     </section>
@@ -127,7 +127,7 @@
         <div class="section-head">
             <div>
                 <h2>Baggage Records</h2>
-                <p>Cap nhat khoi luong se dong bo lai gia theo cong thuc 10,000 VND/kg.</p>
+                <p>Updating the weight will also recalculate the price using 10,000 VND per kg.</p>
             </div>
         </div>
 
@@ -222,7 +222,7 @@
                         <tr>
                             <td colspan="8" class="empty-state">
                                 <i class="fa-solid fa-suitcase-rolling"></i>
-                                Chua co ban ghi hanh ly nao.
+                                No baggage records found.
                             </td>
                         </tr>
                     }

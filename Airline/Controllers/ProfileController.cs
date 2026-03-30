@@ -59,7 +59,7 @@ namespace Airline.Controllers
                 return Ok(new { success = false, message = "Not authenticated" });
 
             if (string.IsNullOrWhiteSpace(req.CurrentPassword) || string.IsNullOrWhiteSpace(req.NewPassword))
-                return Ok(new { success = false, message = "Thiếu dữ liệu" });
+                return Ok(new { success = false, message = "Missing required data." });
 
             if (req.NewPassword.Length < 6)
                 return Ok(new { success = false, message = "New password must be at least 6 characters" });
@@ -97,12 +97,12 @@ namespace Airline.Controllers
             // Check email uniqueness (exclude current user)
             if (!string.IsNullOrEmpty(req.Email) &&
                 await _context.Users.AnyAsync(x => x.Email == req.Email && x.Username != username))
-                return Ok(new { success = false, message = "Email đã tồn tại" });
+                return Ok(new { success = false, message = "Email already exists." });
 
             // Check CCCD uniqueness (exclude current user)
             if (!string.IsNullOrEmpty(req.Cccd) &&
                 await _context.Users.AnyAsync(x => x.Cccd == req.Cccd && x.Username != username))
-                return Ok(new { success = false, message = "CCCD đã tồn tại" });
+                return Ok(new { success = false, message = "CCCD already exists." });
 
             // Chỉ cập nhật field nào được gửi lên (null/empty → giữ nguyên giá trị cũ)
             if (!string.IsNullOrWhiteSpace(req.FirstName)) user.FirstName = req.FirstName;

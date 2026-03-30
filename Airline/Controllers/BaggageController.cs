@@ -45,7 +45,7 @@ namespace Airline.Controllers
 
             if (ticket == null || !CanRegisterForTicket(ticket.Status, ticket.Booking.Status))
             {
-                TempData["ErrorMessage"] = "Ban phai co ve hop le moi dang ky duoc hanh ly.";
+                TempData["ErrorMessage"] = "You need a valid ticket to register baggage.";
                 return RedirectToAction(nameof(Register));
             }
 
@@ -54,7 +54,7 @@ namespace Airline.Controllers
 
             if (hasExistingBaggage)
             {
-                TempData["ErrorMessage"] = "Ve nay da duoc dang ky hanh ly roi.";
+                TempData["ErrorMessage"] = "This ticket already has baggage registered.";
                 return RedirectToAction(nameof(Register));
             }
 
@@ -69,7 +69,7 @@ namespace Airline.Controllers
             _context.Baggages.Add(baggage);
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = $"Dang ky hanh ly thanh cong cho ticket #{ticket.TicketId}. Vui long thanh toan hanh ly de hoan tat.";
+            TempData["SuccessMessage"] = $"Baggage registration for ticket #{ticket.TicketId} was created successfully. Please complete baggage payment to finish the process.";
             return RedirectToAction(nameof(Register));
         }
 
@@ -89,20 +89,20 @@ namespace Airline.Controllers
 
             if (baggage == null)
             {
-                TempData["ErrorMessage"] = "Khong tim thay dang ky hanh ly can xoa.";
+                TempData["ErrorMessage"] = "The baggage registration to delete was not found.";
                 return RedirectToAction(nameof(Register));
             }
 
             if (await IsBaggagePaidAsync(baggage.BaggageId, baggage.Ticket.BookingId))
             {
-                TempData["ErrorMessage"] = "Hanh ly da thanh toan thi khong the xoa truc tiep.";
+                TempData["ErrorMessage"] = "Paid baggage cannot be deleted directly.";
                 return RedirectToAction(nameof(Register));
             }
 
             _context.Baggages.Remove(baggage);
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = $"Da huy dang ky hanh ly cho ticket #{baggage.TicketId}.";
+            TempData["SuccessMessage"] = $"Cancelled baggage registration for ticket #{baggage.TicketId}.";
             return RedirectToAction(nameof(Register));
         }
 

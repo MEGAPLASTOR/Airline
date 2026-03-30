@@ -11,11 +11,11 @@ namespace Airline.Models
         public int? ClassId { get; set; }
         public string? SeatNumber { get; set; }
         
-        [Required(ErrorMessage = "Họ và tên là bắt buộc")]
+        [Required(ErrorMessage = "Full name is required.")]
         public string? FullName { get; set; }
         
-        [Required(ErrorMessage = "Loại hành khách là bắt buộc")]
-        public string? PassengerType { get; set; } = "Người lớn";
+        [Required(ErrorMessage = "Passenger type is required.")]
+        public string? PassengerType { get; set; } = "Adult";
         
         public string? Destination { get; set; }
         public string? Origin { get; set; }

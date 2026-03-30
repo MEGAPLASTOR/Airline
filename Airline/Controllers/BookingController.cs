@@ -182,7 +182,7 @@ namespace Airline.Controllers
 
                     if (schedule == null || seat == null || seat.SeatStatus != "AVAILABLE")
                     {
-                         throw new Exception("Chỗ ngồi không còn sẵn hoặc lịch trình không tồn tại.");
+                         throw new Exception("The seat is no longer available or the schedule does not exist.");
                     }
 
                     // 1. Create Booking
@@ -211,8 +211,8 @@ namespace Airline.Controllers
                     var passenger = new Passenger
                     {
                         BookingId = booking.BookingId,
-                        FullName = model.FullName ?? "Người mới",
-                        PassengerType = model.PassengerType ?? "Người lớn"
+                        FullName = model.FullName ?? "New passenger",
+                        PassengerType = model.PassengerType ?? "Adult"
                     };
                     _context.Passengers.Add(passenger);
                     await _context.SaveChangesAsync();
@@ -240,7 +240,7 @@ namespace Airline.Controllers
                 catch (Exception ex)
                 {
                     await transaction.RollbackAsync();
-                    ModelState.AddModelError("", "Đặt vé thất bại: " + ex.Message);
+                    ModelState.AddModelError("", "Booking failed: " + ex.Message);
                     await PopulatePassengerInfoStateAsync(model);
                     return View("PassengerInfo", model);
                 }

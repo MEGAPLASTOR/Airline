@@ -31,7 +31,7 @@ namespace Airline.Controllers
 
             if (!ModelState.IsValid)
             {
-                TempData["ErrorMessage"] = "Du lieu hanh ly khong hop le.";
+                TempData["ErrorMessage"] = "Invalid baggage data.";
                 return RedirectToAction(nameof(ManageBaggage));
             }
 
@@ -41,7 +41,7 @@ namespace Airline.Controllers
 
             if (ticket == null || !CanRegisterForTicket(ticket.Status, ticket.Booking.Status))
             {
-                TempData["ErrorMessage"] = "Ticket khong hop le de dang ky hanh ly.";
+                TempData["ErrorMessage"] = "This ticket is not eligible for baggage registration.";
                 return RedirectToAction(nameof(ManageBaggage));
             }
 
@@ -50,7 +50,7 @@ namespace Airline.Controllers
 
             if (hasExistingBaggage)
             {
-                TempData["ErrorMessage"] = $"Ticket #{ticket.TicketId} da co hanh ly.";
+                TempData["ErrorMessage"] = $"Ticket #{ticket.TicketId} already has registered baggage.";
                 return RedirectToAction(nameof(ManageBaggage));
             }
 
@@ -65,7 +65,7 @@ namespace Airline.Controllers
             _context.Baggages.Add(baggage);
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = $"Da tao hanh ly cho ticket #{ticket.TicketId}.";
+            TempData["SuccessMessage"] = $"Created baggage for ticket #{ticket.TicketId}.";
             return RedirectToAction(nameof(ManageBaggage));
         }
 
@@ -77,7 +77,7 @@ namespace Airline.Controllers
 
             if (!ModelState.IsValid)
             {
-                TempData["ErrorMessage"] = "Khoi luong hanh ly khong hop le.";
+                TempData["ErrorMessage"] = "Invalid baggage weight.";
                 return RedirectToAction(nameof(ManageBaggage));
             }
 
@@ -86,7 +86,7 @@ namespace Airline.Controllers
 
             if (baggage == null)
             {
-                TempData["ErrorMessage"] = "Khong tim thay hanh ly can cap nhat.";
+                TempData["ErrorMessage"] = "Baggage record to update was not found.";
                 return RedirectToAction(nameof(ManageBaggage));
             }
 
@@ -96,7 +96,7 @@ namespace Airline.Controllers
 
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = $"Da cap nhat hanh ly #{baggage.BaggageId}.";
+            TempData["SuccessMessage"] = $"Updated baggage #{baggage.BaggageId}.";
             return RedirectToAction(nameof(ManageBaggage));
         }
 
@@ -112,7 +112,7 @@ namespace Airline.Controllers
 
             if (baggage == null)
             {
-                TempData["ErrorMessage"] = "Khong tim thay hanh ly can xoa.";
+                TempData["ErrorMessage"] = "Baggage record to delete was not found.";
                 return RedirectToAction(nameof(ManageBaggage));
             }
 
@@ -126,14 +126,14 @@ namespace Airline.Controllers
 
             if (isPaid)
             {
-                TempData["ErrorMessage"] = "Khong the xoa hanh ly da thanh toan.";
+                TempData["ErrorMessage"] = "Paid baggage cannot be deleted.";
                 return RedirectToAction(nameof(ManageBaggage));
             }
 
             _context.Baggages.Remove(baggage);
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = $"Da xoa hanh ly #{baggage.BaggageId}.";
+            TempData["SuccessMessage"] = $"Deleted baggage #{baggage.BaggageId}.";
             return RedirectToAction(nameof(ManageBaggage));
         }
 

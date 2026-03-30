@@ -40,7 +40,7 @@ namespace Airline.Controllers
             var pricing = await _promotionService.CalculateBookingAsync(booking);
             return Redirect(CreatePaymentUrl(
                 pricing.FinalAmount,
-                $"Thanh toan ve may bay cho Booking #{booking.BookingId}",
+                $"Airfare payment for booking #{booking.BookingId}",
                 $"{BookingTransactionPrefix}{booking.BookingId}_{DateTime.Now.Ticks}"));
         }
 
@@ -62,20 +62,20 @@ namespace Airline.Controllers
 
             if (await IsBaggagePaymentSuccessfulAsync(baggage.BaggageId, baggage.Ticket.BookingId))
             {
-                TempData["SuccessMessage"] = $"Hanh ly #{baggage.BaggageId} da duoc thanh toan truoc do.";
+                TempData["SuccessMessage"] = $"Baggage #{baggage.BaggageId} has already been paid.";
                 return RedirectToAction("Register", "Baggage");
             }
 
             var amount = baggage.Price ?? 0m;
             if (amount <= 0)
             {
-                TempData["ErrorMessage"] = "Phi hanh ly khong hop le de thanh toan.";
+                TempData["ErrorMessage"] = "The baggage fee is invalid for payment.";
                 return RedirectToAction("Register", "Baggage");
             }
 
             return Redirect(CreatePaymentUrl(
                 amount,
-                $"Thanh toan hanh ly cho Ticket #{baggage.TicketId}",
+                $"Baggage payment for ticket #{baggage.TicketId}",
                 $"{BaggageTransactionPrefix}{baggage.BaggageId}_{DateTime.Now.Ticks}"));
         }
 
@@ -98,17 +98,17 @@ namespace Airline.Controllers
                 if (TryParseBaggageTxnRef(txnRef, out var baggageId))
                 {
                     ViewBag.ReturnUrl = Url.Action("Register", "Baggage");
-                    ViewBag.ReturnText = "Quay lai hanh ly";
+                    ViewBag.ReturnText = "Back to Baggage";
 
                     if (responseCode == "00")
                     {
                         await UpdateBaggagePaymentStatus(baggageId, transactionNo);
-                        ViewBag.Message = "Thanh toan hanh ly thanh cong!";
+                        ViewBag.Message = "Baggage payment was successful.";
                         ViewBag.Success = true;
                     }
                     else
                     {
-                        ViewBag.Message = "Thanh toan hanh ly khong thanh cong. Ma loi: " + responseCode;
+                        ViewBag.Message = "Baggage payment failed. Error code: " + responseCode;
                         ViewBag.Success = false;
                     }
                 }
@@ -118,19 +118,19 @@ namespace Airline.Controllers
                     if (responseCode == "00")
                     {
                         await UpdateBookingStatus(bookingId, "PAID", transactionNo);
-                        ViewBag.Message = "Thanh toan thanh cong!";
+                        ViewBag.Message = "Payment was successful.";
                         ViewBag.Success = true;
                     }
                     else
                     {
-                        ViewBag.Message = "Thanh toan khong thanh cong. Ma loi: " + responseCode;
+                        ViewBag.Message = "Payment failed. Error code: " + responseCode;
                         ViewBag.Success = false;
                     }
                 }
             }
             else
             {
-                ViewBag.Message = "Chu ky khong hop le. Giao dich co the da bi can thiep.";
+                ViewBag.Message = "Invalid signature. The transaction may have been tampered with.";
                 ViewBag.Success = false;
             }
 
@@ -181,7 +181,7 @@ namespace Airline.Controllers
             vnpay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
             vnpay.AddRequestData("vnp_CurrCode", "VND");
             vnpay.AddRequestData("vnp_IpAddr", HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1");
-            vnpay.AddRequestData("vnp_Locale", "vn");
+            vnpay.AddRequestData("vnp_Locale", "en");
             vnpay.AddRequestData("vnp_OrderInfo", orderInfo);
             vnpay.AddRequestData("vnp_OrderType", "other");
             vnpay.AddRequestData("vnp_ReturnUrl", config["ReturnUrl"]!);

@@ -1,14 +1,14 @@
 @model Airline.Models.BookingViewModel
 @{
-    ViewData["Title"] = "Thông tin Hành khách";
+    ViewData["Title"] = "Passenger Information";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 <div class="passenger-info-container">
     <div class="selection-header">
-        <a href="javascript:history.back()" class="btn-back"><i class="fas fa-chevron-left"></i> Quay lại chọn chỗ</a>
-        <h1 class="premium-title">Thông tin <span class="highlight">Hành khách</span></h1>
-        <p class="premium-subtitle">Vui lòng nhập tên đúng như trong CMND/CCCD hoặc Hộ chiếu</p>
+        <a href="javascript:history.back()" class="btn-back"><i class="fas fa-chevron-left"></i> Back to seat selection</a>
+        <h1 class="premium-title">Passenger <span class="highlight">Information</span></h1>
+        <p class="premium-subtitle">Please enter the passenger name exactly as it appears on the ID card or passport.</p>
     </div>
 
     <div class="form-layout">
@@ -35,38 +35,38 @@
 
                     <div class="form-header">
                         <i class="fas fa-user-edit"></i>
-                        <span>Thông tin Hành khách 1</span>
+                        <span>Passenger Information 1</span>
                     </div>
 
                     <div class="form-group">
-                        <label asp-for="FullName">Họ và Tên (Tiếng Việt có dấu)</label>
+                        <label asp-for="FullName">Full Name</label>
                         <div class="input-with-icon">
                             <i class="fas fa-user"></i>
-                            <input asp-for="FullName" class="form-control" placeholder="Ví dụ: NGUYỄN VĂN AN" required />
+                            <input asp-for="FullName" class="form-control" placeholder="Example: NGUYEN VAN AN" required />
                         </div>
                         <span asp-validation-for="FullName" class="text-danger"></span>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group flex-1">
-                            <label asp-for="PassengerType">Loại hành khách</label>
+                            <label asp-for="PassengerType">Passenger Type</label>
                             <div class="input-with-icon">
                                 <i class="fas fa-users"></i>
                                 <select asp-for="PassengerType" class="form-control">
-                                    <option value="Người lớn">Người lớn (Trên 12 tuổi)</option>
-                                    <option value="Trẻ em">Trẻ em (2 - 12 tuổi)</option>
-                                    <option value="Em bé">Em bé (Dưới 2 tuổi)</option>
+                                    <option value="Adult">Adult (Over 12 years old)</option>
+                                    <option value="Child">Child (2 - 12 years old)</option>
+                                    <option value="Infant">Infant (Under 2 years old)</option>
                                 </select>
                             </div>
                         </div>
                         <div class="form-group flex-1">
-                            <label>Quốc tịch</label>
+                            <label>Nationality</label>
                             <div class="input-with-icon">
                                 <i class="fas fa-globe"></i>
                                 <select class="form-control">
-                                    <option value="VN">Việt Nam</option>
-                                    <option value="US">Hoa Kỳ</option>
-                                    <option value="FR">Pháp</option>
+                                    <option value="VN">Vietnam</option>
+                                    <option value="US">United States</option>
+                                    <option value="FR">France</option>
                                 </select>
                             </div>
                         </div>
@@ -122,12 +122,12 @@
 
                     <div class="form-notice">
                         <i class="fas fa-info-circle"></i>
-                        <p>Tên hành khách phải trùng khớp hoàn toàn với giấy tờ tùy thân.</p>
+                        <p>The passenger name must match the travel document exactly.</p>
                     </div>
 
                     <div class="action-buttons">
                         <button type="submit" class="btn-confirm-final">
-                            Xác nhận Đặt vé <i class="fas fa-check-circle"></i>
+                            Confirm Booking <i class="fas fa-check-circle"></i>
                         </button>
                     </div>
                 </form>
@@ -137,7 +137,7 @@
         <!-- Order Summary Sidebar -->
         <div class="order-summary-sidebar">
             <div class="glass-card sticky-card">
-                <h3 class="card-title">Tóm tắt đơn hàng</h3>
+                <h3 class="card-title">Order Summary</h3>
                 
                 <div class="flight-summary-card">
                     <div class="flight-header">
@@ -148,28 +148,28 @@
                     <div class="route-display">
                         <div class="node">
                             <strong>@Model.Origin</strong>
-                            <span>Điểm đi</span>
+                            <span>Origin</span>
                         </div>
                         <div class="sep"><i class="fas fa-long-arrow-alt-right"></i></div>
                         <div class="node">
                             <strong>@Model.Destination</strong>
-                            <span>Điểm đến</span>
+                            <span>Destination</span>
                         </div>
                     </div>
 
                     <div class="seat-badge-mini">
                         <i class="fas fa-couch"></i>
-                        <span>Ghế <strong>@Model.SeatNumber</strong></span>
+                        <span>Seat <strong>@Model.SeatNumber</strong></span>
                     </div>
                 </div>
 
                 <div class="price-breakdown">
                     <div class="breakdown-row">
-                        <span>Giá cơ bản</span>
+                        <span>Base Fare</span>
                         <span id="summary-base-price">@(Model.Price?.ToString("N0") ?? "0") VND</span>
                     </div>
                     <div class="breakdown-row">
-                        <span>Thuế & Phí</span>
+                        <span>Taxes & Fees</span>
                         <span id="summary-tax-price">@Model.TaxAmount.ToString("N0") VND</span>
                     </div>
                     <div class="breakdown-row discount-row @(Model.AppliedPromotionId.HasValue ? "is-visible" : "")" id="discount-row">
@@ -177,7 +177,7 @@
                         <span id="summary-discount-price">-@Model.DiscountAmount.ToString("N0") VND</span>
                     </div>
                     <div class="total-row">
-                        <span>Tổng thanh toán</span>
+                        <span>Total Payment</span>
                         <span id="summary-final-price">@Model.FinalPrice.ToString("N0") VND</span>
                     </div>
                 </div>

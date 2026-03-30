@@ -4,21 +4,21 @@ namespace Airline.Models;
 
 public sealed class BaggageRegisterInputModel
 {
-    [Range(1, int.MaxValue, ErrorMessage = "Vui long chon ve hop le.")]
+    [Range(1, int.MaxValue, ErrorMessage = "Please select a valid ticket.")]
     public int TicketId { get; set; }
 
-    [Required(ErrorMessage = "Vui long nhap khoi luong hanh ly.")]
-    [Range(typeof(decimal), "1", "99.99", ErrorMessage = "Khoi luong phai tu 1 den 99.99 kg.")]
+    [Required(ErrorMessage = "Please enter a baggage weight.")]
+    [Range(typeof(decimal), "1", "99.99", ErrorMessage = "Weight must be between 1 and 99.99 kg.")]
     public decimal? Weight { get; set; }
 }
 
 public sealed class BaggageUpdateWeightModel
 {
-    [Range(1, int.MaxValue, ErrorMessage = "Ban ghi hanh ly khong hop le.")]
+    [Range(1, int.MaxValue, ErrorMessage = "The baggage record is invalid.")]
     public int BaggageId { get; set; }
 
-    [Required(ErrorMessage = "Vui long nhap khoi luong hanh ly.")]
-    [Range(typeof(decimal), "1", "99.99", ErrorMessage = "Khoi luong phai tu 1 den 99.99 kg.")]
+    [Required(ErrorMessage = "Please enter a baggage weight.")]
+    [Range(typeof(decimal), "1", "99.99", ErrorMessage = "Weight must be between 1 and 99.99 kg.")]
     public decimal? Weight { get; set; }
 }
 

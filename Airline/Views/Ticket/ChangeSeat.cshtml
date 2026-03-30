@@ -1,6 +1,6 @@
 @model Airline.Models.Ticket
 @{
-    ViewData["Title"] = "Đổi Chỗ Ngồi";
+    ViewData["Title"] = "Change Seat";
     Layout = "~/Views/Shared/_Layout.cshtml";
     
     var availableSeats = ViewBag.AvailableSeats as List<Airline.Models.Seat> ?? new List<Airline.Models.Seat>();
@@ -8,9 +8,9 @@
 
 <div class="change-seat-container">
     <div class="selection-header">
-        <a asp-action="ViewConfirmation" class="btn-back"><i class="fas fa-chevron-left"></i> Quay lại danh sách vé</a>
-        <h1 class="premium-title">Đổi Vị Trí <span class="highlight">Chỗ Ngồi</span></h1>
-        <p class="premium-subtitle">Chọn một chỗ ngồi mới trong cùng hạng vé <strong>@(Model?.Class?.ClassName ?? "N/A")</strong></p>
+        <a asp-action="ViewConfirmation" class="btn-back"><i class="fas fa-chevron-left"></i> Back to ticket list</a>
+        <h1 class="premium-title">Change <span class="highlight">Seat</span></h1>
+        <p class="premium-subtitle">Choose a new seat within the same fare class <strong>@(Model?.Class?.ClassName ?? "N/A")</strong></p>
     </div>
 
     <div class="selection-layout">
@@ -19,7 +19,7 @@
             <div class="airplane-body">
                 <div class="cabin-container">
                     <div class="cabin-divider">
-                        <span>Hạng @(Model?.Class?.ClassName ?? "N/A")</span>
+                        <span>@(Model?.Class?.ClassName ?? "N/A") Class</span>
                     </div>
                     
                     <div class="seat-grid-container">
@@ -27,7 +27,7 @@
                         {
                             <div class="empty-seats">
                                 <i class="fas fa-info-circle"></i>
-                                <p>Rất tiếc, hiện không còn chỗ nào trống trong hạng vé này.</p>
+                                <p>Sorry, there are no available seats left in this fare class.</p>
                             </div>
                         }
                         else
@@ -50,12 +50,12 @@
         <!-- Sidebar -->
         <div class="checkout-sidebar">
             <div class="glass-card sticky-card">
-                <h3 class="card-title">Chi tiết Thay đổi</h3>
+                <h3 class="card-title">Change Details</h3>
                 
                 <div class="current-selection-badge">
                     <div class="badge-icon"><i class="fas fa-chair"></i></div>
                     <div class="badge-text">
-                        <p>Ghế hiện tại</p>
+                        <p>Current Seat</p>
                         <h4>@ViewBag.CurrentSeatNumber</h4>
                     </div>
                 </div>
@@ -65,8 +65,8 @@
                 <div class="current-selection-badge new-selection" id="new-seat-badge">
                     <div class="badge-icon"><i class="fas fa-star"></i></div>
                     <div class="badge-text">
-                        <p>Ghế mới chọn</p>
-                        <h4 id="selected-seat-text">Chưa chọn</h4>
+                        <p>Selected New Seat</p>
+                        <h4 id="selected-seat-text">Not selected</h4>
                     </div>
                 </div>
 
@@ -75,13 +75,13 @@
                     <input type="hidden" name="ticketId" value="@Model?.TicketId" />
                     <input type="hidden" name="newSeatId" id="hidden-new-seat-id" />
                     <button type="button" class="btn-confirm-change" id="btn-submit-change" disabled onclick="confirmSeatChange()">
-                        Xác nhận Đổi ghế <i class="fas fa-check"></i>
+                        Confirm Seat Change <i class="fas fa-check"></i>
                     </button>
                 </form>
 
                 <div class="notice-box">
                     <i class="fas fa-lightbulb"></i>
-                    <p>Việc đổi ghế là hoàn toàn miễn phí trong cùng một hạng vé.</p>
+                    <p>Changing seats is completely free within the same fare class.</p>
                 </div>
             </div>
         </div>
@@ -221,13 +221,13 @@
             if (!selectedId) return;
 
             const result = await Swal.fire({
-                title: 'Xác nhận đổi ghế?',
-                text: "Bạn có chắc chắn muốn chuyển sang chỗ ngồi mới này không?",
+                title: 'Confirm seat change?',
+                text: "Are you sure you want to switch to this new seat?",
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#17aab8',
-                confirmButtonText: 'Đồng ý đổi',
-                cancelButtonText: 'Hủy'
+                confirmButtonText: 'Yes, change it',
+                cancelButtonText: 'Cancel'
             });
 
             if (result.isConfirmed) {
@@ -245,13 +245,13 @@
                     const data = await response.json();
 
                     if (data.success) {
-                        await Swal.fire('Thành công!', data.message, 'success');
+                        await Swal.fire('Success!', data.message, 'success');
                         window.location.href = '/Ticket/ViewConfirmation';
                     } else {
-                        Swal.fire('Lỗi', data.message, 'error');
+                        Swal.fire('Error', data.message, 'error');
                     }
                 } catch (error) {
-                    Swal.fire('Lỗi', 'Đã có lỗi xảy ra khi thực hiện yêu cầu.', 'error');
+                    Swal.fire('Error', 'An error occurred while processing your request.', 'error');
                 }
             }
         }

@@ -8,7 +8,7 @@ namespace Airline.Controllers
     [Route("Admin")]
     public class AdminDashboardController : AdminBaseController
     {
-        private static readonly CultureInfo ViCulture = CultureInfo.GetCultureInfo("vi-VN");
+        private static readonly CultureInfo EnCulture = CultureInfo.GetCultureInfo("en-US");
 
         public AdminDashboardController(DataContext context) : base(context)
         {
@@ -398,7 +398,7 @@ namespace Airline.Controllers
             if (value >= 1_000_000m) return $"{value / 1_000_000m:0.##}M";
             if (value >= 1_000m) return $"{value / 1_000m:0.##}K";
 
-            return value.ToString("#,0", ViCulture);
+            return value.ToString("#,0", EnCulture);
         }
 
         private static string FormatCurrency(decimal amount)
@@ -407,7 +407,7 @@ namespace Airline.Controllers
             if (amount >= 1_000_000m) return $"{amount / 1_000_000m:0.##}M VND";
             if (amount >= 1_000m) return $"{amount / 1_000m:0.##}K VND";
 
-            return $"{amount.ToString("#,0", ViCulture)} VND";
+            return $"{amount.ToString("#,0", EnCulture)} VND";
         }
 
         private static int ToPercent(decimal numerator, decimal denominator)
