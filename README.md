@@ -87,5 +87,3 @@ tạo và thêm dữ liệu vào database: dotnet ef database update
 4. **Chạy ứng dụng**: dotnet run --project Airline.
 
 ---
-
-_Cập nhật bởi Antigravity v1.0 - 2026-03-30_
