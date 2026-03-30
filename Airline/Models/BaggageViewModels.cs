@@ -69,6 +69,10 @@ public sealed class UserBaggageItemViewModel
     public decimal Weight { get; init; }
 
     public decimal Price { get; init; }
+
+    public bool IsPaid { get; init; }
+
+    public string PaymentStatus { get; init; } = "";
 }
 
 public sealed class UserBaggagePageViewModel

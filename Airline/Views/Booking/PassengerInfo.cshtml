@@ -166,15 +166,19 @@
                 <div class="price-breakdown">
                     <div class="breakdown-row">
                         <span>Giá cơ bản</span>
-                        <span>@(Model.Price?.ToString("N0") ?? "0") VND</span>
+                        <span id="summary-base-price">@(Model.Price?.ToString("N0") ?? "0") VND</span>
                     </div>
                     <div class="breakdown-row">
                         <span>Thuế & Phí</span>
-                        <span>@((Model.Price * 0.1m)?.ToString("N0") ?? "0") VND</span>
+                        <span id="summary-tax-price">@Model.TaxAmount.ToString("N0") VND</span>
+                    </div>
+                    <div class="breakdown-row discount-row @(Model.AppliedPromotionId.HasValue ? "is-visible" : "")" id="discount-row">
+                        <span id="summary-discount-label">Promotion @(Model.DiscountPercent > 0 ? $"(-{Model.DiscountPercent}%)" : "")</span>
+                        <span id="summary-discount-price">-@Model.DiscountAmount.ToString("N0") VND</span>
                     </div>
                     <div class="total-row">
                         <span>Tổng thanh toán</span>
-                        <span>@((Model.Price * 1.1m)?.ToString("N0") ?? "0") VND</span>
+                        <span id="summary-final-price">@Model.FinalPrice.ToString("N0") VND</span>
                     </div>
                 </div>
             </div>
@@ -280,6 +284,112 @@
         .form-row { display: flex; gap: 1.5rem; }
         .flex-1 { flex: 1; }
 
+        .promotion-panel {
+            margin-bottom: 1.8rem;
+            padding: 1.2rem;
+            border-radius: 18px;
+            background: rgba(23,170,184,0.08);
+            border: 1px solid rgba(23,170,184,0.18);
+        }
+
+        .promotion-panel-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .promotion-panel-header h3 {
+            color: #fff;
+            font-size: 1rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .promotion-panel-header p {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.82rem;
+        }
+
+        .promotion-link {
+            color: var(--ocean-foam);
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        .promotion-input-row {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 0.8rem;
+            align-items: center;
+        }
+
+        .promotion-input-wrap .form-control {
+            padding-right: 1rem;
+            text-transform: uppercase;
+        }
+
+        .btn-apply-promo,
+        .btn-clear-promo {
+            border: none;
+            border-radius: 12px;
+            padding: 0.85rem 1rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .btn-apply-promo {
+            background: linear-gradient(135deg, var(--accent-gold), #f39c12);
+            color: #071421;
+        }
+
+        .btn-clear-promo {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.12);
+        }
+
+        .promo-feedback {
+            min-height: 1.2rem;
+            margin-top: 0.75rem;
+            color: rgba(255,255,255,0.55);
+            font-size: 0.82rem;
+        }
+
+        .promo-feedback.is-success {
+            color: #9df1c8;
+        }
+
+        .promo-feedback.is-error {
+            color: #ff9e9e;
+        }
+
+        .promo-chip-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .promo-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.7rem;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 999px;
+            padding: 0.6rem 0.9rem;
+            color: #fff;
+        }
+
+        .promo-chip-code {
+            font-weight: 700;
+        }
+
+        .promo-chip-discount {
+            color: var(--accent-gold);
+            font-size: 0.82rem;
+        }
+
         .form-notice {
             background: rgba(240,180,41,0.1);
             border-left: 4px solid var(--accent-gold);
@@ -350,8 +460,132 @@
         }
 
         .breakdown-row { display: flex; justify-content: space-between; font-size: 0.85rem; color: rgba(255,255,255,0.5); }
+        .discount-row { display: none; color: #9df1c8; }
+        .discount-row.is-visible { display: flex; }
         .total-row { display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 1.2rem; font-weight: 700; color: var(--accent-gold); }
 
         .sticky-card { position: sticky; top: 100px; }
     </style>
+}
+
+@section Scripts {
+    <script>
+        function formatMoney(value) {
+            return Number(value || 0).toLocaleString('en-US') + ' VND';
+        }
+
+        function setPromotionSummary(data) {
+            document.getElementById('PromoCode').value = data.promoCode || '';
+            document.getElementById('AppliedPromotionId').value = data.promoId || '';
+            document.getElementById('DiscountPercent').value = data.discountPercent || 0;
+            document.getElementById('TaxAmount').value = data.taxAmount || 0;
+            document.getElementById('DiscountAmount').value = data.discountAmount || 0;
+            document.getElementById('FinalPrice').value = data.finalAmount || 0;
+
+            document.getElementById('summary-base-price').textContent = formatMoney(data.baseFare);
+            document.getElementById('summary-tax-price').textContent = formatMoney(data.taxAmount);
+            document.getElementById('summary-final-price').textContent = formatMoney(data.finalAmount);
+
+            const discountRow = document.getElementById('discount-row');
+            const discountLabel = document.getElementById('summary-discount-label');
+            const discountPrice = document.getElementById('summary-discount-price');
+
+            if (Number(data.discountPercent || 0) > 0) {
+                discountRow.classList.add('is-visible');
+                discountLabel.textContent = 'Promotion (-' + data.discountPercent + '%)';
+                discountPrice.textContent = '-' + formatMoney(data.discountAmount);
+            } else {
+                discountRow.classList.remove('is-visible');
+                discountLabel.textContent = 'Promotion';
+                discountPrice.textContent = '-0 VND';
+            }
+        }
+
+        function setFeedback(message, isSuccess) {
+            const feedback = document.getElementById('promoFeedback');
+            feedback.classList.remove('is-success', 'is-error');
+            feedback.textContent = message || '';
+
+            if (!message) {
+                return;
+            }
+
+            feedback.classList.add(isSuccess ? 'is-success' : 'is-error');
+        }
+
+        function resetPromotionValues() {
+            setPromotionSummary({
+                promoCode: '',
+                promoId: '',
+                discountPercent: 0,
+                baseFare: document.getElementById('Price').value || 0,
+                taxAmount: document.getElementById('TaxAmount').value || 0,
+                discountAmount: 0,
+                finalAmount: (Number(document.getElementById('Price').value || 0) + Number(document.getElementById('TaxAmount').value || 0))
+            });
+        }
+
+        async function applyPromotion() {
+            const input = document.getElementById('promoCodeInput');
+            const code = (input.value || '').trim().toUpperCase();
+
+            if (!code) {
+                clearPromotion();
+                return;
+            }
+
+            const params = new URLSearchParams({
+                scheduleId: document.getElementById('ScheduleId').value,
+                seatId: document.getElementById('SeatId').value,
+                code
+            });
+
+            try {
+                const response = await fetch('/Booking/ValidatePromotion?' + params.toString());
+                const result = await response.json();
+
+                if (!result.success) {
+                    document.getElementById('PromoCode').value = code;
+                    document.getElementById('AppliedPromotionId').value = '';
+                    document.getElementById('DiscountPercent').value = 0;
+                    document.getElementById('DiscountAmount').value = 0;
+                    document.getElementById('FinalPrice').value = Number(document.getElementById('Price').value || 0) + Number(document.getElementById('TaxAmount').value || 0);
+                    document.getElementById('discount-row').classList.remove('is-visible');
+                    setFeedback(result.message || 'Promotion code is invalid.', false);
+                    return;
+                }
+
+                input.value = result.promoCode || code;
+                setPromotionSummary(result);
+                setFeedback('Applied code ' + (result.promoCode || code) + ' successfully.', true);
+            } catch {
+                setFeedback('Unable to validate promotion right now.', false);
+            }
+        }
+
+        function clearPromotion() {
+            document.getElementById('promoCodeInput').value = '';
+            document.getElementById('PromoCode').value = '';
+            document.getElementById('AppliedPromotionId').value = '';
+            document.getElementById('DiscountPercent').value = 0;
+            document.getElementById('DiscountAmount').value = 0;
+            document.getElementById('FinalPrice').value = Number(document.getElementById('Price').value || 0) + Number(document.getElementById('TaxAmount').value || 0);
+            document.getElementById('discount-row').classList.remove('is-visible');
+            document.getElementById('summary-discount-label').textContent = 'Promotion';
+            document.getElementById('summary-discount-price').textContent = '-0 VND';
+            document.getElementById('summary-final-price').textContent = formatMoney(Number(document.getElementById('Price').value || 0) + Number(document.getElementById('TaxAmount').value || 0));
+            setFeedback('', true);
+        }
+
+        function selectPromotion(code) {
+            document.getElementById('promoCodeInput').value = code;
+            applyPromotion();
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelector('.passenger-form')?.addEventListener('submit', function () {
+                document.getElementById('PromoCode').value = (document.getElementById('promoCodeInput').value || '').trim().toUpperCase();
+            });
+        });
+    </script>
 }

@@ -7,6 +7,7 @@ namespace Airline.Controllers
 {
     public class BaggageController : Controller
     {
+        private const string BaggageTransactionPrefix = "BAG_";
         private const decimal PricePerKg = 10000m;
         private readonly DataContext _context;
 
@@ -68,7 +69,7 @@ namespace Airline.Controllers
             _context.Baggages.Add(baggage);
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = $"Dang ky hanh ly thanh cong cho ticket #{ticket.TicketId}.";
+            TempData["SuccessMessage"] = $"Dang ky hanh ly thanh cong cho ticket #{ticket.TicketId}. Vui long thanh toan hanh ly de hoan tat.";
             return RedirectToAction(nameof(Register));
         }
 
@@ -89,6 +90,12 @@ namespace Airline.Controllers
             if (baggage == null)
             {
                 TempData["ErrorMessage"] = "Khong tim thay dang ky hanh ly can xoa.";
+                return RedirectToAction(nameof(Register));
+            }
+
+            if (await IsBaggagePaidAsync(baggage.BaggageId, baggage.Ticket.BookingId))
+            {
+                TempData["ErrorMessage"] = "Hanh ly da thanh toan thi khong the xoa truc tiep.";
                 return RedirectToAction(nameof(Register));
             }
 
@@ -157,6 +164,28 @@ namespace Airline.Controllers
                 })
                 .ToListAsync();
 
+            var bookingIds = registeredRows
+                .Select(x => x.BookingId)
+                .Distinct()
+                .ToList();
+
+            var baggagePayments = bookingIds.Count == 0
+                ? []
+                : await _context.Payments
+                    .AsNoTracking()
+                    .Where(p =>
+                        bookingIds.Contains(p.BookingId) &&
+                        p.TransactionNo != null &&
+                        p.TransactionNo.StartsWith(BaggageTransactionPrefix))
+                    .Select(p => new
+                    {
+                        p.BookingId,
+                        p.PaymentStatus,
+                        p.PaymentDate,
+                        p.TransactionNo
+                    })
+                    .ToListAsync();
+
             var availableTickets = ownedTicketRows
                 .Where(t => !t.HasBaggage)
                 .Select(t => new BaggageTicketOptionViewModel
@@ -175,18 +204,35 @@ namespace Airline.Controllers
                 .ToList();
 
             var registeredBaggages = registeredRows
-                .Select(b => new UserBaggageItemViewModel
+                .Select(b =>
                 {
-                    BaggageId = b.BaggageId,
-                    TicketId = b.TicketId,
-                    BookingId = b.BookingId,
-                    PassengerName = b.PassengerName ?? "",
-                    FlightNumber = b.FlightNumber ?? "",
-                    RouteLabel = $"{b.DepartureCity} -> {b.ArrivalCity}",
-                    DepartureTime = b.DepartureTime,
-                    TicketStatus = b.TicketStatus ?? "",
-                    Weight = b.Weight,
-                    Price = b.Price
+                    var payment = baggagePayments
+                        .Where(p =>
+                            p.BookingId == b.BookingId &&
+                            p.TransactionNo != null &&
+                            p.TransactionNo.StartsWith($"{BaggageTransactionPrefix}{b.BaggageId}_", StringComparison.OrdinalIgnoreCase))
+                        .OrderByDescending(p => p.PaymentDate)
+                        .FirstOrDefault();
+
+                    var paymentStatus = payment?.PaymentStatus ?? "UNPAID";
+                    var isPaid = string.Equals(paymentStatus, "SUCCESS", StringComparison.OrdinalIgnoreCase) ||
+                                 string.Equals(paymentStatus, "PAID", StringComparison.OrdinalIgnoreCase);
+
+                    return new UserBaggageItemViewModel
+                    {
+                        BaggageId = b.BaggageId,
+                        TicketId = b.TicketId,
+                        BookingId = b.BookingId,
+                        PassengerName = b.PassengerName ?? "",
+                        FlightNumber = b.FlightNumber ?? "",
+                        RouteLabel = $"{b.DepartureCity} -> {b.ArrivalCity}",
+                        DepartureTime = b.DepartureTime,
+                        TicketStatus = b.TicketStatus ?? "",
+                        Weight = b.Weight,
+                        Price = b.Price,
+                        IsPaid = isPaid,
+                        PaymentStatus = isPaid ? "PAID" : "UNPAID"
+                    };
                 })
                 .ToList();
 
@@ -200,6 +246,17 @@ namespace Airline.Controllers
                 TotalRegisteredWeight = registeredBaggages.Sum(x => x.Weight),
                 TotalRegisteredPrice = registeredBaggages.Sum(x => x.Price)
             };
+        }
+
+        private async Task<bool> IsBaggagePaidAsync(int baggageId, int bookingId)
+        {
+            return await _context.Payments
+                .AsNoTracking()
+                .AnyAsync(p =>
+                    p.BookingId == bookingId &&
+                    p.TransactionNo != null &&
+                    p.TransactionNo.StartsWith($"{BaggageTransactionPrefix}{baggageId}_") &&
+                    (p.PaymentStatus == "SUCCESS" || p.PaymentStatus == "PAID"));
         }
 
         private static bool CanRegisterForTicket(string? ticketStatus, string? bookingStatus)
