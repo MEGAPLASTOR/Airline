@@ -1,4 +1,5 @@
 using Airline.Models;
+using Airline.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,7 +8,12 @@ namespace Airline.Controllers
     [Route("Admin")]
     public class AdminBookingController : AdminBaseController
     {
-        public AdminBookingController(DataContext context) : base(context) { }
+        private readonly PromotionService _promotionService;
+
+        public AdminBookingController(DataContext context, PromotionService promotionService) : base(context)
+        {
+            _promotionService = promotionService;
+        }
 
         // ══════════════════════════════════════════════════════════════
         // GET /Admin/ConfirmTicket
@@ -31,6 +37,8 @@ namespace Airline.Controllers
                             .ThenInclude(r => r.ArrivalCityNavigation)
                 .Include(b => b.Tickets)
                 .Include(b => b.Passengers)
+                .Include(b => b.BookingPromotions)
+                    .ThenInclude(bp => bp.Promo)
                 .Where(b => b.Status == "CONFIRMED" || b.Status == "PENDING_PAYMENT")
                 .OrderByDescending(b => b.BookingDate)
                 .ToListAsync();
@@ -38,14 +46,8 @@ namespace Airline.Controllers
             // Tính toán giá vé cho từng booking để hiển thị (do DB không lưu TotalAmount trực tiếp)
             foreach (var booking in pendingBookings)
             {
-                decimal total = 0;
-                foreach (var ticket in booking.Tickets)
-                {
-                    var priceEntry = await _context.TicketPrices
-                        .FirstOrDefaultAsync(p => p.ScheduleId == booking.ScheduleId && p.ClassId == ticket.ClassId);
-                    total += priceEntry?.Price ?? 1500000;
-                }
-                ViewData[$"Total_{booking.BookingId}"] = total;
+                var pricing = await _promotionService.CalculateBookingAsync(booking);
+                ViewData[$"Total_{booking.BookingId}"] = pricing.FinalAmount;
             }
 
             return View("~/Views/Admin/ConfirmTicket.cshtml", pendingBookings);
@@ -62,6 +64,8 @@ namespace Airline.Controllers
 
             var booking = await _context.Bookings
                 .Include(b => b.Tickets)
+                .Include(b => b.BookingPromotions)
+                    .ThenInclude(bp => bp.Promo)
                 .FirstOrDefaultAsync(b => b.BookingId == bookingId);
 
             if (booking == null) return NotFound();
@@ -94,7 +98,7 @@ namespace Airline.Controllers
                     var payment = new Payment
                     {
                         BookingId = bookingId,
-                        Amount = totalAmount,
+                        Amount = (await _promotionService.CalculateBookingAsync(booking)).FinalAmount,
                         PaymentDate = DateTime.Now,
                         PaymentMethod = "MANUAL_ADMIN", // Đánh dấu xác nhận bởi Admin
                         PaymentStatus = "SUCCESS",

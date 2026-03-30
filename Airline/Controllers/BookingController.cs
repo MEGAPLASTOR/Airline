@@ -316,16 +316,22 @@ namespace Airline.Controllers
 
             if (!string.IsNullOrWhiteSpace(model.PromoCode) && model.ClassId.HasValue)
             {
+                var normalizedPromoCode = PromotionService.NormalizePromoCode(model.PromoCode);
                 var pricing = await _promotionService.CalculateSingleTicketAsync(
                     model.ScheduleId,
                     model.ClassId.Value,
-                    model.PromoCode);
+                    normalizedPromoCode);
 
                 model.AppliedPromotionId = pricing.AppliedPromotionId;
+                model.PromoCode = pricing.HasPromotion ? pricing.AppliedPromotionCode : normalizedPromoCode;
                 model.DiscountPercent = pricing.DiscountPercent;
                 model.TaxAmount = pricing.TaxAmount;
                 model.DiscountAmount = pricing.DiscountAmount;
                 model.FinalPrice = pricing.FinalAmount;
+            }
+            else
+            {
+                model.AppliedPromotionId = null;
             }
 
             return true;

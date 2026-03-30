@@ -10,11 +10,13 @@ namespace Airline.Controllers
     {
         private readonly DataContext _context;
         private readonly IConfiguration _configuration;
+        private readonly PromotionService _promotionService;
 
-        public PaymentController(DataContext context, IConfiguration configuration)
+        public PaymentController(DataContext context, IConfiguration configuration, PromotionService promotionService)
         {
             _context = context;
             _configuration = configuration;
+            _promotionService = promotionService;
         }
 
         // ══════════════════════════════════════════════════════════════
@@ -29,6 +31,8 @@ namespace Airline.Controllers
             var booking = await _context.Bookings
                 .Include(b => b.Schedule)
                 .Include(b => b.Tickets)
+                .Include(b => b.BookingPromotions)
+                    .ThenInclude(bp => bp.Promo)
                 .Include(b => b.User)
                 .FirstOrDefaultAsync(b => b.BookingId == id && b.User.Username == username);
 
@@ -52,7 +56,7 @@ namespace Airline.Controllers
             vnpay.AddRequestData("vnp_Version", "2.1.0");
             vnpay.AddRequestData("vnp_Command", "pay");
             vnpay.AddRequestData("vnp_TmnCode", config["TmnCode"]!);
-            vnpay.AddRequestData("vnp_Amount", ((long)(totalAmount * 100)).ToString()); // VNPay uses cents (VND * 100)
+            vnpay.AddRequestData("vnp_Amount", ((long)((await _promotionService.CalculateBookingAsync(booking)).FinalAmount * 100)).ToString()); // VNPay uses cents (VND * 100)
             vnpay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
             vnpay.AddRequestData("vnp_CurrCode", "VND");
             vnpay.AddRequestData("vnp_IpAddr", HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1");
@@ -152,6 +156,8 @@ namespace Airline.Controllers
         {
             var booking = await _context.Bookings
                 .Include(b => b.Tickets)
+                .Include(b => b.BookingPromotions)
+                    .ThenInclude(bp => bp.Promo)
                 .FirstOrDefaultAsync(b => b.BookingId == bookingId);
 
             if (booking != null && booking.Status != "PAID")
@@ -174,7 +180,7 @@ namespace Airline.Controllers
                         var payment = new Payment
                         {
                             BookingId = bookingId,
-                            Amount = totalAmount,
+                            Amount = (await _promotionService.CalculateBookingAsync(booking)).FinalAmount,
                             PaymentDate = DateTime.Now,
                             PaymentMethod = "VNPAY",
                             PaymentStatus = "SUCCESS",
