@@ -26,6 +26,12 @@
                     <input type="hidden" asp-for="FlightNumber" />
                     <input type="hidden" asp-for="Price" />
                     <input type="hidden" asp-for="DepartureTime" />
+                    <input type="hidden" asp-for="PromoCode" />
+                    <input type="hidden" asp-for="AppliedPromotionId" />
+                    <input type="hidden" asp-for="DiscountPercent" />
+                    <input type="hidden" asp-for="TaxAmount" />
+                    <input type="hidden" asp-for="DiscountAmount" />
+                    <input type="hidden" asp-for="FinalPrice" />
 
                     <div class="form-header">
                         <i class="fas fa-user-edit"></i>
@@ -64,6 +70,54 @@
                                 </select>
                             </div>
                         </div>
+                    </div>
+
+                    <div class="promotion-panel">
+                        <div class="promotion-panel-header">
+                            <div>
+                                <h3>Promotion Code</h3>
+                                <p>Enter a code from the active offers below.</p>
+                            </div>
+                            <a asp-action="ApplyPromotion" class="promotion-link">View all offers</a>
+                        </div>
+
+                        <div class="promotion-input-row">
+                            <div class="input-with-icon promotion-input-wrap">
+                                <i class="fas fa-ticket-percent"></i>
+                                <input type="text"
+                                       id="promoCodeInput"
+                                       value="@Model.PromoCode"
+                                       class="form-control"
+                                       placeholder="Example: NEWUSER10"
+                                       autocomplete="off" />
+                            </div>
+                            <button type="button" class="btn-apply-promo" onclick="applyPromotion()">Apply</button>
+                            <button type="button" class="btn-clear-promo" onclick="clearPromotion()">Clear</button>
+                        </div>
+
+                        <span asp-validation-for="PromoCode" class="text-danger"></span>
+                        <div id="promoFeedback" class="promo-feedback @(Model.AppliedPromotionId.HasValue ? "is-success" : "")">
+                            @if (Model.AppliedPromotionId.HasValue)
+                            {
+                                <span>Applied code <strong>@Model.PromoCode</strong> with @Model.DiscountPercent% discount.</span>
+                            }
+                        </div>
+
+                        @if (Model.AvailablePromotions.Any())
+                        {
+                            <div class="promo-chip-list">
+                                @foreach (var promo in Model.AvailablePromotions)
+                                {
+                                    <button type="button"
+                                            class="promo-chip"
+                                            data-code="@promo.PromoCode"
+                                            onclick="selectPromotion(this.dataset.code)">
+                                        <span class="promo-chip-code">@promo.PromoCode</span>
+                                        <span class="promo-chip-discount">-@(promo.DiscountPercent ?? 0)%</span>
+                                    </button>
+                                }
+                            </div>
+                        }
                     </div>
 
                     <div class="form-notice">
