@@ -154,7 +154,7 @@
         <div class="registered-card">
             <div class="card-head">
                 <h2>Danh sach hanh ly da dang ky</h2>
-                <p>Ban co the huy dang ky de tao lai mot ticket khac neu can.</p>
+                <p>Ban co the thanh toan hanh ly ngay tai day. Hanh ly da thanh toan se khong duoc xoa truc tiep.</p>
             </div>
 
             @if (Model.RegisteredBaggages.Any())
@@ -189,16 +189,40 @@
                                     <span>Trang thai ticket</span>
                                     <strong>@baggage.TicketStatus</strong>
                                 </div>
+                                <div class="metric-pill @(baggage.IsPaid ? "paid" : "unpaid")">
+                                    <span>Thanh toan hanh ly</span>
+                                    <strong>@(baggage.IsPaid ? "Da thanh toan" : "Chua thanh toan")</strong>
+                                </div>
                             </div>
 
-                            <form asp-action="DeleteRegistration" method="post" class="inline-delete-form">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="baggageId" value="@baggage.BaggageId" />
-                                <button type="submit" class="ghost-danger-btn">
-                                    <i class="fa-solid fa-trash"></i>
-                                    Huy dang ky
-                                </button>
-                            </form>
+                            <div class="item-actions">
+                                @if (!baggage.IsPaid)
+                                {
+                                    <a asp-controller="Payment"
+                                       asp-action="CreateBaggagePayment"
+                                       asp-route-id="@baggage.BaggageId"
+                                       class="primary-btn action-btn">
+                                        <i class="fa-solid fa-credit-card"></i>
+                                        Thanh toan ngay
+                                    </a>
+
+                                    <form asp-action="DeleteRegistration" method="post" class="inline-delete-form">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="baggageId" value="@baggage.BaggageId" />
+                                        <button type="submit" class="ghost-danger-btn action-btn">
+                                            <i class="fa-solid fa-trash"></i>
+                                            Huy dang ky
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <div class="paid-badge">
+                                        <i class="fa-solid fa-circle-check"></i>
+                                        Giao dich da hoan tat
+                                    </div>
+                                }
+                            </div>
                         </article>
                     }
                 </div>

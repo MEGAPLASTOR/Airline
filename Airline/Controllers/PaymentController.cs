@@ -1,13 +1,14 @@
-using Airline.Models;
+﻿using Airline.Models;
 using Airline.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace Airline.Controllers
 {
     public class PaymentController : Controller
     {
+        private const string BookingTransactionPrefix = "BOOK_";
+        private const string BaggageTransactionPrefix = "BAG_";
         private readonly DataContext _context;
         private readonly IConfiguration _configuration;
         private readonly PromotionService _promotionService;
@@ -19,15 +20,12 @@ namespace Airline.Controllers
             _promotionService = promotionService;
         }
 
-        // ══════════════════════════════════════════════════════════════
-        // GET /Payment/CreatePayment/{bookingId}
-        // ══════════════════════════════════════════════════════════════
         public async Task<IActionResult> CreatePayment(int id)
         {
             if (User?.Identity?.IsAuthenticated != true)
-                return RedirectToAction("Login", "Account");
+                return Redirect("/");
 
-            var username = User.Identity.Name;
+            var username = User.Identity?.Name;
             var booking = await _context.Bookings
                 .Include(b => b.Schedule)
                 .Include(b => b.Tickets)
@@ -39,89 +37,160 @@ namespace Airline.Controllers
             if (booking == null) return NotFound();
             if (booking.Status == "PAID") return RedirectToAction("ViewConfirmation", "Ticket");
 
-            // Tính tổng tiền từ bảng TicketPrice
-            decimal totalAmount = 0;
-            foreach (var ticket in booking.Tickets)
-            {
-                var priceEntry = await _context.TicketPrices
-                    .FirstOrDefaultAsync(p => p.ScheduleId == booking.ScheduleId && p.ClassId == ticket.ClassId);
-                
-                totalAmount += priceEntry?.Price ?? 1500000; // Fallback if price not found
-            }
-
-            // Tích hợp VNPay
-            var vnpay = new VnPayLibrary();
-            var config = _configuration.GetSection("Vnpay");
-
-            vnpay.AddRequestData("vnp_Version", "2.1.0");
-            vnpay.AddRequestData("vnp_Command", "pay");
-            vnpay.AddRequestData("vnp_TmnCode", config["TmnCode"]!);
-            vnpay.AddRequestData("vnp_Amount", ((long)((await _promotionService.CalculateBookingAsync(booking)).FinalAmount * 100)).ToString()); // VNPay uses cents (VND * 100)
-            vnpay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
-            vnpay.AddRequestData("vnp_CurrCode", "VND");
-            vnpay.AddRequestData("vnp_IpAddr", HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1");
-            vnpay.AddRequestData("vnp_Locale", "vn");
-            vnpay.AddRequestData("vnp_OrderInfo", $"Thanh toan ve may bay cho Booking #{booking.BookingId}");
-            vnpay.AddRequestData("vnp_OrderType", "other"); // Default type
-            vnpay.AddRequestData("vnp_ReturnUrl", config["ReturnUrl"]!);
-            vnpay.AddRequestData("vnp_TxnRef", $"{booking.BookingId}_{DateTime.Now.Ticks}"); // Unique ref
-
-            var paymentUrl = vnpay.CreateRequestUrl(config["BaseUrl"]!, config["HashSecret"]!);
-
-            return Redirect(paymentUrl);
+            var pricing = await _promotionService.CalculateBookingAsync(booking);
+            return Redirect(CreatePaymentUrl(
+                pricing.FinalAmount,
+                $"Thanh toan ve may bay cho Booking #{booking.BookingId}",
+                $"{BookingTransactionPrefix}{booking.BookingId}_{DateTime.Now.Ticks}"));
         }
 
-        // ══════════════════════════════════════════════════════════════
-        // GET /Payment/PaymentCallback
-        // ══════════════════════════════════════════════════════════════
-        public async Task<IActionResult> PaymentCallback()
+        public async Task<IActionResult> CreateBaggagePayment(int id)
         {
-            var vnpay = new VnPayLibrary();
-            foreach (var (key, value) in Request.Query)
+            if (User?.Identity?.IsAuthenticated != true)
+                return Redirect("/");
+
+            var username = User.Identity?.Name;
+            var baggage = await _context.Baggages
+                .Include(b => b.Ticket)
+                    .ThenInclude(t => t.Booking)
+                        .ThenInclude(bk => bk.User)
+                .FirstOrDefaultAsync(b =>
+                    b.BaggageId == id &&
+                    b.Ticket.Booking.User.Username == username);
+
+            if (baggage == null) return NotFound();
+
+            if (await IsBaggagePaymentSuccessfulAsync(baggage.BaggageId, baggage.Ticket.BookingId))
             {
-                if (!string.IsNullOrEmpty(key) && key.StartsWith("vnp_"))
-                {
-                    vnpay.AddResponseData(key, value!);
-                }
+                TempData["SuccessMessage"] = $"Hanh ly #{baggage.BaggageId} da duoc thanh toan truoc do.";
+                return RedirectToAction("Register", "Baggage");
             }
 
+            var amount = baggage.Price ?? 0m;
+            if (amount <= 0)
+            {
+                TempData["ErrorMessage"] = "Phi hanh ly khong hop le de thanh toan.";
+                return RedirectToAction("Register", "Baggage");
+            }
+
+            return Redirect(CreatePaymentUrl(
+                amount,
+                $"Thanh toan hanh ly cho Ticket #{baggage.TicketId}",
+                $"{BaggageTransactionPrefix}{baggage.BaggageId}_{DateTime.Now.Ticks}"));
+        }
+
+        public async Task<IActionResult> PaymentCallback()
+        {
+            var vnpay = BuildResponseLibrary();
             var config = _configuration.GetSection("Vnpay");
-            var vnp_SecureHash = Request.Query["vnp_SecureHash"];
-            bool isValidSignature = vnpay.ValidateSignature(vnp_SecureHash!, config["HashSecret"]!);
+            var secureHash = Request.Query["vnp_SecureHash"];
+            var isValidSignature = vnpay.ValidateSignature(secureHash!, config["HashSecret"]!);
+
+            ViewBag.ReturnUrl = Url.Action("ViewConfirmation", "Ticket");
+            ViewBag.ReturnText = "Go to My Tickets";
 
             if (isValidSignature)
             {
-                var vnp_ResponseCode = vnpay.GetResponseData("vnp_ResponseCode");
-                var vnp_TxnRef = vnpay.GetResponseData("vnp_TxnRef");
-                var bookingId = int.Parse(vnp_TxnRef.Split('_')[0]);
+                var responseCode = vnpay.GetResponseData("vnp_ResponseCode");
+                var txnRef = vnpay.GetResponseData("vnp_TxnRef");
+                var transactionNo = vnpay.GetResponseData("vnp_TransactionNo");
 
-                if (vnp_ResponseCode == "00")
+                if (TryParseBaggageTxnRef(txnRef, out var baggageId))
                 {
-                    // Thanh toán thành công
-                    await UpdateBookingStatus(bookingId, "PAID", vnpay.GetResponseData("vnp_TransactionNo"));
-                    ViewBag.Message = "Thanh toán thành công!";
-                    ViewBag.Success = true;
+                    ViewBag.ReturnUrl = Url.Action("Register", "Baggage");
+                    ViewBag.ReturnText = "Quay lai hanh ly";
+
+                    if (responseCode == "00")
+                    {
+                        await UpdateBaggagePaymentStatus(baggageId, transactionNo);
+                        ViewBag.Message = "Thanh toan hanh ly thanh cong!";
+                        ViewBag.Success = true;
+                    }
+                    else
+                    {
+                        ViewBag.Message = "Thanh toan hanh ly khong thanh cong. Ma loi: " + responseCode;
+                        ViewBag.Success = false;
+                    }
                 }
                 else
                 {
-                    ViewBag.Message = "Thanh toán không thành công. Mã lỗi: " + vnp_ResponseCode;
-                    ViewBag.Success = false;
+                    var bookingId = ParseBookingId(txnRef);
+                    if (responseCode == "00")
+                    {
+                        await UpdateBookingStatus(bookingId, "PAID", transactionNo);
+                        ViewBag.Message = "Thanh toan thanh cong!";
+                        ViewBag.Success = true;
+                    }
+                    else
+                    {
+                        ViewBag.Message = "Thanh toan khong thanh cong. Ma loi: " + responseCode;
+                        ViewBag.Success = false;
+                    }
                 }
             }
             else
             {
-                ViewBag.Message = "Chữ ký không hợp lệ. Giao dịch có thể đã bị can thiệp.";
+                ViewBag.Message = "Chu ky khong hop le. Giao dich co the da bi can thiep.";
                 ViewBag.Success = false;
             }
 
             return View("PaymentResult");
         }
 
-        // ══════════════════════════════════════════════════════════════
-        // GET /Payment/PaymentIPN
-        // ══════════════════════════════════════════════════════════════
         [HttpGet]
         public async Task<IActionResult> PaymentIPN()
+        {
+            var vnpay = BuildResponseLibrary();
+            var config = _configuration.GetSection("Vnpay");
+            var secureHash = Request.Query["vnp_SecureHash"];
+            var isValidSignature = vnpay.ValidateSignature(secureHash!, config["HashSecret"]!);
+
+            if (isValidSignature)
+            {
+                var responseCode = vnpay.GetResponseData("vnp_ResponseCode");
+                var txnRef = vnpay.GetResponseData("vnp_TxnRef");
+                var transactionNo = vnpay.GetResponseData("vnp_TransactionNo");
+
+                if (responseCode == "00")
+                {
+                    if (TryParseBaggageTxnRef(txnRef, out var baggageId))
+                    {
+                        await UpdateBaggagePaymentStatus(baggageId, transactionNo);
+                    }
+                    else
+                    {
+                        await UpdateBookingStatus(ParseBookingId(txnRef), "PAID", transactionNo);
+                    }
+
+                    return Json(new { RspCode = "00", Message = "Confirm Success" });
+                }
+            }
+
+            return Json(new { RspCode = "97", Message = "Invalid Signature or Failed" });
+        }
+
+        private string CreatePaymentUrl(decimal amount, string orderInfo, string transactionRef)
+        {
+            var vnpay = new VnPayLibrary();
+            var config = _configuration.GetSection("Vnpay");
+
+            vnpay.AddRequestData("vnp_Version", "2.1.0");
+            vnpay.AddRequestData("vnp_Command", "pay");
+            vnpay.AddRequestData("vnp_TmnCode", config["TmnCode"]!);
+            vnpay.AddRequestData("vnp_Amount", ((long)(amount * 100)).ToString());
+            vnpay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
+            vnpay.AddRequestData("vnp_CurrCode", "VND");
+            vnpay.AddRequestData("vnp_IpAddr", HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1");
+            vnpay.AddRequestData("vnp_Locale", "vn");
+            vnpay.AddRequestData("vnp_OrderInfo", orderInfo);
+            vnpay.AddRequestData("vnp_OrderType", "other");
+            vnpay.AddRequestData("vnp_ReturnUrl", config["ReturnUrl"]!);
+            vnpay.AddRequestData("vnp_TxnRef", transactionRef);
+
+            return vnpay.CreateRequestUrl(config["BaseUrl"]!, config["HashSecret"]!);
+        }
+
+        private VnPayLibrary BuildResponseLibrary()
         {
             var vnpay = new VnPayLibrary();
             foreach (var (key, value) in Request.Query)
@@ -132,24 +201,7 @@ namespace Airline.Controllers
                 }
             }
 
-            var config = _configuration.GetSection("Vnpay");
-            var vnp_SecureHash = Request.Query["vnp_SecureHash"];
-            bool isValidSignature = vnpay.ValidateSignature(vnp_SecureHash!, config["HashSecret"]!);
-
-            if (isValidSignature)
-            {
-                var vnp_ResponseCode = vnpay.GetResponseData("vnp_ResponseCode");
-                var vnp_TxnRef = vnpay.GetResponseData("vnp_TxnRef");
-                var bookingId = int.Parse(vnp_TxnRef.Split('_')[0]);
-
-                if (vnp_ResponseCode == "00")
-                {
-                    await UpdateBookingStatus(bookingId, "PAID", vnpay.GetResponseData("vnp_TransactionNo"));
-                    return Json(new { RspCode = "00", Message = "Confirm Success" });
-                }
-            }
-
-            return Json(new { RspCode = "97", Message = "Invalid Signature or Failed" });
+            return vnpay;
         }
 
         private async Task UpdateBookingStatus(int bookingId, string status, string transactionNo)
@@ -162,41 +214,103 @@ namespace Airline.Controllers
 
             if (booking != null && booking.Status != "PAID")
             {
-                using (var transaction = await _context.Database.BeginTransactionAsync())
+                using var transaction = await _context.Database.BeginTransactionAsync();
+                try
                 {
-                    try
+                    booking.Status = status;
+                    foreach (var ticket in booking.Tickets)
                     {
-                        booking.Status = status;
-                        decimal totalAmount = 0;
-                        foreach (var ticket in booking.Tickets)
-                        {
-                            ticket.Status = status;
-                            var priceEntry = await _context.TicketPrices
-                                .FirstOrDefaultAsync(p => p.ScheduleId == booking.ScheduleId && p.ClassId == ticket.ClassId);
-                            totalAmount += priceEntry?.Price ?? 1500000;
-                        }
-
-                        // Tạo bản ghi Payment
-                        var payment = new Payment
-                        {
-                            BookingId = bookingId,
-                            Amount = (await _promotionService.CalculateBookingAsync(booking)).FinalAmount,
-                            PaymentDate = DateTime.Now,
-                            PaymentMethod = "VNPAY",
-                            PaymentStatus = "SUCCESS",
-                            TransactionNo = transactionNo
-                        };
-                        _context.Payments.Add(payment);
-
-                        await _context.SaveChangesAsync();
-                        await transaction.CommitAsync();
+                        ticket.Status = status;
                     }
-                    catch
+
+                    var payment = new Payment
                     {
-                        await transaction.RollbackAsync();
-                    }
+                        BookingId = bookingId,
+                        Amount = (await _promotionService.CalculateBookingAsync(booking)).FinalAmount,
+                        PaymentDate = DateTime.Now,
+                        PaymentMethod = "VNPAY",
+                        PaymentStatus = "SUCCESS",
+                        TransactionNo = transactionNo
+                    };
+                    _context.Payments.Add(payment);
+
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
                 }
             }
+        }
+
+        private async Task UpdateBaggagePaymentStatus(int baggageId, string transactionNo)
+        {
+            var baggage = await _context.Baggages
+                .Include(b => b.Ticket)
+                .FirstOrDefaultAsync(b => b.BaggageId == baggageId);
+
+            if (baggage == null)
+            {
+                return;
+            }
+
+            if (await IsBaggagePaymentSuccessfulAsync(baggageId, baggage.Ticket.BookingId))
+            {
+                return;
+            }
+
+            var payment = new Payment
+            {
+                BookingId = baggage.Ticket.BookingId,
+                Amount = baggage.Price ?? 0m,
+                PaymentDate = DateTime.Now,
+                PaymentMethod = "VNPAY_BAGGAGE",
+                PaymentStatus = "SUCCESS",
+                TransactionNo = $"{BaggageTransactionPrefix}{baggageId}_{transactionNo}"
+            };
+
+            _context.Payments.Add(payment);
+            await _context.SaveChangesAsync();
+        }
+
+        private async Task<bool> IsBaggagePaymentSuccessfulAsync(int baggageId, int bookingId)
+        {
+            return await _context.Payments
+                .AsNoTracking()
+                .AnyAsync(p =>
+                    p.BookingId == bookingId &&
+                    p.TransactionNo != null &&
+                    p.TransactionNo.StartsWith($"{BaggageTransactionPrefix}{baggageId}_") &&
+                    (p.PaymentStatus == "SUCCESS" || p.PaymentStatus == "PAID"));
+        }
+
+        private static bool TryParseBaggageTxnRef(string? txnRef, out int baggageId)
+        {
+            baggageId = 0;
+            if (string.IsNullOrWhiteSpace(txnRef) || !txnRef.StartsWith(BaggageTransactionPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            var parts = txnRef.Split('_', StringSplitOptions.RemoveEmptyEntries);
+            return parts.Length >= 2 && int.TryParse(parts[1], out baggageId);
+        }
+
+        private static int ParseBookingId(string? txnRef)
+        {
+            if (string.IsNullOrWhiteSpace(txnRef))
+            {
+                throw new InvalidOperationException("Transaction reference is invalid.");
+            }
+
+            var parts = txnRef.Split('_', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length >= 2 && string.Equals(parts[0], BookingTransactionPrefix.TrimEnd('_'), StringComparison.OrdinalIgnoreCase))
+            {
+                return int.Parse(parts[1]);
+            }
+
+            return int.Parse(parts[0]);
         }
     }
 }

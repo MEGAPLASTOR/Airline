@@ -343,7 +343,7 @@
 
 .item-side {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.8rem;
 }
 
@@ -364,6 +364,39 @@
 .metric-pill strong {
     color: #fff;
     font-size: 0.98rem;
+}
+
+.metric-pill.paid {
+    background: rgba(93, 232, 168, 0.08);
+    border-color: rgba(93, 232, 168, 0.18);
+}
+
+.metric-pill.unpaid {
+    background: rgba(240, 180, 41, 0.08);
+    border-color: rgba(240, 180, 41, 0.18);
+}
+
+.item-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    min-width: 180px;
+}
+
+.paid-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.9rem 1rem;
+    border-radius: 14px;
+    background: rgba(93, 232, 168, 0.1);
+    border: 1px solid rgba(93, 232, 168, 0.22);
+    color: #c3f7de;
+    font-weight: 700;
 }
 
 .inline-delete-form {

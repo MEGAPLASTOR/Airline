@@ -1,11 +1,11 @@
-@{
+﻿@{
     ViewData["Title"] = "Payment Result";
     Layout = "_Layout";
     var success = ViewBag.Success as bool? ?? false;
-    var message = ViewBag.Message as string ?? "Thông tin thanh toán không xác định.";
+    var message = ViewBag.Message as string ?? "Thong tin thanh toan khong xac dinh.";
+    var returnUrl = ViewBag.ReturnUrl as string ?? Url.Action("ViewConfirmation", "Ticket");
+    var returnText = ViewBag.ReturnText as string ?? "Go to My Tickets";
 }
-
-
 
 <div class="result-container">
     <div class="result-card">
@@ -19,15 +19,15 @@
 
         @if (success)
         {
-            <p style="color: rgba(255,255,255,0.4); font-size: 0.85rem;">Vé của bạn đã được xác nhận và cập nhật trạng thái PAID. Bạn có thể xem lại trong mục My Tickets.</p>
+            <p style="color: rgba(255,255,255,0.4); font-size: 0.85rem;">Giao dich da duoc ghi nhan thanh cong. Ban co the quay lai man hinh lien quan de kiem tra trang thai moi nhat.</p>
         }
         else
         {
-            <p style="color: rgba(255,255,255,0.4); font-size: 0.85rem;">Đã có lỗi xảy ra trong quá trình thanh toán. Vui lòng thử lại sau hoặc liên hệ bộ phận chăm sóc khách hàng.</p>
+            <p style="color: rgba(255,255,255,0.4); font-size: 0.85rem;">Da co loi xay ra trong qua trinh thanh toan. Vui long thu lai sau hoac lien he bo phan cham soc khach hang.</p>
         }
 
-        <a asp-controller="Ticket" asp-action="ViewConfirmation" class="btn-return">
-            Go to My Tickets
+        <a href="@returnUrl" class="btn-return">
+            @returnText
         </a>
     </div>
 </div>
