@@ -17,6 +17,7 @@ namespace Airline.Controllers
             var routes = await _context.Routes
                 .Include(x => x.DepartureCityNavigation)
                 .Include(x => x.ArrivalCityNavigation)
+                .Include(x => x.Flights)
                 .ToListAsync();
 
             ViewBag.Cities = await _context.Cities.OrderBy(c => c.CityName).ToListAsync();

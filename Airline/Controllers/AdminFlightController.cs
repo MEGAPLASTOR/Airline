@@ -16,6 +16,10 @@ namespace Airline.Controllers
 
             var flights = await _context.Flights
                 .Include(x => x.Route)
+                    .ThenInclude(x => x.DepartureCityNavigation)
+                .Include(x => x.Route)
+                    .ThenInclude(x => x.ArrivalCityNavigation)
+                .Include(x => x.FlightSchedules)
                 .OrderByDescending(x => x.FlightId)
                 .ToListAsync();
 
@@ -85,7 +89,9 @@ namespace Airline.Controllers
         {
             if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized" });
 
-            var flight = await _context.Flights.Include(x => x.FlightSchedules).FirstOrDefaultAsync(x => x.FlightId == id);
+            var flight = await _context.Flights
+                .Include(x => x.FlightSchedules)
+                .FirstOrDefaultAsync(x => x.FlightId == id);
             if (flight == null) return Json(new { success = false, message = "Flight not found." });
 
             if (flight.FlightSchedules.Any()) 

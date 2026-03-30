@@ -2,35 +2,94 @@
 @{
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
     ViewData["Title"] = "Manage Flights";
-    var routes = ViewBag.Routes as IEnumerable<Airline.Models.Route>;
-    var search = ViewBag.Search as string ?? "";
+
+    var flights = Model?.ToList() ?? new List<Airline.Models.Flight>();
+    var routes = ViewBag.Routes as IEnumerable<Airline.Models.Route> ?? Enumerable.Empty<Airline.Models.Route>();
+    var totalFlights = flights.Count;
+    var linkedRoutes = flights.Select(x => x.RouteId).Distinct().Count();
+    var scheduledFlights = flights.Count(x => x.FlightSchedules.Any());
+    var unscheduledFlights = totalFlights - scheduledFlights;
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/admin-flights.css" />
+    <link rel="stylesheet" href="~/css/admin-unified.css" asp-append-version="true" />
 }
 
-<!-- Page Header -->
-<div class="schedule-header">
+<div class="page-header">
     <div class="page-title-block">
         <div class="page-greeting">Master Data</div>
-        <h1 class="page-title">Manage Flights</h1>
-        <p class="page-subtitle">Configure flight numbers and assign routes</p>
+        <h1 class="page-title">Manage <span>Flights</span></h1>
+        <p class="page-subtitle">Control flight numbers and map each flight to its assigned route.</p>
     </div>
-    <button class="btn-create" onclick="openCreateModal()">
-        <i class="fa-solid fa-plus"></i> Add New Flight
-    </button>
+
+    <div class="page-actions">
+        <button type="button" class="btn-ghost js-refresh-page">
+            <i class="fa-solid fa-arrows-rotate"></i> Refresh
+        </button>
+        <button type="button" class="btn-primary" onclick="openCreateModal()">
+            <i class="fa-solid fa-plane"></i> Add Flight
+        </button>
+    </div>
 </div>
 
-<!-- Filter Bar -->
-<form method="get" class="filter-bar" asp-controller="Admin" asp-action="ManageFlights">
-    <input type="text" name="search" placeholder="Search flight number, city..." value="@search" style="min-width:280px" />
-    <button type="submit" class="filter-btn"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
-</form>
+<div class="kpi-grid">
+    <div class="kpi-card" style="--kpi-accent:#17aab8">
+        <div class="kpi-top">
+            <div class="kpi-icon-wrap"><i class="fa-solid fa-plane"></i></div>
+        </div>
+        <div class="kpi-value">@totalFlights</div>
+        <div class="kpi-label">Total Flights</div>
+    </div>
 
-<!-- Data Table -->
-<div class="schedule-table-card">
-    <table class="schedule-table">
+    <div class="kpi-card" style="--kpi-accent:#f0b429">
+        <div class="kpi-top">
+            <div class="kpi-icon-wrap"><i class="fa-solid fa-route"></i></div>
+        </div>
+        <div class="kpi-value">@linkedRoutes</div>
+        <div class="kpi-label">Routes Assigned</div>
+    </div>
+
+    <div class="kpi-card" style="--kpi-accent:#5de8a8">
+        <div class="kpi-top">
+            <div class="kpi-icon-wrap"><i class="fa-solid fa-calendar-check"></i></div>
+        </div>
+        <div class="kpi-value">@scheduledFlights</div>
+        <div class="kpi-label">Flights With Schedules</div>
+    </div>
+
+    <div class="kpi-card" style="--kpi-accent:#ff6b6b">
+        <div class="kpi-top">
+            <div class="kpi-icon-wrap"><i class="fa-solid fa-calendar-xmark"></i></div>
+        </div>
+        <div class="kpi-value">@unscheduledFlights</div>
+        <div class="kpi-label">Flights Without Schedules</div>
+    </div>
+</div>
+
+<div class="table-card">
+    <div class="toolbar">
+        <div class="toolbar-left">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="flightSearch" placeholder="Search flight number or route..." />
+            </div>
+
+            <select id="flightScheduleFilter" class="toolbar-select">
+                <option value="">All Flights</option>
+                <option value="SCHEDULED">With Schedules</option>
+                <option value="UNSCHEDULED">Without Schedules</option>
+            </select>
+        </div>
+
+        <div class="toolbar-right">
+            <span class="result-text">
+                Total: <strong id="flightCount">@totalFlights</strong> flight(s)
+            </span>
+        </div>
+    </div>
+
+    <div class="table-wrap">
+        <table class="data-table" id="flightsTable">
         <thead>
             <tr>
                 <th>ID</th>

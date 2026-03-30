@@ -15,6 +15,8 @@ namespace Airline.Controllers
             if (!IsAdmin()) return RedirectIfNotAdmin();
 
             var cities = await _context.Cities
+                .Include(x => x.RouteDepartureCityNavigations)
+                .Include(x => x.RouteArrivalCityNavigations)
                 .OrderBy(x => x.CityName)
                 .ToListAsync();
 
