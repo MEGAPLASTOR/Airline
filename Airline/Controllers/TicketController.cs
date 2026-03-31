@@ -53,6 +53,76 @@ namespace Airline.Controllers
             return View(tickets);
         }
 
+        // ==============================================================
+        // GET /Ticket/Rescheduled
+        // ==============================================================
+        public async Task<IActionResult> Rescheduled()
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdStr))
+                return RedirectToAction("Login", "Account");
+
+            int userId = int.Parse(userIdStr);
+
+            var affectedTickets = await _context.Tickets
+                .AsNoTracking()
+                .Include(t => t.Booking)
+                    .ThenInclude(b => b.Schedule)
+                        .ThenInclude(s => s.Flight)
+                            .ThenInclude(f => f.Route)
+                                .ThenInclude(r => r.DepartureCityNavigation)
+                .Include(t => t.Booking.Schedule.Flight.Route.ArrivalCityNavigation)
+                .Include(t => t.Passenger)
+                .Include(t => t.Class)
+                .Include(t => t.Seat)
+                .Where(t =>
+                    t.Booking.UserId == userId &&
+                    !string.Equals(t.Status, "CANCELLED", StringComparison.OrdinalIgnoreCase) &&
+                    (string.Equals(t.Booking.Schedule.Status, "DELAYED", StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals(t.Booking.Schedule.Status, "CANCELLED", StringComparison.OrdinalIgnoreCase)))
+                .OrderBy(t => t.Booking.Schedule.DepartureTime)
+                .ThenByDescending(t => t.Booking.BookingDate)
+                .ToListAsync();
+
+            var flights = affectedTickets
+                .Select(ticket =>
+                {
+                    var schedule = ticket.Booking.Schedule;
+                    var route = schedule.Flight.Route;
+                    var normalizedScheduleStatus = (schedule.Status ?? string.Empty).ToUpperInvariant();
+
+                    return new RescheduledFlightItemViewModel
+                    {
+                        TicketId = ticket.TicketId,
+                        BookingId = ticket.BookingId,
+                        PassengerName = ticket.Passenger?.FullName ?? "N/A",
+                        FlightNumber = schedule.Flight?.FlightNumber ?? "-",
+                        Origin = route?.DepartureCityNavigation?.CityName ?? "-",
+                        Destination = route?.ArrivalCityNavigation?.CityName ?? "-",
+                        DepartureTime = schedule.DepartureTime,
+                        ArrivalTime = schedule.ArrivalTime,
+                        ScheduleStatus = normalizedScheduleStatus,
+                        TicketStatus = ticket.Status ?? "BOOKED",
+                        SeatNumber = ticket.Seat?.SeatNumber ?? "Not assigned",
+                        FareClass = ticket.Class?.ClassName ?? "-",
+                        GuidanceText = normalizedScheduleStatus == "CANCELLED"
+                            ? "This flight has been cancelled. Please contact support or the airline counter for rebooking assistance."
+                            : "This flight has been delayed. Please use the updated departure time shown below for your trip."
+                    };
+                })
+                .ToList();
+
+            var viewModel = new RescheduledFlightPageViewModel
+            {
+                Flights = flights,
+                TotalAffectedFlights = flights.Count,
+                DelayedFlights = flights.Count(x => x.ScheduleStatus == "DELAYED"),
+                CancelledFlights = flights.Count(x => x.ScheduleStatus == "CANCELLED")
+            };
+
+            return View("~/Views/Ticket/Rescheduled.cshtml", viewModel);
+        }
+
         private async Task RefreshAuthenticatedUserClaimsAsync(BookingPaymentResult paymentResult)
         {
             if (User?.Identity?.IsAuthenticated != true || !paymentResult.UserId.HasValue)

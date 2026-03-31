@@ -1,0 +1,395 @@
+@model Airline.Models.RescheduledFlightPageViewModel
+@{
+    ViewData["Title"] = "Rescheduled Flights";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var flights = Model?.Flights?.ToList() ?? new List<Airline.Models.RescheduledFlightItemViewModel>();
+}
+
+<style>
+    .reschedule-container {
+        padding: 2.5rem 2rem;
+        max-width: 1140px;
+        margin: 0 auto;
+    }
+
+    .reschedule-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 1.5rem;
+        align-items: flex-start;
+        margin-bottom: 2rem;
+    }
+
+    .reschedule-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 2.4rem;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .reschedule-title span {
+        color: var(--ocean-aqua);
+    }
+
+    .reschedule-subtitle {
+        max-width: 720px;
+        color: rgba(255,255,255,0.62);
+        line-height: 1.7;
+    }
+
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .summary-card {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 22px;
+        padding: 1.4rem 1.5rem;
+        backdrop-filter: blur(12px);
+    }
+
+    .summary-label {
+        display: block;
+        font-size: 0.76rem;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: rgba(255,255,255,0.42);
+        margin-bottom: 0.9rem;
+    }
+
+    .summary-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #fff;
+    }
+
+    .summary-value.teal {
+        color: var(--ocean-aqua);
+    }
+
+    .summary-value.coral {
+        color: #ff8f8f;
+    }
+
+    .notice-box {
+        margin-bottom: 1.8rem;
+        padding: 1rem 1.1rem;
+        border-radius: 18px;
+        background: rgba(240,180,41,0.08);
+        border: 1px solid rgba(240,180,41,0.18);
+        color: rgba(255,255,255,0.74);
+        line-height: 1.7;
+    }
+
+    .update-card {
+        background: rgba(255,255,255,0.04);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 24px;
+        padding: 1.8rem;
+        margin-bottom: 1.4rem;
+        display: grid;
+        gap: 1.25rem;
+    }
+
+    .update-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+
+    .route-block {
+        display: flex;
+        align-items: center;
+        gap: 1.8rem;
+        flex-wrap: wrap;
+    }
+
+    .route-city strong {
+        display: block;
+        font-family: 'Playfair Display', serif;
+        font-size: 1.65rem;
+        color: #fff;
+    }
+
+    .route-city span {
+        display: block;
+        margin-top: 0.25rem;
+        font-size: 0.74rem;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: rgba(255,255,255,0.38);
+    }
+
+    .route-flight {
+        min-width: 144px;
+        text-align: center;
+    }
+
+    .route-line {
+        position: relative;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, rgba(23,170,184,0.55), transparent);
+        margin-bottom: 0.45rem;
+    }
+
+    .route-line i {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: var(--ocean-aqua);
+        background: rgba(6,21,37,0.9);
+        padding: 0 0.3rem;
+    }
+
+    .flight-tag {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.24rem 0.8rem;
+        border-radius: 999px;
+        background: rgba(23,170,184,0.12);
+        color: var(--ocean-aqua);
+        font-weight: 700;
+        font-size: 0.8rem;
+    }
+
+    .impact-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.62rem 1rem;
+        border-radius: 12px;
+        font-size: 0.78rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+
+    .impact-delayed {
+        background: rgba(240,180,41,0.14);
+        color: #f0b429;
+        border: 1px solid rgba(240,180,41,0.28);
+    }
+
+    .impact-cancelled {
+        background: rgba(255,107,107,0.14);
+        color: #ff9b9b;
+        border: 1px solid rgba(255,107,107,0.28);
+    }
+
+    .update-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem 1.25rem;
+        background: rgba(0,0,0,0.18);
+        border-radius: 18px;
+        padding: 1.25rem;
+    }
+
+    .update-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+    }
+
+    .update-item span {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: rgba(255,255,255,0.4);
+        font-weight: 700;
+    }
+
+    .update-item strong {
+        color: #fff;
+        font-size: 1rem;
+    }
+
+    .guidance-box {
+        padding: 1rem 1.1rem;
+        border-radius: 16px;
+        background: rgba(10,34,60,0.65);
+        border: 1px solid rgba(255,255,255,0.08);
+        color: rgba(255,255,255,0.76);
+        line-height: 1.7;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 5.5rem 2rem;
+        background: rgba(255,255,255,0.03);
+        border: 2px dashed rgba(255,255,255,0.06);
+        border-radius: 28px;
+    }
+
+    .empty-state i {
+        font-size: 3.6rem;
+        color: rgba(255,255,255,0.08);
+        margin-bottom: 1.2rem;
+    }
+
+    .empty-state h2 {
+        color: #fff;
+        margin-bottom: 0.8rem;
+    }
+
+    .empty-state p {
+        color: rgba(255,255,255,0.55);
+        margin-bottom: 1.6rem;
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.95rem 1.4rem;
+        border-radius: 12px;
+        text-decoration: none;
+        color: #fff;
+        border: 1px solid rgba(255,255,255,0.1);
+        background: rgba(255,255,255,0.05);
+    }
+
+    @@media (max-width: 760px) {
+        .reschedule-container {
+            padding: 1.5rem 1rem;
+        }
+
+        .reschedule-header,
+        .update-top {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<div class="reschedule-container">
+    <div class="reschedule-header">
+        <div>
+            <h1 class="reschedule-title"><i class="fa-solid fa-clock-rotate-left"></i> View <span>Rescheduled Flight</span></h1>
+            <p class="reschedule-subtitle">
+                This page shows tickets from your account that are currently affected by operational changes such as delays or flight cancellations.
+            </p>
+        </div>
+
+        <a asp-controller="Ticket" asp-action="ViewConfirmation" class="back-link">
+            <i class="fa-solid fa-ticket"></i>
+            Back to My Tickets
+        </a>
+    </div>
+
+    <div class="summary-grid">
+        <div class="summary-card">
+            <span class="summary-label">Affected Tickets</span>
+            <div class="summary-value">@Model.TotalAffectedFlights</div>
+        </div>
+        <div class="summary-card">
+            <span class="summary-label">Delayed Flights</span>
+            <div class="summary-value teal">@Model.DelayedFlights</div>
+        </div>
+        <div class="summary-card">
+            <span class="summary-label">Cancelled Flights</span>
+            <div class="summary-value coral">@Model.CancelledFlights</div>
+        </div>
+    </div>
+
+    <div class="notice-box">
+        The system currently displays the latest schedule stored for your booking. Previous departure times are not kept in the current data model, so this page focuses on the updated flight status and latest departure information.
+    </div>
+
+    @if (!flights.Any())
+    {
+        <div class="empty-state">
+            <i class="fa-solid fa-plane-circle-check"></i>
+            <h2>No rescheduled flights at the moment</h2>
+            <p>Your current tickets are not affected by a delay or cancellation right now.</p>
+            <a asp-controller="Ticket" asp-action="ViewConfirmation" class="back-link">
+                <i class="fa-solid fa-ticket"></i>
+                View My Tickets
+            </a>
+        </div>
+    }
+    else
+    {
+        foreach (var flight in flights)
+        {
+            var isCancelled = flight.ScheduleStatus == "CANCELLED";
+            var impactClass = isCancelled ? "impact-cancelled" : "impact-delayed";
+
+            <article class="update-card">
+                <div class="update-top">
+                    <div class="route-block">
+                        <div class="route-city">
+                            <strong>@flight.Origin</strong>
+                            <span>Origin</span>
+                        </div>
+
+                        <div class="route-flight">
+                            <div class="route-line"><i class="fa-solid fa-plane"></i></div>
+                            <span class="flight-tag">@flight.FlightNumber</span>
+                        </div>
+
+                        <div class="route-city">
+                            <strong>@flight.Destination</strong>
+                            <span>Destination</span>
+                        </div>
+                    </div>
+
+                    <div class="impact-badge @impactClass">
+                        <i class="fa-solid @(isCancelled ? "fa-ban" : "fa-clock")"></i>
+                        @flight.ScheduleStatus
+                    </div>
+                </div>
+
+                <div class="update-grid">
+                    <div class="update-item">
+                        <span>Passenger</span>
+                        <strong>@flight.PassengerName</strong>
+                    </div>
+                    <div class="update-item">
+                        <span>Booking Reference</span>
+                        <strong>#@flight.BookingId</strong>
+                    </div>
+                    <div class="update-item">
+                        <span>Ticket</span>
+                        <strong>#@flight.TicketId</strong>
+                    </div>
+                    <div class="update-item">
+                        <span>Updated Departure</span>
+                        <strong>@flight.DepartureTime.ToString("dd/MM/yyyy HH:mm")</strong>
+                    </div>
+                    <div class="update-item">
+                        <span>Updated Arrival</span>
+                        <strong>@flight.ArrivalTime.ToString("dd/MM/yyyy HH:mm")</strong>
+                    </div>
+                    <div class="update-item">
+                        <span>Seat</span>
+                        <strong>@flight.SeatNumber</strong>
+                    </div>
+                    <div class="update-item">
+                        <span>Fare Class</span>
+                        <strong>@flight.FareClass</strong>
+                    </div>
+                    <div class="update-item">
+                        <span>Ticket Status</span>
+                        <strong>@flight.TicketStatus</strong>
+                    </div>
+                </div>
+
+                <div class="guidance-box">
+                    @flight.GuidanceText
+                </div>
+            </article>
+        }
+    }
+</div>
