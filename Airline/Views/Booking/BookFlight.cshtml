@@ -83,7 +83,7 @@
                             <div class="pricing-action">
                                 <div class="price-info">
                                     <span class="label">Starting from</span>
-                                    <span class="amount">1,200,000 <small>VND</small></span>
+                                    <span class="amount">@(s.TicketPrices.Any() ? s.TicketPrices.Min(p => p.Price)?.ToString("N0") : "0") <small>VND</small></span>
                                 </div>
                                 <a asp-action="SelectSeat" asp-route-id="@s.ScheduleId" class="btn-select-seat">
                                     Select Seat <i class="fas fa-arrow-right"></i>
