@@ -17,9 +17,9 @@ namespace Airline.Controllers
             _context = context;
         }
 
-        // ─────────────────────────────────────────────────────
-        //  GET /Account/GetProfile  (dùng cho EditAccount page load)
-        // ─────────────────────────────────────────────────────
+        // ---------------------------------------------
+        // GET /Account/GetProfile (used by EditAccount)
+        // ---------------------------------------------
         [HttpGet("/Account/GetProfile")]
         public async Task<IActionResult> GetProfile()
         {
@@ -49,9 +49,9 @@ namespace Airline.Controllers
             });
         }
 
-        // ─────────────────────────────────────────────────────
+        // ---------------------------------------------
         //  POST /Account/ChangePassword
-        // ─────────────────────────────────────────────────────
+        // ---------------------------------------------
         [HttpPost("/Account/ChangePassword")]
         public async Task<IActionResult> ChangePasswordPost([FromBody] ChangePasswordRequest req)
         {
@@ -59,7 +59,7 @@ namespace Airline.Controllers
                 return Ok(new { success = false, message = "Not authenticated" });
 
             if (string.IsNullOrWhiteSpace(req.CurrentPassword) || string.IsNullOrWhiteSpace(req.NewPassword))
-                return Ok(new { success = false, message = "Thiếu dữ liệu" });
+                return Ok(new { success = false, message = "Missing required data." });
 
             if (req.NewPassword.Length < 6)
                 return Ok(new { success = false, message = "New password must be at least 6 characters" });
@@ -80,9 +80,9 @@ namespace Airline.Controllers
             return Ok(new { success = true });
         }
 
-        // ─────────────────────────────────────────────────────
+        // ---------------------------------------------
         //  POST /Account/EditAccount
-        // ─────────────────────────────────────────────────────
+        // ---------------------------------------------
         [HttpPost("/Account/EditAccount")]
         public async Task<IActionResult> EditAccountPost([FromBody] EditAccountRequest req)
         {
@@ -97,14 +97,14 @@ namespace Airline.Controllers
             // Check email uniqueness (exclude current user)
             if (!string.IsNullOrEmpty(req.Email) &&
                 await _context.Users.AnyAsync(x => x.Email == req.Email && x.Username != username))
-                return Ok(new { success = false, message = "Email đã tồn tại" });
+                return Ok(new { success = false, message = "Email already exists." });
 
             // Check CCCD uniqueness (exclude current user)
             if (!string.IsNullOrEmpty(req.Cccd) &&
                 await _context.Users.AnyAsync(x => x.Cccd == req.Cccd && x.Username != username))
-                return Ok(new { success = false, message = "CCCD đã tồn tại" });
+                return Ok(new { success = false, message = "CCCD already exists." });
 
-            // Chỉ cập nhật field nào được gửi lên (null/empty → giữ nguyên giá trị cũ)
+            // Only update fields that were sent. Keep the existing value otherwise.
             if (!string.IsNullOrWhiteSpace(req.FirstName)) user.FirstName = req.FirstName;
             if (!string.IsNullOrWhiteSpace(req.LastName)) user.LastName = req.LastName;
             if (!string.IsNullOrWhiteSpace(req.Email)) user.Email = req.Email;
@@ -116,15 +116,15 @@ namespace Airline.Controllers
 
             await _context.SaveChangesAsync();
 
-            // Re-issue cookie để claims (FirstName, LastName) cập nhật ngay
+            // Re-issue the cookie so updated claims are available immediately.
             await SignIn(user);
 
             return Ok(new { success = true });
         }
 
-        // ─────────────────────────────────────────────────────
+        // ---------------------------------------------
         //  Helper: re-issue auth cookie
-        // ─────────────────────────────────────────────────────
+        // ---------------------------------------------
         private async Task SignIn(User user)
         {
             var claims = new List<Claim>
@@ -145,10 +145,10 @@ namespace Airline.Controllers
         }
     }
 
-    // ─────────────────────────────────────────────────────
-    //  Request models  —  [JsonPropertyName] khớp với
-    //  snake_case mà JS gửi lên (first_name, last_name…)
-    // ─────────────────────────────────────────────────────
+    // ---------------------------------------------
+    // Request models. JsonPropertyName matches the
+    // snake_case keys sent by the frontend.
+    // ---------------------------------------------
 
     public class ChangePasswordRequest
     {

@@ -2,8 +2,8 @@
     Layout = null;
 
     /*
-     * isLoggedIn đọc từ Cookie Authentication
-     * Sau khi tích hợp AccountController + cookie auth thì tự động đúng
+     * isLoggedIn is read from Cookie Authentication.
+     * Once AccountController and cookie auth are wired up, it stays in sync automatically.
      */
     bool isLoggedIn = User?.Identity?.IsAuthenticated == true;
 
@@ -1313,10 +1313,11 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="~/css/skywave-premium.css" asp-append-version="true" />
 </head>
 <body>
 
-    <!-- Anti-forgery token (dùng cho AJAX) -->
+    <!-- Anti-forgery token for AJAX requests -->
     @Html.AntiForgeryToken()
 
     <!-- ════════════════════ SIDEBAR ════════════════════ -->
@@ -1324,8 +1325,8 @@
         <a class="sidebar-brand" asp-area="" asp-controller="Home" asp-action="Index">
             <div class="brand-icon"><i class="fa-solid fa-plane-departure"></i></div>
             <div class="brand-text">
-                <span class="brand-name">The Airline</span>
-                <span class="brand-sub">Reservation System</span>
+                <span class="brand-name">SkyWave</span>
+                <span class="brand-sub">Airlines</span>
             </div>
         </a>
 
@@ -1343,7 +1344,6 @@
                 </div>
                 <div class="nav-group-items">
                     <a asp-area="" asp-controller="Booking" asp-action="BookFlight">Book Flight Ticket</a>
-                    <a asp-area="" asp-controller="Booking" asp-action="SeatReservation">Seat Reservation</a>
                     <a asp-area="" asp-controller="Booking" asp-action="ApplyPromotion">Apply Promotion</a>
                 </div>
             </div>
@@ -1366,18 +1366,6 @@
                 <div class="nav-group-items">
                     <a asp-area="" asp-controller="Ticket" asp-action="ViewConfirmation">View Ticket Confirmation</a>
                     <a asp-area="" asp-controller="Ticket" asp-action="Rescheduled">View Rescheduled Flight</a>
-                    <a asp-area="" asp-controller="Ticket" asp-action="Refund">Refund</a>
-                </div>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-group-trigger" onclick="toggleGroup(this)">
-                    <span class="nav-icon"><i class="fa-solid fa-bell"></i></span>
-                    Notifications & Miles <i class="fa-solid fa-chevron-down arrow"></i>
-                </div>
-                <div class="nav-group-items">
-                    <a asp-area="" asp-controller="Notification" asp-action="FlightNotification">Flight Notification</a>
-                    <a asp-area="" asp-controller="Miles" asp-action="Index">Sky Miles</a>
                 </div>
             </div>
 
@@ -1483,7 +1471,7 @@
                 <div class="footer-brand">
                     <div class="footer-logo">
                         <i class="fa-solid fa-plane-departure"></i>
-                        <strong>The Airline Reservation System</strong>
+                        <strong>SkyWave Airlines</strong>
                     </div>
                     <p class="footer-desc">
                         Your trusted partner in the skies. We connect people and places across
@@ -1503,7 +1491,6 @@
                         <li><a asp-controller="Booking" asp-action="BookFlight">Book Flight</a></li>
                         <li><a asp-controller="Ticket" asp-action="ViewConfirmation">My Tickets</a></li>
                         <li><a asp-controller="Baggage" asp-action="Register">Register Baggage</a></li>
-                        <li><a asp-controller="Ticket" asp-action="Refund">Refund Policy</a></li>
                         <li><a asp-controller="Miles" asp-action="Index">Sky Miles</a></li>
                     </ul>
                 </div>
@@ -1546,7 +1533,7 @@
     </div>
 
     <!-- ════════════════════════════════════════════════════
-         AUTH MODAL  (nhúng thẳng vào layout)
+         AUTH MODAL (embedded directly in the layout)
     ════════════════════════════════════════════════════ -->
     <div class="auth-overlay" id="authOverlay" onclick="overlayClick(event)">
         <div class="auth-modal" id="authModal">

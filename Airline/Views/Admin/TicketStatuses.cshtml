@@ -1,0 +1,245 @@
+@model Airline.Models.AdminTicketStatusesViewModel
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Manage Ticket Statuses";
+
+    var tickets = Model?.Tickets?.ToList() ?? new List<Airline.Models.AdminTicketStatusRowViewModel>();
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin-unified.css" asp-append-version="true" />
+    <style>
+        .status-form {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .status-form select {
+            min-width: 144px;
+        }
+
+        .ticket-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .ticket-meta strong {
+            color: #f8fbff;
+            font-size: 0.98rem;
+        }
+
+        .ticket-meta span {
+            color: rgba(226, 236, 246, 0.66);
+            font-size: 0.82rem;
+        }
+
+        .status-form .btn-primary {
+            white-space: nowrap;
+        }
+
+        .pill-amber {
+            background: rgba(240, 180, 41, 0.15);
+            color: #f0b429;
+            border: 1px solid rgba(240, 180, 41, 0.28);
+        }
+    </style>
+}
+
+<div class="page-header">
+    <div class="page-title-block">
+        <div class="page-greeting">Ticketing Operations</div>
+        <h1 class="page-title">Manage <span>Ticket Statuses</span></h1>
+        <p class="page-subtitle">Review ticket lifecycle states and update active reservations without leaving the admin workspace.</p>
+    </div>
+
+    <div class="page-actions">
+        <a class="btn-ghost" asp-controller="AdminTicketStatus" asp-action="TicketStatuses">
+            <i class="fa-solid fa-arrows-rotate"></i> Reset
+        </a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert-box alert-success">
+        <i class="fa-solid fa-circle-check"></i>
+        <span>@TempData["SuccessMessage"]</span>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert-box alert-error">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span>@TempData["ErrorMessage"]</span>
+    </div>
+}
+
+<div class="kpi-grid">
+    <div class="kpi-card" style="--kpi-accent:#17aab8">
+        <div class="kpi-top">
+            <div class="kpi-icon-wrap"><i class="fa-solid fa-ticket"></i></div>
+        </div>
+        <div class="kpi-value">@Model.TotalTickets</div>
+        <div class="kpi-label">Total Tickets</div>
+    </div>
+
+    <div class="kpi-card" style="--kpi-accent:#5de8a8">
+        <div class="kpi-top">
+            <div class="kpi-icon-wrap"><i class="fa-solid fa-money-check-dollar"></i></div>
+        </div>
+        <div class="kpi-value">@Model.PaidTickets</div>
+        <div class="kpi-label">Paid Tickets</div>
+    </div>
+
+    <div class="kpi-card" style="--kpi-accent:#f0b429">
+        <div class="kpi-top">
+            <div class="kpi-icon-wrap"><i class="fa-solid fa-hourglass-half"></i></div>
+        </div>
+        <div class="kpi-value">@Model.BookedTickets</div>
+        <div class="kpi-label">Booked Tickets</div>
+    </div>
+
+    <div class="kpi-card" style="--kpi-accent:#ff6b6b">
+        <div class="kpi-top">
+            <div class="kpi-icon-wrap"><i class="fa-solid fa-ban"></i></div>
+        </div>
+        <div class="kpi-value">@Model.CancelledTickets</div>
+        <div class="kpi-label">Cancelled Tickets</div>
+    </div>
+</div>
+
+<div class="table-card">
+    <form method="get" asp-controller="AdminTicketStatus" asp-action="TicketStatuses" class="toolbar">
+        <div class="toolbar-left">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" name="search" value="@Model.SearchTerm" placeholder="Search ticket, booking, passenger, user, seat..." />
+            </div>
+
+            <select name="status" class="toolbar-select">
+                <option value="">All statuses</option>
+                @foreach (var status in Model.AvailableStatuses)
+                {
+                    @if (status == Model.SelectedStatus)
+                    {
+                        <option value="@status" selected>@status</option>
+                    }
+                    else
+                    {
+                        <option value="@status">@status</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="toolbar-right">
+            <button type="submit" class="btn-primary">
+                <i class="fa-solid fa-filter"></i> Apply
+            </button>
+        </div>
+    </form>
+
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Ticket</th>
+                    <th>Passenger</th>
+                    <th>Flight</th>
+                    <th>Seat / Class</th>
+                    <th>Current Status</th>
+                    <th class="text-center">Update</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (tickets.Any())
+                {
+                    foreach (var ticket in tickets)
+                    {
+                        var statusClass = ticket.Status switch
+                        {
+                            "PAID" => "pill-green",
+                            "BOOKED" => "pill-amber",
+                            "CANCELLED" => "pill-red",
+                            _ => "pill-neutral"
+                        };
+
+                        <tr>
+                            <td>
+                                <div class="ticket-meta">
+                                    <strong>#@ticket.TicketId</strong>
+                                    <span>Booking #@ticket.BookingId</span>
+                                    <span>@(ticket.BookingDate?.ToString("dd/MM/yyyy HH:mm") ?? "No booking time")</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="ticket-meta">
+                                    <strong>@ticket.PassengerName</strong>
+                                    <span>@ticket.Username</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="ticket-meta">
+                                    <strong>@ticket.FlightNumber</strong>
+                                    <span>@ticket.RouteSummary</span>
+                                    <span>@(ticket.DepartureTime?.ToString("dd/MM/yyyy HH:mm") ?? "No departure time")</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="ticket-meta">
+                                    <strong>@ticket.SeatNumber</strong>
+                                    <span>@ticket.FareClass</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="status-pill @statusClass">@ticket.Status</span>
+                            </td>
+                            <td class="text-center">
+                                <form asp-controller="AdminTicketStatus"
+                                      asp-action="UpdateStatus"
+                                      method="post"
+                                      class="status-form">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="ticketId" value="@ticket.TicketId" />
+                                    <input type="hidden" name="search" value="@Model.SearchTerm" />
+                                    <input type="hidden" name="filterStatus" value="@Model.SelectedStatus" />
+
+                                    <select name="status" class="toolbar-select" @(ticket.IsLocked ? "disabled" : null)>
+                                        @foreach (var status in Model.AvailableStatuses)
+                                        {
+                                            @if (status == ticket.Status)
+                                            {
+                                                <option value="@status" selected>@status</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@status">@status</option>
+                                            }
+                                        }
+                                    </select>
+
+                                    <button type="submit" class="btn-primary" @(ticket.IsLocked ? "disabled" : null)>
+                                        <i class="fa-solid fa-floppy-disk"></i> Save
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <i class="fa-solid fa-ticket"></i>
+                            No tickets matched the current filters.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

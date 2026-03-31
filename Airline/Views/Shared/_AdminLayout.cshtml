@@ -37,7 +37,7 @@
     );
 
     var isTicketingGroup = IsAny(
-        ("Admin", "TicketStatuses"),
+        ("AdminTicketStatus", "TicketStatuses"),
         ("AdminBooking", "ConfirmTicket"),
         ("ManageTicketClass", "TicketClasses"),
         ("TicketPrice", "TicketPrice")
@@ -47,11 +47,9 @@
 
     var isFlightsGroup = IsAny(
         ("AdminFlight", "ManageFlights"),
-        ("Admin", "FlightManagement"),
         ("AdminSchedule", "FlightSchedules"),
         ("AdminSchedule", "FlightReschedule"),
-        ("AdminSchedule", "FlightSeats"),
-        ("Admin", "FlightNotifications")
+        ("AdminSchedule", "FlightSeats")
     );
 
     var isRoutesGroup = IsAny(
@@ -60,8 +58,8 @@
     );
 
     var isCommerceGroup = IsAny(
-        ("Admin", "ManagePromotions"),
-        ("Admin", "ManageBaggage")
+        ("AdminPromotionManagement", "ManagePromotions"),
+        ("AdminBaggage", "ManageBaggage")
     );
 }
 
@@ -602,7 +600,7 @@
         <a class="sidebar-brand" asp-controller="AdminDashboard" asp-action="Dashboard">
             <div class="brand-icon"><i class="fa-solid fa-shield-halved"></i></div>
             <div class="brand-text">
-                <span class="brand-name">The Airline</span>
+                <span class="brand-name">SkyWave</span>
                 <span class="brand-sub">Admin Panel</span>
             </div>
         </a>
@@ -621,8 +619,8 @@
                     <i class="fa-solid fa-chevron-down arrow"></i>
                 </div>
                 <div class="nav-group-items">
-                    <a class="@(IsActive("Admin", "TicketStatuses") ? "active-sub-link" : "")"
-                       asp-controller="Admin" asp-action="TicketStatuses">Manage Ticket Statuses</a>
+                    <a class="@(IsActive("AdminTicketStatus", "TicketStatuses") ? "active-sub-link" : "")"
+                       asp-controller="AdminTicketStatus" asp-action="TicketStatuses">Manage Ticket Statuses</a>
 
                     <a class="@(IsActive("AdminBooking", "ConfirmTicket") ? "active-sub-link" : "")"
                        asp-controller="AdminBooking" asp-action="ConfirmTicket">Confirm Ticket</a>
@@ -652,9 +650,6 @@
                     <a class="@(IsActive("AdminFlight", "ManageFlights") ? "active-sub-link" : "")"
                        asp-controller="AdminFlight" asp-action="ManageFlights">Manage Flights</a>
 
-                    <a class="@(IsActive("Admin", "FlightManagement") ? "active-sub-link" : "")"
-                       asp-controller="Admin" asp-action="FlightManagement">Set Flight Management</a>
-
                     <a class="@(IsActive("AdminSchedule", "FlightSchedules") ? "active-sub-link" : "")"
                        asp-controller="AdminSchedule" asp-action="FlightSchedules">Manage Flight Schedules</a>
 
@@ -663,9 +658,6 @@
 
                     <a class="@(IsActive("AdminSchedule", "FlightSeats") ? "active-sub-link" : "")"
                        asp-controller="AdminSchedule" asp-action="FlightSeats">Manage Flight Seats</a>
-
-                    <a class="@(IsActive("Admin", "FlightNotifications") ? "active-sub-link" : "")"
-                       asp-controller="Admin" asp-action="FlightNotifications">Manage Flight Notifications</a>
                 </div>
             </div>
 
@@ -692,11 +684,11 @@
                     <i class="fa-solid fa-chevron-down arrow"></i>
                 </div>
                 <div class="nav-group-items">
-                    <a class="@(IsActive("Admin", "ManagePromotions") ? "active-sub-link" : "")"
-                       asp-controller="Admin" asp-action="ManagePromotions">Manage Promotions</a>
+                    <a class="@(IsActive("AdminPromotionManagement", "ManagePromotions") ? "active-sub-link" : "")"
+                       asp-controller="AdminPromotionManagement" asp-action="ManagePromotions">Manage Promotions</a>
 
-                    <a class="@(IsActive("Admin", "ManageBaggage") ? "active-sub-link" : "")"
-                       asp-controller="Admin" asp-action="ManageBaggage">Manage Baggage</a>
+                    <a class="@(IsActive("AdminBaggage", "ManageBaggage") ? "active-sub-link" : "")"
+                       asp-controller="AdminBaggage" asp-action="ManageBaggage">Manage Baggage</a>
                 </div>
             </div>
         </nav>
@@ -788,7 +780,7 @@
             const element = document.getElementById('topbarDateTime');
             if (!element) return;
 
-            element.textContent = new Date().toLocaleString('vi-VN', {
+            element.textContent = new Date().toLocaleString('en-US', {
                 weekday: 'short',
                 day: '2-digit',
                 month: '2-digit',

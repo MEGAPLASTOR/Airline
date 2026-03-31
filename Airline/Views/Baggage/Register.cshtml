@@ -1,0 +1,258 @@
+@model Airline.Models.UserBaggagePageViewModel
+@{
+    ViewData["Title"] = "Baggage Registration";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var hasAvailableTickets = Model.AvailableTickets.Any();
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/baggage-register.css" asp-append-version="true" />
+}
+
+<div class="baggage-page">
+    <section class="baggage-hero">
+        <div>
+            <span class="baggage-kicker">Baggage Service</span>
+            <h1>Register baggage for <span>your ticket</span></h1>
+            <p>
+                The system only allows baggage registration when you have an eligible ticket.
+                Each ticket can only be registered once to keep the data consistent.
+            </p>
+        </div>
+
+        <a asp-controller="Ticket" asp-action="ViewConfirmation" class="hero-link">
+            <i class="fa-solid fa-ticket"></i>
+            View my tickets
+        </a>
+    </section>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="message-banner success">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>@TempData["SuccessMessage"]</span>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="message-banner error">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <span>@TempData["ErrorMessage"]</span>
+        </div>
+    }
+
+    <section class="baggage-stats">
+        <article class="stat-card">
+            <span class="stat-label">Eligible Tickets</span>
+            <strong>@Model.TotalOwnedTickets</strong>
+        </article>
+        <article class="stat-card">
+            <span class="stat-label">Tickets Without Baggage</span>
+            <strong>@Model.EligibleTicketCount</strong>
+        </article>
+        <article class="stat-card">
+            <span class="stat-label">Registered</span>
+            <strong>@Model.RegisteredBaggages.Count</strong>
+        </article>
+        <article class="stat-card">
+            <span class="stat-label">Total Baggage Fees</span>
+            <strong>@Model.TotalRegisteredPrice.ToString("N0") VND</strong>
+        </article>
+    </section>
+
+    <section class="baggage-content">
+        <div class="register-card">
+            <div class="card-head">
+                <h2>New Baggage Registration</h2>
+                <p>Select a ticket without baggage, enter the weight, and the system will calculate the price automatically.</p>
+            </div>
+
+            @if (Model.TotalOwnedTickets == 0)
+            {
+                <div class="empty-callout">
+                    <i class="fa-solid fa-plane-circle-xmark"></i>
+                    <div>
+                        <h3>You do not have any tickets yet</h3>
+                        <p>You need a ticket before you can register baggage.</p>
+                    </div>
+                    <a asp-controller="Booking" asp-action="BookFlight" class="primary-btn">
+                        Book now
+                    </a>
+                </div>
+            }
+            else
+            {
+                <form asp-action="ProcessRegister" method="post" class="register-form">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+
+                    <div class="form-group">
+                        <label asp-for="Form.TicketId">Eligible Ticket</label>
+                        @if (hasAvailableTickets)
+                        {
+                            <select asp-for="Form.TicketId" class="form-control">
+                                <option value="">Select a ticket</option>
+                                @foreach (var ticket in Model.AvailableTickets)
+                                {
+                                    <option value="@ticket.TicketId">@ticket.DisplayText</option>
+                                }
+                            </select>
+                        }
+                        else
+                        {
+                            <select asp-for="Form.TicketId" class="form-control" disabled>
+                                <option value="">No eligible tickets available</option>
+                            </select>
+                        }
+                        <span asp-validation-for="Form.TicketId" class="field-error"></span>
+                        @if (!hasAvailableTickets)
+                        {
+                            <p class="field-note">All of your eligible tickets already have baggage or no longer meet the registration conditions.</p>
+                        }
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Form.Weight">Weight (kg)</label>
+                        <input asp-for="Form.Weight" class="form-control" type="number" min="1" max="99.99" step="0.01" id="baggageWeightInput" />
+                        <span asp-validation-for="Form.Weight" class="field-error"></span>
+                    </div>
+
+                    <div class="price-preview">
+                        <span>Estimated Price</span>
+                        <strong id="pricePreview">0 VND</strong>
+                        <small>Current formula: 10,000 VND / kg</small>
+                    </div>
+
+                    <div class="rule-box">
+                        <h3>Required Conditions</h3>
+                        <ul>
+                            <li>You must be signed in and own the ticket on the current account.</li>
+                            <li>Cancelled or blocked tickets cannot be used for baggage registration.</li>
+                            <li>Each ticket can only have one baggage record.</li>
+                        </ul>
+                    </div>
+
+                    @if (hasAvailableTickets)
+                    {
+                        <button type="submit" class="primary-btn">
+                            <i class="fa-solid fa-suitcase-rolling"></i>
+                            Register baggage
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="primary-btn" disabled>
+                            <i class="fa-solid fa-suitcase-rolling"></i>
+                            Register baggage
+                        </button>
+                    }
+                </form>
+            }
+        </div>
+
+        <div class="registered-card">
+            <div class="card-head">
+                <h2>Registered Baggage</h2>
+                <p>You can pay for baggage here directly. Paid baggage cannot be deleted directly.</p>
+            </div>
+
+            @if (Model.RegisteredBaggages.Any())
+            {
+                <div class="registered-list">
+                    @foreach (var baggage in Model.RegisteredBaggages)
+                    {
+                        <article class="registered-item">
+                            <div class="item-main">
+                                <div class="item-route">
+                                    <strong>@baggage.RouteLabel</strong>
+                                    <span>@baggage.FlightNumber</span>
+                                </div>
+                                <div class="item-meta">
+                                    <span>Ticket #@baggage.TicketId</span>
+                                    <span>Booking #@baggage.BookingId</span>
+                                    <span>@baggage.PassengerName</span>
+                                    <span>@(baggage.DepartureTime?.ToString("dd/MM/yyyy HH:mm") ?? "-")</span>
+                                </div>
+                            </div>
+
+                            <div class="item-side">
+                                <div class="metric-pill">
+                                    <span>Weight</span>
+                                    <strong>@baggage.Weight.ToString("N2") kg</strong>
+                                </div>
+                                <div class="metric-pill">
+                                    <span>Fee</span>
+                                    <strong>@baggage.Price.ToString("N0") VND</strong>
+                                </div>
+                                <div class="metric-pill status">
+                                    <span>Ticket Status</span>
+                                    <strong>@baggage.TicketStatus</strong>
+                                </div>
+                                <div class="metric-pill @(baggage.IsPaid ? "paid" : "unpaid")">
+                                    <span>Baggage Payment</span>
+                                    <strong>@(baggage.IsPaid ? "Paid" : "Unpaid")</strong>
+                                </div>
+                            </div>
+
+                            <div class="item-actions">
+                                @if (!baggage.IsPaid)
+                                {
+                                    <a asp-controller="Payment"
+                                       asp-action="CreateBaggagePayment"
+                                       asp-route-id="@baggage.BaggageId"
+                                       class="primary-btn action-btn">
+                                        <i class="fa-solid fa-credit-card"></i>
+                                        Pay now
+                                    </a>
+
+                                    <form asp-action="DeleteRegistration" method="post" class="inline-delete-form">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="baggageId" value="@baggage.BaggageId" />
+                                        <button type="submit" class="ghost-danger-btn action-btn">
+                                            <i class="fa-solid fa-trash"></i>
+                                            Cancel registration
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <div class="paid-badge">
+                                        <i class="fa-solid fa-circle-check"></i>
+                                        Transaction completed
+                                    </div>
+                                }
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="empty-panel">
+                    <i class="fa-solid fa-suitcase"></i>
+                    <p>No baggage registrations have been created for this account yet.</p>
+                </div>
+            }
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const weightInput = document.getElementById('baggageWeightInput');
+            const preview = document.getElementById('pricePreview');
+            if (!weightInput || !preview) return;
+
+            const updatePreview = () => {
+                const weight = Number.parseFloat(weightInput.value || '0');
+                const price = Number.isFinite(weight) && weight > 0 ? weight * 10000 : 0;
+                preview.textContent = `${price.toLocaleString('en-US')} VND`;
+            };
+
+            updatePreview();
+            weightInput.addEventListener('input', updatePreview);
+        })();
+    </script>
+}

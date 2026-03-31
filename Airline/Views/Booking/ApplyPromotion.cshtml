@@ -1,0 +1,216 @@
+@model IEnumerable<Airline.Models.Promotion>
+@{
+    ViewData["Title"] = "Apply Promotion";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var promotions = Model?.ToList() ?? new List<Airline.Models.Promotion>();
+    var today = DateOnly.FromDateTime(DateTime.Now);
+}
+
+<div class="promotion-page">
+    <div class="promotion-hero">
+        <p class="eyebrow">Booking Offers</p>
+        <h1>Promotion <span>Codes</span></h1>
+        <p class="hero-copy">Browse the latest discount codes managed by admin and use them in the passenger information step when booking a flight.</p>
+        <a asp-action="BookFlight" class="hero-cta">Book a flight now</a>
+    </div>
+
+    <div class="promotion-grid">
+        @if (promotions.Any())
+        {
+            foreach (var promo in promotions)
+            {
+                var status = "ACTIVE";
+                if (promo.StartDate.HasValue && promo.StartDate.Value > today)
+                {
+                    status = "UPCOMING";
+                }
+                else if (promo.EndDate.HasValue && promo.EndDate.Value < today)
+                {
+                    status = "EXPIRED";
+                }
+
+                <div class="promo-card @status.ToLowerInvariant()">
+                    <div class="promo-top">
+                        <span class="promo-status">@status</span>
+                        <span class="promo-discount">-@(promo.DiscountPercent ?? 0)%</span>
+                    </div>
+                    <h3>@promo.PromoCode</h3>
+                    <p class="promo-range">
+                        @(promo.StartDate?.ToString("dd/MM/yyyy") ?? "-")
+                        to
+                        @(promo.EndDate?.ToString("dd/MM/yyyy") ?? "-")
+                    </p>
+                    <button type="button" class="copy-btn" onclick="copyCode('@promo.PromoCode')">
+                        Copy code
+                    </button>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="empty-promo-state">
+                <i class="fas fa-ticket-percent"></i>
+                <h3>No promotions available</h3>
+                <p>Admin has not published any codes yet.</p>
+            </div>
+        }
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .promotion-page {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding-bottom: 5rem;
+        }
+
+        .promotion-hero {
+            padding: 2rem 0 3rem;
+            text-align: center;
+        }
+
+        .promotion-hero .eyebrow {
+            color: var(--ocean-aqua);
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 0.8rem;
+        }
+
+        .promotion-hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            color: #fff;
+            margin-bottom: 1rem;
+        }
+
+        .promotion-hero h1 span {
+            color: var(--accent-gold);
+        }
+
+        .hero-copy {
+            max-width: 720px;
+            margin: 0 auto 1.5rem;
+            color: rgba(255,255,255,0.62);
+            line-height: 1.7;
+        }
+
+        .hero-cta {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.9rem 1.4rem;
+            border-radius: 999px;
+            background: linear-gradient(135deg, var(--ocean-aqua), var(--ocean-teal));
+            color: #fff;
+            font-weight: 700;
+        }
+
+        .promotion-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.2rem;
+        }
+
+        .promo-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px;
+            padding: 1.4rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .promo-card.active {
+            box-shadow: 0 18px 40px rgba(23,170,184,0.15);
+            border-color: rgba(23,170,184,0.28);
+        }
+
+        .promo-card.upcoming {
+            border-color: rgba(240,180,41,0.25);
+        }
+
+        .promo-card.expired {
+            border-color: rgba(255,107,107,0.22);
+            opacity: 0.76;
+        }
+
+        .promo-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .promo-status {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.35rem 0.7rem;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.08);
+            font-size: 0.72rem;
+            color: rgba(255,255,255,0.76);
+            font-weight: 700;
+        }
+
+        .promo-discount {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: var(--accent-gold);
+        }
+
+        .promo-card h3 {
+            color: #fff;
+            font-size: 1.5rem;
+            letter-spacing: 0.06em;
+        }
+
+        .promo-range {
+            color: rgba(255,255,255,0.55);
+            line-height: 1.6;
+        }
+
+        .copy-btn {
+            margin-top: auto;
+            border: none;
+            border-radius: 14px;
+            padding: 0.9rem 1rem;
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            font-weight: 700;
+        }
+
+        .empty-promo-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 4rem 2rem;
+            background: rgba(255,255,255,0.04);
+            border: 1px dashed rgba(255,255,255,0.12);
+            border-radius: 28px;
+            color: rgba(255,255,255,0.52);
+        }
+
+        .empty-promo-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: rgba(255,255,255,0.28);
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        async function copyCode(code) {
+            try {
+                await navigator.clipboard.writeText(code);
+                alert('Copied code: ' + code);
+            } catch {
+                alert('Unable to copy the code automatically. Please copy it manually: ' + code);
+            }
+        }
+    </script>
+}

@@ -1,14 +1,14 @@
 @model Airline.Models.BookingViewModel
 @{
-    ViewData["Title"] = "Thông tin Hành khách";
+    ViewData["Title"] = "Passenger Information";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 <div class="passenger-info-container">
     <div class="selection-header">
-        <a href="javascript:history.back()" class="btn-back"><i class="fas fa-chevron-left"></i> Quay lại chọn chỗ</a>
-        <h1 class="premium-title">Thông tin <span class="highlight">Hành khách</span></h1>
-        <p class="premium-subtitle">Vui lòng nhập tên đúng như trong CMND/CCCD hoặc Hộ chiếu</p>
+        <a href="javascript:history.back()" class="btn-back"><i class="fas fa-chevron-left"></i> Back to seat selection</a>
+        <h1 class="premium-title">Passenger <span class="highlight">Information</span></h1>
+        <p class="premium-subtitle">Please enter the passenger name exactly as it appears on the ID card or passport.</p>
     </div>
 
     <div class="form-layout">
@@ -26,54 +26,108 @@
                     <input type="hidden" asp-for="FlightNumber" />
                     <input type="hidden" asp-for="Price" />
                     <input type="hidden" asp-for="DepartureTime" />
+                    <input type="hidden" asp-for="PromoCode" />
+                    <input type="hidden" asp-for="AppliedPromotionId" />
+                    <input type="hidden" asp-for="DiscountPercent" />
+                    <input type="hidden" asp-for="TaxAmount" />
+                    <input type="hidden" asp-for="DiscountAmount" />
+                    <input type="hidden" asp-for="FinalPrice" />
 
                     <div class="form-header">
                         <i class="fas fa-user-edit"></i>
-                        <span>Thông tin Hành khách 1</span>
+                        <span>Passenger Information 1</span>
                     </div>
 
                     <div class="form-group">
-                        <label asp-for="FullName">Họ và Tên (Tiếng Việt có dấu)</label>
+                        <label asp-for="FullName">Full Name</label>
                         <div class="input-with-icon">
                             <i class="fas fa-user"></i>
-                            <input asp-for="FullName" class="form-control" placeholder="Ví dụ: NGUYỄN VĂN AN" required />
+                            <input asp-for="FullName" class="form-control" placeholder="Example: NGUYEN VAN AN" required />
                         </div>
                         <span asp-validation-for="FullName" class="text-danger"></span>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group flex-1">
-                            <label asp-for="PassengerType">Loại hành khách</label>
+                            <label asp-for="PassengerType">Passenger Type</label>
                             <div class="input-with-icon">
                                 <i class="fas fa-users"></i>
                                 <select asp-for="PassengerType" class="form-control">
-                                    <option value="Người lớn">Người lớn (Trên 12 tuổi)</option>
-                                    <option value="Trẻ em">Trẻ em (2 - 12 tuổi)</option>
-                                    <option value="Em bé">Em bé (Dưới 2 tuổi)</option>
+                                    <option value="Adult">Adult (Over 12 years old)</option>
+                                    <option value="Child">Child (2 - 12 years old)</option>
+                                    <option value="Infant">Infant (Under 2 years old)</option>
                                 </select>
                             </div>
                         </div>
                         <div class="form-group flex-1">
-                            <label>Quốc tịch</label>
+                            <label>Nationality</label>
                             <div class="input-with-icon">
                                 <i class="fas fa-globe"></i>
                                 <select class="form-control">
-                                    <option value="VN">Việt Nam</option>
-                                    <option value="US">Hoa Kỳ</option>
-                                    <option value="FR">Pháp</option>
+                                    <option value="VN">Vietnam</option>
+                                    <option value="US">United States</option>
+                                    <option value="FR">France</option>
                                 </select>
                             </div>
                         </div>
                     </div>
 
+                    <div class="promotion-panel">
+                        <div class="promotion-panel-header">
+                            <div>
+                                <h3>Promotion Code</h3>
+                                <p>Enter a code from the active offers below.</p>
+                            </div>
+                            <a asp-action="ApplyPromotion" class="promotion-link">View all offers</a>
+                        </div>
+
+                        <div class="promotion-input-row">
+                            <div class="input-with-icon promotion-input-wrap">
+                                <i class="fas fa-ticket-percent"></i>
+                                <input type="text"
+                                       id="promoCodeInput"
+                                       value="@Model.PromoCode"
+                                       class="form-control"
+                                       placeholder="Example: NEWUSER10"
+                                       autocomplete="off" />
+                            </div>
+                            <button type="button" class="btn-apply-promo" onclick="applyPromotion()">Apply</button>
+                            <button type="button" class="btn-clear-promo" onclick="clearPromotion()">Clear</button>
+                        </div>
+
+                        <span asp-validation-for="PromoCode" class="text-danger"></span>
+                        <div id="promoFeedback" class="promo-feedback @(Model.AppliedPromotionId.HasValue ? "is-success" : "")">
+                            @if (Model.AppliedPromotionId.HasValue)
+                            {
+                                <span>Applied code <strong>@Model.PromoCode</strong> with @Model.DiscountPercent% discount.</span>
+                            }
+                        </div>
+
+                        @if (Model.AvailablePromotions.Any())
+                        {
+                            <div class="promo-chip-list">
+                                @foreach (var promo in Model.AvailablePromotions)
+                                {
+                                    <button type="button"
+                                            class="promo-chip"
+                                            data-code="@promo.PromoCode"
+                                            onclick="selectPromotion(this.dataset.code)">
+                                        <span class="promo-chip-code">@promo.PromoCode</span>
+                                        <span class="promo-chip-discount">-@(promo.DiscountPercent ?? 0)%</span>
+                                    </button>
+                                }
+                            </div>
+                        }
+                    </div>
+
                     <div class="form-notice">
                         <i class="fas fa-info-circle"></i>
-                        <p>Tên hành khách phải trùng khớp hoàn toàn với giấy tờ tùy thân.</p>
+                        <p>The passenger name must match the travel document exactly.</p>
                     </div>
 
                     <div class="action-buttons">
                         <button type="submit" class="btn-confirm-final">
-                            Xác nhận Đặt vé <i class="fas fa-check-circle"></i>
+                            Confirm Booking <i class="fas fa-check-circle"></i>
                         </button>
                     </div>
                 </form>
@@ -83,7 +137,7 @@
         <!-- Order Summary Sidebar -->
         <div class="order-summary-sidebar">
             <div class="glass-card sticky-card">
-                <h3 class="card-title">Tóm tắt đơn hàng</h3>
+                <h3 class="card-title">Order Summary</h3>
                 
                 <div class="flight-summary-card">
                     <div class="flight-header">
@@ -94,33 +148,37 @@
                     <div class="route-display">
                         <div class="node">
                             <strong>@Model.Origin</strong>
-                            <span>Điểm đi</span>
+                            <span>Origin</span>
                         </div>
                         <div class="sep"><i class="fas fa-long-arrow-alt-right"></i></div>
                         <div class="node">
                             <strong>@Model.Destination</strong>
-                            <span>Điểm đến</span>
+                            <span>Destination</span>
                         </div>
                     </div>
 
                     <div class="seat-badge-mini">
                         <i class="fas fa-couch"></i>
-                        <span>Ghế <strong>@Model.SeatNumber</strong></span>
+                        <span>Seat <strong>@Model.SeatNumber</strong></span>
                     </div>
                 </div>
 
                 <div class="price-breakdown">
                     <div class="breakdown-row">
-                        <span>Giá cơ bản</span>
-                        <span>@(Model.Price?.ToString("N0") ?? "0") VND</span>
+                        <span>Base Fare</span>
+                        <span id="summary-base-price">@(Model.Price?.ToString("N0") ?? "0") VND</span>
                     </div>
                     <div class="breakdown-row">
-                        <span>Thuế & Phí</span>
-                        <span>@((Model.Price * 0.1m)?.ToString("N0") ?? "0") VND</span>
+                        <span>Taxes & Fees</span>
+                        <span id="summary-tax-price">@Model.TaxAmount.ToString("N0") VND</span>
+                    </div>
+                    <div class="breakdown-row discount-row @(Model.AppliedPromotionId.HasValue ? "is-visible" : "")" id="discount-row">
+                        <span id="summary-discount-label">Promotion @(Model.DiscountPercent > 0 ? $"(-{Model.DiscountPercent}%)" : "")</span>
+                        <span id="summary-discount-price">-@Model.DiscountAmount.ToString("N0") VND</span>
                     </div>
                     <div class="total-row">
-                        <span>Tổng thanh toán</span>
-                        <span>@((Model.Price * 1.1m)?.ToString("N0") ?? "0") VND</span>
+                        <span>Total Payment</span>
+                        <span id="summary-final-price">@Model.FinalPrice.ToString("N0") VND</span>
                     </div>
                 </div>
             </div>
@@ -226,6 +284,112 @@
         .form-row { display: flex; gap: 1.5rem; }
         .flex-1 { flex: 1; }
 
+        .promotion-panel {
+            margin-bottom: 1.8rem;
+            padding: 1.2rem;
+            border-radius: 18px;
+            background: rgba(23,170,184,0.08);
+            border: 1px solid rgba(23,170,184,0.18);
+        }
+
+        .promotion-panel-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .promotion-panel-header h3 {
+            color: #fff;
+            font-size: 1rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .promotion-panel-header p {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.82rem;
+        }
+
+        .promotion-link {
+            color: var(--ocean-foam);
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        .promotion-input-row {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 0.8rem;
+            align-items: center;
+        }
+
+        .promotion-input-wrap .form-control {
+            padding-right: 1rem;
+            text-transform: uppercase;
+        }
+
+        .btn-apply-promo,
+        .btn-clear-promo {
+            border: none;
+            border-radius: 12px;
+            padding: 0.85rem 1rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .btn-apply-promo {
+            background: linear-gradient(135deg, var(--accent-gold), #f39c12);
+            color: #071421;
+        }
+
+        .btn-clear-promo {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.12);
+        }
+
+        .promo-feedback {
+            min-height: 1.2rem;
+            margin-top: 0.75rem;
+            color: rgba(255,255,255,0.55);
+            font-size: 0.82rem;
+        }
+
+        .promo-feedback.is-success {
+            color: #9df1c8;
+        }
+
+        .promo-feedback.is-error {
+            color: #ff9e9e;
+        }
+
+        .promo-chip-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .promo-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.7rem;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 999px;
+            padding: 0.6rem 0.9rem;
+            color: #fff;
+        }
+
+        .promo-chip-code {
+            font-weight: 700;
+        }
+
+        .promo-chip-discount {
+            color: var(--accent-gold);
+            font-size: 0.82rem;
+        }
+
         .form-notice {
             background: rgba(240,180,41,0.1);
             border-left: 4px solid var(--accent-gold);
@@ -296,8 +460,132 @@
         }
 
         .breakdown-row { display: flex; justify-content: space-between; font-size: 0.85rem; color: rgba(255,255,255,0.5); }
+        .discount-row { display: none; color: #9df1c8; }
+        .discount-row.is-visible { display: flex; }
         .total-row { display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 1.2rem; font-weight: 700; color: var(--accent-gold); }
 
         .sticky-card { position: sticky; top: 100px; }
     </style>
+}
+
+@section Scripts {
+    <script>
+        function formatMoney(value) {
+            return Number(value || 0).toLocaleString('en-US') + ' VND';
+        }
+
+        function setPromotionSummary(data) {
+            document.getElementById('PromoCode').value = data.promoCode || '';
+            document.getElementById('AppliedPromotionId').value = data.promoId || '';
+            document.getElementById('DiscountPercent').value = data.discountPercent || 0;
+            document.getElementById('TaxAmount').value = data.taxAmount || 0;
+            document.getElementById('DiscountAmount').value = data.discountAmount || 0;
+            document.getElementById('FinalPrice').value = data.finalAmount || 0;
+
+            document.getElementById('summary-base-price').textContent = formatMoney(data.baseFare);
+            document.getElementById('summary-tax-price').textContent = formatMoney(data.taxAmount);
+            document.getElementById('summary-final-price').textContent = formatMoney(data.finalAmount);
+
+            const discountRow = document.getElementById('discount-row');
+            const discountLabel = document.getElementById('summary-discount-label');
+            const discountPrice = document.getElementById('summary-discount-price');
+
+            if (Number(data.discountPercent || 0) > 0) {
+                discountRow.classList.add('is-visible');
+                discountLabel.textContent = 'Promotion (-' + data.discountPercent + '%)';
+                discountPrice.textContent = '-' + formatMoney(data.discountAmount);
+            } else {
+                discountRow.classList.remove('is-visible');
+                discountLabel.textContent = 'Promotion';
+                discountPrice.textContent = '-0 VND';
+            }
+        }
+
+        function setFeedback(message, isSuccess) {
+            const feedback = document.getElementById('promoFeedback');
+            feedback.classList.remove('is-success', 'is-error');
+            feedback.textContent = message || '';
+
+            if (!message) {
+                return;
+            }
+
+            feedback.classList.add(isSuccess ? 'is-success' : 'is-error');
+        }
+
+        function resetPromotionValues() {
+            setPromotionSummary({
+                promoCode: '',
+                promoId: '',
+                discountPercent: 0,
+                baseFare: document.getElementById('Price').value || 0,
+                taxAmount: document.getElementById('TaxAmount').value || 0,
+                discountAmount: 0,
+                finalAmount: (Number(document.getElementById('Price').value || 0) + Number(document.getElementById('TaxAmount').value || 0))
+            });
+        }
+
+        async function applyPromotion() {
+            const input = document.getElementById('promoCodeInput');
+            const code = (input.value || '').trim().toUpperCase();
+
+            if (!code) {
+                clearPromotion();
+                return;
+            }
+
+            const params = new URLSearchParams({
+                scheduleId: document.getElementById('ScheduleId').value,
+                seatId: document.getElementById('SeatId').value,
+                code
+            });
+
+            try {
+                const response = await fetch('/Booking/ValidatePromotion?' + params.toString());
+                const result = await response.json();
+
+                if (!result.success) {
+                    document.getElementById('PromoCode').value = code;
+                    document.getElementById('AppliedPromotionId').value = '';
+                    document.getElementById('DiscountPercent').value = 0;
+                    document.getElementById('DiscountAmount').value = 0;
+                    document.getElementById('FinalPrice').value = Number(document.getElementById('Price').value || 0) + Number(document.getElementById('TaxAmount').value || 0);
+                    document.getElementById('discount-row').classList.remove('is-visible');
+                    setFeedback(result.message || 'Promotion code is invalid.', false);
+                    return;
+                }
+
+                input.value = result.promoCode || code;
+                setPromotionSummary(result);
+                setFeedback('Applied code ' + (result.promoCode || code) + ' successfully.', true);
+            } catch {
+                setFeedback('Unable to validate promotion right now.', false);
+            }
+        }
+
+        function clearPromotion() {
+            document.getElementById('promoCodeInput').value = '';
+            document.getElementById('PromoCode').value = '';
+            document.getElementById('AppliedPromotionId').value = '';
+            document.getElementById('DiscountPercent').value = 0;
+            document.getElementById('DiscountAmount').value = 0;
+            document.getElementById('FinalPrice').value = Number(document.getElementById('Price').value || 0) + Number(document.getElementById('TaxAmount').value || 0);
+            document.getElementById('discount-row').classList.remove('is-visible');
+            document.getElementById('summary-discount-label').textContent = 'Promotion';
+            document.getElementById('summary-discount-price').textContent = '-0 VND';
+            document.getElementById('summary-final-price').textContent = formatMoney(Number(document.getElementById('Price').value || 0) + Number(document.getElementById('TaxAmount').value || 0));
+            setFeedback('', true);
+        }
+
+        function selectPromotion(code) {
+            document.getElementById('promoCodeInput').value = code;
+            applyPromotion();
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelector('.passenger-form')?.addEventListener('submit', function () {
+                document.getElementById('PromoCode').value = (document.getElementById('promoCodeInput').value || '').trim().toUpperCase();
+            });
+        });
+    </script>
 }

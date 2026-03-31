@@ -10,6 +10,8 @@ builder.Services.AddDbContext<DataContext>(options =>
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<Airline.Services.SeatService>();
+builder.Services.AddScoped<Airline.Services.PromotionService>();
+builder.Services.AddScoped<Airline.Services.BookingPaymentService>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
