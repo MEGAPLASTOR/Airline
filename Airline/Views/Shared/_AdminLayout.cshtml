@@ -37,7 +37,7 @@
     );
 
     var isTicketingGroup = IsAny(
-        ("Admin", "TicketStatuses"),
+        ("AdminTicketStatus", "TicketStatuses"),
         ("AdminBooking", "ConfirmTicket"),
         ("ManageTicketClass", "TicketClasses"),
         ("TicketPrice", "TicketPrice")
@@ -47,7 +47,6 @@
 
     var isFlightsGroup = IsAny(
         ("AdminFlight", "ManageFlights"),
-        ("Admin", "FlightManagement"),
         ("AdminSchedule", "FlightSchedules"),
         ("AdminSchedule", "FlightReschedule"),
         ("AdminSchedule", "FlightSeats"),
@@ -621,8 +620,8 @@
                     <i class="fa-solid fa-chevron-down arrow"></i>
                 </div>
                 <div class="nav-group-items">
-                    <a class="@(IsActive("Admin", "TicketStatuses") ? "active-sub-link" : "")"
-                       asp-controller="Admin" asp-action="TicketStatuses">Manage Ticket Statuses</a>
+                    <a class="@(IsActive("AdminTicketStatus", "TicketStatuses") ? "active-sub-link" : "")"
+                       asp-controller="AdminTicketStatus" asp-action="TicketStatuses">Manage Ticket Statuses</a>
 
                     <a class="@(IsActive("AdminBooking", "ConfirmTicket") ? "active-sub-link" : "")"
                        asp-controller="AdminBooking" asp-action="ConfirmTicket">Confirm Ticket</a>
@@ -651,9 +650,6 @@
                 <div class="nav-group-items">
                     <a class="@(IsActive("AdminFlight", "ManageFlights") ? "active-sub-link" : "")"
                        asp-controller="AdminFlight" asp-action="ManageFlights">Manage Flights</a>
-
-                    <a class="@(IsActive("Admin", "FlightManagement") ? "active-sub-link" : "")"
-                       asp-controller="Admin" asp-action="FlightManagement">Set Flight Management</a>
 
                     <a class="@(IsActive("AdminSchedule", "FlightSchedules") ? "active-sub-link" : "")"
                        asp-controller="AdminSchedule" asp-action="FlightSchedules">Manage Flight Schedules</a>
