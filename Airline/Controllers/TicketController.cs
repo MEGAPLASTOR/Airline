@@ -77,9 +77,9 @@ namespace Airline.Controllers
                 .Include(t => t.Seat)
                 .Where(t =>
                     t.Booking.UserId == userId &&
-                    !string.Equals(t.Status, "CANCELLED", StringComparison.OrdinalIgnoreCase) &&
-                    (string.Equals(t.Booking.Schedule.Status, "DELAYED", StringComparison.OrdinalIgnoreCase) ||
-                     string.Equals(t.Booking.Schedule.Status, "CANCELLED", StringComparison.OrdinalIgnoreCase)))
+                    t.Status != "CANCELLED" &&
+                    (t.Booking.Schedule.Status == "DELAYED" ||
+                     t.Booking.Schedule.Status == "CANCELLED"))
                 .OrderBy(t => t.Booking.Schedule.DepartureTime)
                 .ThenByDescending(t => t.Booking.BookingDate)
                 .ToListAsync();
