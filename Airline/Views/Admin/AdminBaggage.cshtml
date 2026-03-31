@@ -14,7 +14,7 @@
     <div class="page-title-block">
         <div class="page-greeting">Commerce Operations</div>
         <h1 class="page-title">Manage <span>Baggage</span></h1>
-        <p class="page-subtitle">Create, update, and delete baggage records for eligible tickets.</p>
+        <p class="page-subtitle">Create, update, confirm payment, and delete baggage records for eligible tickets.</p>
     </div>
 </div>
 
@@ -127,7 +127,7 @@
         <div class="section-head">
             <div>
                 <h2>Baggage Records</h2>
-                <p>Updating the weight will also recalculate the price using 10,000 VND per kg.</p>
+                <p>Updating the weight will also recalculate the price using 10,000 VND per kg. When admin confirms payment, the user will immediately see the baggage as PAID.</p>
             </div>
         </div>
 
@@ -182,40 +182,55 @@
                                         @(baggage.IsPaid ? "PAID" : "UNPAID")
                                     </span>
                                 </td>
-                                <td class="amount-text">@baggage.Price.ToString("N0") VND</td>
-                                <td class="text-center">
-                                    <div class="row-actions">
-                                        <form asp-controller="AdminBaggage" asp-action="UpdateBaggage" method="post" class="inline-action-form">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="BaggageId" value="@baggage.BaggageId" />
-                                            <input type="number"
-                                                   name="Weight"
-                                                   min="1"
-                                                   max="99.99"
-                                                   step="0.01"
-                                                   value="@baggage.Weight.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
-                                                   class="inline-weight-input" />
-                                            <button type="submit" class="btn-success">
-                                                <i class="fa-solid fa-floppy-disk"></i>
-                                                Save
-                                            </button>
-                                        </form>
+                                 <td class="amount-text">@baggage.Price.ToString("N0") VND</td>
+                                 <td class="text-center">
+                                     <div class="row-actions">
+                                         @if (!baggage.IsPaid)
+                                         {
+                                             <form asp-controller="AdminBaggage" asp-action="UpdateBaggage" method="post" class="inline-action-form">
+                                                 @Html.AntiForgeryToken()
+                                                 <input type="hidden" name="BaggageId" value="@baggage.BaggageId" />
+                                                 <input type="number"
+                                                        name="Weight"
+                                                        min="1"
+                                                        max="99.99"
+                                                        step="0.01"
+                                                        value="@baggage.Weight.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
+                                                        class="inline-weight-input" />
+                                                 <button type="submit" class="btn-success">
+                                                     <i class="fa-solid fa-floppy-disk"></i>
+                                                     Save
+                                                 </button>
+                                             </form>
 
-                                        @if (!baggage.IsPaid)
-                                        {
-                                            <form asp-controller="AdminBaggage" asp-action="DeleteBaggage" method="post" class="inline-action-form danger">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="baggageId" value="@baggage.BaggageId" />
-                                                <button type="submit" class="btn-danger">
-                                                    <i class="fa-solid fa-trash"></i>
+                                             <form asp-controller="AdminBaggage" asp-action="ConfirmBaggagePayment" method="post" class="inline-action-form danger">
+                                                 @Html.AntiForgeryToken()
+                                                 <input type="hidden" name="baggageId" value="@baggage.BaggageId" />
+                                                 <button type="submit" class="btn-success">
+                                                     <i class="fa-solid fa-circle-check"></i>
+                                                     Confirm paid
+                                                 </button>
+                                             </form>
+
+                                             <form asp-controller="AdminBaggage" asp-action="DeleteBaggage" method="post" class="inline-action-form danger">
+                                                 @Html.AntiForgeryToken()
+                                                 <input type="hidden" name="baggageId" value="@baggage.BaggageId" />
+                                                 <button type="submit" class="btn-danger">
+                                                     <i class="fa-solid fa-trash"></i>
                                                     Delete
                                                 </button>
                                             </form>
-                                        }
-                                    </div>
-                                </td>
-                            </tr>
-                        }
+                                         }
+                                         else
+                                         {
+                                             <div class="admin-note-box">
+                                                 <strong>Locked:</strong> this baggage has already been confirmed as paid, so its weight and price can no longer be changed.
+                                             </div>
+                                         }
+                                     </div>
+                                 </td>
+                             </tr>
+                         }
                     }
                     else
                     {

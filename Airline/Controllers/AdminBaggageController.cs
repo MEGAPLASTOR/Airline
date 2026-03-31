@@ -82,11 +82,18 @@ namespace Airline.Controllers
             }
 
             var baggage = await _context.Baggages
+                .Include(b => b.Ticket)
                 .FirstOrDefaultAsync(b => b.BaggageId == model.BaggageId);
 
             if (baggage == null)
             {
                 TempData["ErrorMessage"] = "Baggage record to update was not found.";
+                return RedirectToAction(nameof(ManageBaggage));
+            }
+
+            if (await IsBaggagePaidAsync(baggage.BaggageId, baggage.Ticket.BookingId))
+            {
+                TempData["ErrorMessage"] = "Paid baggage cannot be edited.";
                 return RedirectToAction(nameof(ManageBaggage));
             }
 
@@ -97,6 +104,63 @@ namespace Airline.Controllers
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = $"Updated baggage #{baggage.BaggageId}.";
+            return RedirectToAction(nameof(ManageBaggage));
+        }
+
+        [HttpPost("ConfirmBaggagePayment")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ConfirmBaggagePayment(int baggageId)
+        {
+            if (!IsAdmin()) return RedirectIfNotAdmin();
+
+            var baggage = await _context.Baggages
+                .Include(b => b.Ticket)
+                .FirstOrDefaultAsync(b => b.BaggageId == baggageId);
+
+            if (baggage == null)
+            {
+                TempData["ErrorMessage"] = "Baggage record was not found.";
+                return RedirectToAction(nameof(ManageBaggage));
+            }
+
+            if (await IsBaggagePaidAsync(baggage.BaggageId, baggage.Ticket.BookingId))
+            {
+                TempData["SuccessMessage"] = $"Baggage #{baggage.BaggageId} has already been confirmed as paid.";
+                return RedirectToAction(nameof(ManageBaggage));
+            }
+
+            var amount = baggage.Price ?? 0m;
+            if (amount <= 0)
+            {
+                TempData["ErrorMessage"] = "The baggage fee is invalid for confirmation.";
+                return RedirectToAction(nameof(ManageBaggage));
+            }
+
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                _context.Payments.Add(new Payment
+                {
+                    BookingId = baggage.Ticket.BookingId,
+                    Amount = amount,
+                    PaymentDate = DateTime.Now,
+                    PaymentMethod = "MANUAL_ADMIN_BAGGAGE",
+                    PaymentStatus = "SUCCESS",
+                    TransactionNo = $"{BaggageTransactionPrefix}{baggage.BaggageId}_MANUAL_{DateTime.Now.Ticks}"
+                });
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                TempData["SuccessMessage"] = $"Confirmed baggage payment for baggage #{baggage.BaggageId}. The user now sees this baggage as PAID.";
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                TempData["ErrorMessage"] = $"Failed to confirm baggage payment: {ex.Message}";
+            }
+
             return RedirectToAction(nameof(ManageBaggage));
         }
 
@@ -280,6 +344,17 @@ namespace Airline.Controllers
                    !string.Equals(ticketStatus, "BLOCKED", StringComparison.OrdinalIgnoreCase) &&
                    !string.Equals(bookingStatus, "CANCELLED", StringComparison.OrdinalIgnoreCase) &&
                    !string.Equals(bookingStatus, "BLOCKED", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private async Task<bool> IsBaggagePaidAsync(int baggageId, int bookingId)
+        {
+            return await _context.Payments
+                .AsNoTracking()
+                .AnyAsync(p =>
+                    p.BookingId == bookingId &&
+                    p.TransactionNo != null &&
+                    p.TransactionNo.StartsWith($"{BaggageTransactionPrefix}{baggageId}_") &&
+                    (p.PaymentStatus == "SUCCESS" || p.PaymentStatus == "PAID"));
         }
 
         private static decimal NormalizeWeight(decimal weight)
