@@ -49,8 +49,7 @@
         ("AdminFlight", "ManageFlights"),
         ("AdminSchedule", "FlightSchedules"),
         ("AdminSchedule", "FlightReschedule"),
-        ("AdminSchedule", "FlightSeats"),
-        ("Admin", "FlightNotifications")
+        ("AdminSchedule", "FlightSeats")
     );
 
     var isRoutesGroup = IsAny(
@@ -659,9 +658,6 @@
 
                     <a class="@(IsActive("AdminSchedule", "FlightSeats") ? "active-sub-link" : "")"
                        asp-controller="AdminSchedule" asp-action="FlightSeats">Manage Flight Seats</a>
-
-                    <a class="@(IsActive("Admin", "FlightNotifications") ? "active-sub-link" : "")"
-                       asp-controller="Admin" asp-action="FlightNotifications">Manage Flight Notifications</a>
                 </div>
             </div>
 
