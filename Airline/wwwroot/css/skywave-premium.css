@@ -1,0 +1,53 @@
+:root {
+    --premium-select-surface: rgba(9, 30, 48, 0.94);
+    --premium-select-surface-strong: rgba(12, 41, 64, 0.98);
+    --premium-select-border: rgba(32, 191, 208, 0.24);
+    --premium-select-border-hover: rgba(32, 191, 208, 0.36);
+    --premium-select-border-focus: rgba(32, 191, 208, 0.5);
+    --premium-select-text: #f3fdff;
+    --premium-select-muted: rgba(210, 248, 251, 0.68);
+    --premium-select-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 14px 28px rgba(2, 9, 17, 0.16);
+    --premium-select-focus-shadow: 0 0 0 4px rgba(32, 191, 208, 0.14), 0 20px 36px rgba(2, 9, 17, 0.2);
+}
+
+/* Keep native selects, but theme them consistently across public pages. */
+select {
+    font: inherit;
+    color-scheme: dark !important;
+    background-color: var(--premium-select-surface) !important;
+    color: var(--premium-select-text) !important;
+    border-color: var(--premium-select-border) !important;
+    box-shadow: var(--premium-select-shadow);
+    transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+select:not(:disabled):hover {
+    background-color: var(--premium-select-surface-strong) !important;
+    border-color: var(--premium-select-border-hover) !important;
+}
+
+select:focus {
+    background-color: var(--premium-select-surface-strong) !important;
+    border-color: var(--premium-select-border-focus) !important;
+    box-shadow: var(--premium-select-focus-shadow) !important;
+}
+
+select option,
+select optgroup {
+    color-scheme: dark;
+    background-color: #0b2033 !important;
+    color: var(--premium-select-text) !important;
+}
+
+select option:disabled,
+select option[value=""] {
+    color: var(--premium-select-muted) !important;
+}
+
+select:disabled {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    color: rgba(210, 248, 251, 0.45) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    box-shadow: none;
+    cursor: not-allowed;
+}
