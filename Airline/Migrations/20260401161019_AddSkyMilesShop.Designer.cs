@@ -738,7 +738,7 @@ namespace Airline.Migrations
                         },
                         new
                         {
-                            PromoId = 6,
+                            PromoId = 1001,
                             Description = "Redeem this shop code to reduce the SkyMiles cost of your next reward booking by 12 percent.",
                             DiscountPercent = 12,
                             EndDate = new DateOnly(2026, 7, 31),
@@ -751,7 +751,7 @@ namespace Airline.Migrations
                         },
                         new
                         {
-                            PromoId = 7,
+                            PromoId = 1002,
                             Description = "Higher-value reward code for customers redeeming SkyMiles on flights.",
                             DiscountPercent = 18,
                             EndDate = new DateOnly(2026, 8, 15),
@@ -764,7 +764,7 @@ namespace Airline.Migrations
                         },
                         new
                         {
-                            PromoId = 8,
+                            PromoId = 1003,
                             Description = "Premium reward-booking code that cuts the miles needed on your next SkyMiles purchase.",
                             DiscountPercent = 25,
                             EndDate = new DateOnly(2026, 9, 1),
@@ -1354,7 +1354,7 @@ namespace Airline.Migrations
                         {
                             UserPromotionId = 1,
                             IsRedeemed = false,
-                            PromoId = 6,
+                            PromoId = 1001,
                             PurchasedAt = new DateTime(2026, 4, 1, 9, 0, 0, 0, DateTimeKind.Unspecified),
                             SkyMilesSpent = 250,
                             UserId = 1
@@ -1363,7 +1363,7 @@ namespace Airline.Migrations
                         {
                             UserPromotionId = 2,
                             IsRedeemed = false,
-                            PromoId = 7,
+                            PromoId = 1002,
                             PurchasedAt = new DateTime(2026, 4, 1, 9, 30, 0, 0, DateTimeKind.Unspecified),
                             SkyMilesSpent = 450,
                             UserId = 4

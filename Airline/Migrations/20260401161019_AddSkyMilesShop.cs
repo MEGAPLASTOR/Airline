@@ -157,9 +157,9 @@ namespace Airline.Migrations
                 columns: new[] { "promo_id", "description", "discount_percent", "end_date", "is_skymiles_exclusive", "only_for_skymiles_payment", "promo_code", "sky_miles_cost", "start_date", "title" },
                 values: new object[,]
                 {
-                    { 6, "Redeem this shop code to reduce the SkyMiles cost of your next reward booking by 12 percent.", 12, new DateOnly(2026, 7, 31), true, true, "MILES12", 250, new DateOnly(2026, 4, 1), "Sky Saver 12" },
-                    { 7, "Higher-value reward code for customers redeeming SkyMiles on flights.", 18, new DateOnly(2026, 8, 15), true, true, "MILES18", 450, new DateOnly(2026, 4, 1), "Sky Saver 18" },
-                    { 8, "Premium reward-booking code that cuts the miles needed on your next SkyMiles purchase.", 25, new DateOnly(2026, 9, 1), true, true, "MILES25", 700, new DateOnly(2026, 4, 5), "Sky Saver 25" }
+                    { 1001, "Redeem this shop code to reduce the SkyMiles cost of your next reward booking by 12 percent.", 12, new DateOnly(2026, 7, 31), true, true, "MILES12", 250, new DateOnly(2026, 4, 1), "Sky Saver 12" },
+                    { 1002, "Higher-value reward code for customers redeeming SkyMiles on flights.", 18, new DateOnly(2026, 8, 15), true, true, "MILES18", 450, new DateOnly(2026, 4, 1), "Sky Saver 18" },
+                    { 1003, "Premium reward-booking code that cuts the miles needed on your next SkyMiles purchase.", 25, new DateOnly(2026, 9, 1), true, true, "MILES25", 700, new DateOnly(2026, 4, 5), "Sky Saver 25" }
                 });
 
             migrationBuilder.InsertData(
@@ -167,8 +167,8 @@ namespace Airline.Migrations
                 columns: new[] { "user_promotion_id", "is_redeemed", "promo_id", "purchased_at", "redeemed_at", "redeemed_booking_id", "sky_miles_spent", "user_id" },
                 values: new object[,]
                 {
-                    { 1, false, 6, new DateTime(2026, 4, 1, 9, 0, 0, 0, DateTimeKind.Unspecified), null, null, 250, 1 },
-                    { 2, false, 7, new DateTime(2026, 4, 1, 9, 30, 0, 0, DateTimeKind.Unspecified), null, null, 450, 4 }
+                    { 1, false, 1001, new DateTime(2026, 4, 1, 9, 0, 0, 0, DateTimeKind.Unspecified), null, null, 250, 1 },
+                    { 2, false, 1002, new DateTime(2026, 4, 1, 9, 30, 0, 0, DateTimeKind.Unspecified), null, null, 450, 4 }
                 });
 
             migrationBuilder.CreateIndex(
@@ -196,17 +196,17 @@ namespace Airline.Migrations
             migrationBuilder.DeleteData(
                 table: "Promotions",
                 keyColumn: "promo_id",
-                keyValue: 6);
+                keyValue: 1001);
 
             migrationBuilder.DeleteData(
                 table: "Promotions",
                 keyColumn: "promo_id",
-                keyValue: 7);
+                keyValue: 1002);
 
             migrationBuilder.DeleteData(
                 table: "Promotions",
                 keyColumn: "promo_id",
-                keyValue: 8);
+                keyValue: 1003);
 
             migrationBuilder.DropColumn(
                 name: "description",

@@ -700,7 +700,7 @@ public partial class DataContext : DbContext
             },
             new Promotion
             {
-                PromoId = 6,
+                PromoId = 1001,
                 Title = "Sky Saver 12",
                 Description = "Redeem this shop code to reduce the SkyMiles cost of your next reward booking by 12 percent.",
                 PromoCode = "MILES12",
@@ -713,7 +713,7 @@ public partial class DataContext : DbContext
             },
             new Promotion
             {
-                PromoId = 7,
+                PromoId = 1002,
                 Title = "Sky Saver 18",
                 Description = "Higher-value reward code for customers redeeming SkyMiles on flights.",
                 PromoCode = "MILES18",
@@ -726,7 +726,7 @@ public partial class DataContext : DbContext
             },
             new Promotion
             {
-                PromoId = 8,
+                PromoId = 1003,
                 Title = "Sky Saver 25",
                 Description = "Premium reward-booking code that cuts the miles needed on your next SkyMiles purchase.",
                 PromoCode = "MILES25",
@@ -913,7 +913,7 @@ public partial class DataContext : DbContext
             {
                 UserPromotionId = 1,
                 UserId = 1,
-                PromoId = 6,
+                PromoId = 1001,
                 PurchasedAt = new DateTime(2026, 04, 01, 9, 0, 0),
                 SkyMilesSpent = 250,
                 IsRedeemed = false,
@@ -924,7 +924,7 @@ public partial class DataContext : DbContext
             {
                 UserPromotionId = 2,
                 UserId = 4,
-                PromoId = 7,
+                PromoId = 1002,
                 PurchasedAt = new DateTime(2026, 04, 01, 9, 30, 0),
                 SkyMilesSpent = 450,
                 IsRedeemed = false,
