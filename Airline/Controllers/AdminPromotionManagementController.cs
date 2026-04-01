@@ -19,6 +19,7 @@ namespace Airline.Controllers
 
             var promotions = await _context.Promotions
                 .Include(p => p.BookingPromotions)
+                .Where(p => !p.IsSkyMilesExclusive)
                 .OrderByDescending(p => p.StartDate)
                 .ThenByDescending(p => p.DiscountPercent)
                 .ToListAsync();
@@ -31,7 +32,8 @@ namespace Airline.Controllers
         {
             if (!IsAdmin()) return Unauthorized();
 
-            var promotion = await _context.Promotions.FindAsync(id);
+            var promotion = await _context.Promotions
+                .FirstOrDefaultAsync(p => p.PromoId == id && !p.IsSkyMilesExclusive);
             if (promotion == null) return NotFound();
 
             return Json(new
@@ -62,8 +64,12 @@ namespace Airline.Controllers
 
             _context.Promotions.Add(new Promotion
             {
+                Title = promoCode,
                 PromoCode = PromotionService.NormalizePromoCode(promoCode),
                 DiscountPercent = discountPercent,
+                IsSkyMilesExclusive = false,
+                OnlyForSkyMilesPayment = false,
+                SkyMilesCost = 0,
                 StartDate = startDate,
                 EndDate = endDate
             });
@@ -83,7 +89,8 @@ namespace Airline.Controllers
         {
             if (!IsAdmin()) return Json(new { success = false, message = "Unauthorized" });
 
-            var promotion = await _context.Promotions.FindAsync(id);
+            var promotion = await _context.Promotions
+                .FirstOrDefaultAsync(p => p.PromoId == id && !p.IsSkyMilesExclusive);
             if (promotion == null) return Json(new { success = false, message = "Promotion not found." });
 
             var validationError = await ValidatePromotionInputAsync(id, promoCode, discountPercent, startDate, endDate);
@@ -93,6 +100,7 @@ namespace Airline.Controllers
             }
 
             promotion.PromoCode = PromotionService.NormalizePromoCode(promoCode);
+            promotion.Title = promoCode;
             promotion.DiscountPercent = discountPercent;
             promotion.StartDate = startDate;
             promotion.EndDate = endDate;
@@ -109,7 +117,7 @@ namespace Airline.Controllers
 
             var promotion = await _context.Promotions
                 .Include(p => p.BookingPromotions)
-                .FirstOrDefaultAsync(p => p.PromoId == id);
+                .FirstOrDefaultAsync(p => p.PromoId == id && !p.IsSkyMilesExclusive);
 
             if (promotion == null) return Json(new { success = false, message = "Promotion not found." });
 

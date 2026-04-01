@@ -1,4 +1,4 @@
-@model int
+@model Airline.Models.BookingSuccessViewModel
 @{
     ViewData["Title"] = "Booking Success";
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -14,7 +14,7 @@
         </div>
 
         <h1 class="premium-title">Booking <span class="highlight">Successful!</span></h1>
-        <p class="subtitle">Your confirmation code is: <strong class="booking-code">#@Model</strong></p>
+        <p class="subtitle">Your confirmation code is: <strong class="booking-code">#@Model.BookingId</strong></p>
 
         <div class="success-info-grid">
             <div class="info-item">
@@ -25,18 +25,41 @@
                 </div>
             </div>
             <div class="info-item">
-                <i class="fas fa-credit-card"></i>
+                <i class="fas @(Model.WasPaidWithSkyMiles ? "fa-coins" : "fa-credit-card")"></i>
                 <div class="text">
                     <strong>Payment Status</strong>
-                    <span>Pending payment (Please pay within 24 hours).</span>
+                    @if (Model.WasPaidWithSkyMiles)
+                    {
+                        <span>
+                            Paid with <strong>@Model.SkyMilesSpent.ToString("N0") SkyMiles</strong>.
+                            Remaining balance: <strong>@Model.CurrentSkyMiles.ToString("N0") miles</strong>.
+                            @if (!string.IsNullOrWhiteSpace(Model.PromoCode))
+                            {
+                                <text> Code <strong>@Model.PromoCode</strong> was applied to this reward booking.</text>
+                            }
+                        </span>
+                    }
+                    else
+                    {
+                        <span>Pending payment (Please pay within 24 hours).</span>
+                    }
                 </div>
             </div>
         </div>
 
         <div class="action-buttons">
-            <a asp-controller="Payment" asp-action="CreatePayment" asp-route-id="@Model" class="btn-pay-now">
-                Pay Now <i class="fas fa-credit-card"></i>
-            </a>
+            @if (!Model.WasPaidWithSkyMiles)
+            {
+                <a asp-controller="Payment" asp-action="CreatePayment" asp-route-id="@Model.BookingId" class="btn-pay-now">
+                    Pay Now <i class="fas fa-credit-card"></i>
+                </a>
+            }
+            else
+            {
+                <a asp-controller="Miles" asp-action="Index" class="btn-pay-now">
+                    Open SkyMiles Shop <i class="fas fa-bag-shopping"></i>
+                </a>
+            }
             <a asp-controller="Ticket" asp-action="ViewConfirmation" class="btn-view-tickets">
                 View My Tickets <i class="fas fa-ticket-alt"></i>
             </a>

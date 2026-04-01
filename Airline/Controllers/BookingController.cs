@@ -1,13 +1,16 @@
+using Airline.Models;
+using Airline.Services;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Airline.Models;
 using System.Security.Claims;
-using Airline.Services;
 
 namespace Airline.Controllers
 {
     public class BookingController : Controller
     {
+        private const string SkyMilesPaymentMethod = "SKYMILES_REDEEM";
         private readonly DataContext _context;
         private readonly SeatService _seatService;
         private readonly PromotionService _promotionService;
@@ -78,7 +81,13 @@ namespace Airline.Controllers
         [HttpPost]
         public async Task<IActionResult> PassengerInfo(int scheduleId, int seatId)
         {
-            var model = await BuildPassengerInfoModelAsync(scheduleId, seatId);
+            var model = await BuildPassengerInfoModelAsync(
+                scheduleId,
+                seatId,
+                promoCode: null,
+                useSkyMilesPayment: false,
+                userId: TryGetCurrentUserId());
+
             if (model == null) return NotFound();
 
             return View(model);
@@ -87,17 +96,13 @@ namespace Airline.Controllers
         [HttpGet]
         public async Task<IActionResult> ApplyPromotion()
         {
-            var promotions = await _context.Promotions
-                .AsNoTracking()
-                .OrderByDescending(p => p.DiscountPercent ?? 0)
-                .ThenBy(p => p.StartDate)
-                .ToListAsync();
+            var promotions = await _promotionService.GetPublicPromotionsAsync();
 
             return View(promotions);
         }
 
         [HttpGet]
-        public async Task<IActionResult> ValidatePromotion(int scheduleId, int seatId, string code)
+        public async Task<IActionResult> ValidatePromotion(int scheduleId, int seatId, string code, bool useSkyMilesPayment = false)
         {
             var seat = await _context.Seats
                 .AsNoTracking()
@@ -108,13 +113,35 @@ namespace Airline.Controllers
                 return Json(new { success = false, message = "Seat or schedule not found." });
             }
 
-            var promotion = await _promotionService.GetPromotionByCodeAsync(code);
+            var userId = TryGetCurrentUserId();
+            var promotion = await _promotionService.ResolvePromotionAsync(code, userId, useSkyMilesPayment);
             if (promotion == null)
             {
-                return Json(new { success = false, message = "Promotion code is invalid or expired." });
+                return Json(new
+                {
+                    success = false,
+                    message = useSkyMilesPayment
+                        ? "This SkyMiles code is invalid, expired, or not owned by your account."
+                        : "Promotion code is invalid or expired."
+                });
             }
 
-            var pricing = await _promotionService.CalculateSingleTicketAsync(scheduleId, seat.ClassId, code);
+            var pricing = await _promotionService.CalculateSingleTicketAsync(
+                scheduleId,
+                seat.ClassId,
+                code,
+                userId: userId,
+                useSkyMilesPayment: useSkyMilesPayment);
+
+            var currentSkyMiles = 0;
+            if (userId.HasValue)
+            {
+                currentSkyMiles = await _context.Users
+                    .AsNoTracking()
+                    .Where(u => u.UserId == userId.Value)
+                    .Select(u => u.SkyMiles ?? 0)
+                    .FirstOrDefaultAsync();
+            }
 
             return Json(new
             {
@@ -125,7 +152,10 @@ namespace Airline.Controllers
                 baseFare = pricing.BaseFare,
                 taxAmount = pricing.TaxAmount,
                 discountAmount = pricing.DiscountAmount,
-                finalAmount = pricing.FinalAmount
+                finalAmount = pricing.FinalAmount,
+                requiredSkyMiles = pricing.RequiredSkyMiles,
+                currentSkyMiles,
+                canAffordWithSkyMiles = currentSkyMiles >= pricing.RequiredSkyMiles
             });
         }
 
@@ -143,23 +173,69 @@ namespace Airline.Controllers
         {
             if (model == null) return BadRequest("Model is null");
 
-            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdStr)) return Redirect("/");
-            int userId = int.Parse(userIdStr);
+            var userId = TryGetCurrentUserId();
+            if (!userId.HasValue) return Redirect("/");
 
             if (!await PopulatePassengerInfoStateAsync(model))
             {
                 return NotFound();
             }
 
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId.Value);
+            if (user == null)
+            {
+                return Redirect("/");
+            }
+
+            var pricing = await _promotionService.CalculateSingleTicketAsync(
+                model.ScheduleId,
+                model.ClassId ?? 0,
+                model.PromoCode,
+                userId: userId,
+                useSkyMilesPayment: model.UseSkyMilesPayment);
+
+            model.AppliedPromotionId = pricing.AppliedPromotionId;
+            model.PromoCode = pricing.HasPromotion ? pricing.AppliedPromotionCode : model.PromoCode;
+            model.DiscountPercent = pricing.DiscountPercent;
+            model.TaxAmount = pricing.TaxAmount;
+            model.DiscountAmount = pricing.DiscountAmount;
+            model.FinalPrice = pricing.FinalAmount;
+            model.RequiredSkyMiles = pricing.RequiredSkyMiles;
+            model.CurrentSkyMiles = user.SkyMiles ?? 0;
+            model.CanAffordWithSkyMiles = model.CurrentSkyMiles >= model.RequiredSkyMiles;
+
             Promotion? appliedPromotion = null;
+            UserPromotion? ownedPromotion = null;
             if (!string.IsNullOrWhiteSpace(model.PromoCode))
             {
-                appliedPromotion = await _promotionService.GetPromotionByCodeAsync(model.PromoCode);
-                if (appliedPromotion == null)
+                if (model.UseSkyMilesPayment)
                 {
-                    ModelState.AddModelError(nameof(model.PromoCode), "Promotion code is invalid or expired.");
+                    ownedPromotion = await _promotionService.GetOwnedPromotionAsync(userId.Value, model.PromoCode);
+                    if (ownedPromotion == null)
+                    {
+                        ModelState.AddModelError(nameof(model.PromoCode), "Please buy this code from the SkyMiles Shop before using it.");
+                    }
+                    else
+                    {
+                        appliedPromotion = ownedPromotion.Promo;
+                    }
                 }
+                else
+                {
+                    appliedPromotion = await _promotionService.GetPromotionByCodeAsync(
+                        model.PromoCode,
+                        includeSkyMilesExclusive: false);
+
+                    if (appliedPromotion == null)
+                    {
+                        ModelState.AddModelError(nameof(model.PromoCode), "Promotion code is invalid or expired.");
+                    }
+                }
+            }
+
+            if (model.UseSkyMilesPayment && !model.CanAffordWithSkyMiles)
+            {
+                ModelState.AddModelError(string.Empty, $"You need {model.RequiredSkyMiles:N0} SkyMiles, but your balance is only {model.CurrentSkyMiles:N0}.");
             }
 
             if (!ModelState.IsValid)
@@ -188,11 +264,11 @@ namespace Airline.Controllers
                     // 1. Create Booking
                     var booking = new Booking
                     {
-                        UserId = userId,
+                        UserId = userId.Value,
                         ScheduleId = model.ScheduleId,
                         BookingDate = DateTime.Now,
-                        BookingType = "ONLINE",
-                        Status = "PENDING_PAYMENT"
+                        BookingType = model.UseSkyMilesPayment ? "SKYMILES" : "ONLINE",
+                        Status = model.UseSkyMilesPayment ? "PAID" : "PENDING_PAYMENT"
                     };
                     _context.Bookings.Add(booking);
                     await _context.SaveChangesAsync();
@@ -224,18 +300,53 @@ namespace Airline.Controllers
                         PassengerId = passenger.PassengerId,
                         ClassId = seat.ClassId,
                         SeatId = seat.SeatId,
-                        Status = "BOOKED"
+                        Status = model.UseSkyMilesPayment ? "PAID" : "BOOKED"
                     };
                     _context.Tickets.Add(ticket);
 
                     // 4. Update Seat & Schedule
                     seat.SeatStatus = "BOOKED";
                     schedule.AvailableSeats = Math.Max(0, (schedule.AvailableSeats ?? 0) - 1);
+
+                    if (model.UseSkyMilesPayment)
+                    {
+                        user.SkyMiles = Math.Max(0, (user.SkyMiles ?? 0) - model.RequiredSkyMiles);
+
+                        _context.Payments.Add(new Payment
+                        {
+                            BookingId = booking.BookingId,
+                            Amount = 0m,
+                            PaymentDate = DateTime.Now,
+                            PaymentMethod = SkyMilesPaymentMethod,
+                            PaymentStatus = "SUCCESS",
+                            TransactionNo = $"{SkyMilesPaymentMethod}_{booking.BookingId}_{model.RequiredSkyMiles}"
+                        });
+
+                        if (ownedPromotion != null)
+                        {
+                            ownedPromotion.IsRedeemed = true;
+                            ownedPromotion.RedeemedAt = DateTime.Now;
+                            ownedPromotion.RedeemedBookingId = booking.BookingId;
+                        }
+                    }
                     
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
 
-                    return View("BookingSuccess", booking.BookingId);
+                    if (model.UseSkyMilesPayment)
+                    {
+                        await RefreshAuthenticatedUserClaimsAsync(user);
+                    }
+
+                    return View("BookingSuccess", new BookingSuccessViewModel
+                    {
+                        BookingId = booking.BookingId,
+                        WasPaidWithSkyMiles = model.UseSkyMilesPayment,
+                        SkyMilesSpent = model.UseSkyMilesPayment ? model.RequiredSkyMiles : 0,
+                        CurrentSkyMiles = user.SkyMiles ?? 0,
+                        FinalAmount = model.FinalPrice,
+                        PromoCode = appliedPromotion?.PromoCode
+                    });
                 }
                 catch (Exception ex)
                 {
@@ -247,7 +358,12 @@ namespace Airline.Controllers
             }
         }
 
-        private async Task<BookingViewModel?> BuildPassengerInfoModelAsync(int scheduleId, int seatId)
+        private async Task<BookingViewModel?> BuildPassengerInfoModelAsync(
+            int scheduleId,
+            int seatId,
+            string? promoCode,
+            bool useSkyMilesPayment,
+            int? userId)
         {
             var schedule = await _context.FlightSchedules
                 .AsNoTracking()
@@ -267,8 +383,27 @@ namespace Airline.Controllers
                 return null;
             }
 
-            var pricing = await _promotionService.CalculateSingleTicketAsync(scheduleId, seat.ClassId);
-            var promotions = await _promotionService.GetActivePromotionsAsync();
+            var currentSkyMiles = 0;
+            if (userId.HasValue)
+            {
+                currentSkyMiles = await _context.Users
+                    .AsNoTracking()
+                    .Where(u => u.UserId == userId.Value)
+                    .Select(u => u.SkyMiles ?? 0)
+                    .FirstOrDefaultAsync();
+            }
+
+            var pricing = await _promotionService.CalculateSingleTicketAsync(
+                scheduleId,
+                seat.ClassId,
+                promoCode,
+                userId: userId,
+                useSkyMilesPayment: useSkyMilesPayment);
+
+            var promotions = await _promotionService.GetPublicPromotionsAsync();
+            var ownedPromotions = userId.HasValue
+                ? await _promotionService.GetOwnedSkyMilesPromotionsAsync(userId.Value)
+                : new List<Promotion>();
 
             return new BookingViewModel
             {
@@ -281,11 +416,20 @@ namespace Airline.Controllers
                 Origin = schedule.Flight?.Route?.DepartureCityNavigation?.CityName ?? "Unknown",
                 Destination = schedule.Flight?.Route?.ArrivalCityNavigation?.CityName ?? "Unknown",
                 Price = pricing.BaseFare,
+                PromoCode = pricing.HasPromotion
+                    ? pricing.AppliedPromotionCode
+                    : string.IsNullOrWhiteSpace(promoCode) ? null : PromotionService.NormalizePromoCode(promoCode),
+                AppliedPromotionId = pricing.AppliedPromotionId,
                 TaxAmount = pricing.TaxAmount,
                 DiscountAmount = pricing.DiscountAmount,
                 DiscountPercent = pricing.DiscountPercent,
                 FinalPrice = pricing.FinalAmount,
-                AvailablePromotions = promotions
+                UseSkyMilesPayment = useSkyMilesPayment,
+                CurrentSkyMiles = currentSkyMiles,
+                RequiredSkyMiles = pricing.RequiredSkyMiles,
+                CanAffordWithSkyMiles = currentSkyMiles >= pricing.RequiredSkyMiles,
+                AvailablePromotions = promotions,
+                OwnedSkyMilesPromotions = ownedPromotions
             };
         }
 
@@ -296,7 +440,12 @@ namespace Airline.Controllers
                 return false;
             }
 
-            var hydratedModel = await BuildPassengerInfoModelAsync(model.ScheduleId, model.SeatId.Value);
+            var hydratedModel = await BuildPassengerInfoModelAsync(
+                model.ScheduleId,
+                model.SeatId.Value,
+                model.PromoCode,
+                model.UseSkyMilesPayment,
+                TryGetCurrentUserId());
             if (hydratedModel == null)
             {
                 return false;
@@ -309,33 +458,52 @@ namespace Airline.Controllers
             model.DepartureTime = hydratedModel.DepartureTime;
             model.FlightNumber = hydratedModel.FlightNumber;
             model.Price = hydratedModel.Price;
+            model.PromoCode = hydratedModel.PromoCode;
+            model.AppliedPromotionId = hydratedModel.AppliedPromotionId;
             model.TaxAmount = hydratedModel.TaxAmount;
             model.DiscountAmount = hydratedModel.DiscountAmount;
             model.DiscountPercent = hydratedModel.DiscountPercent;
             model.FinalPrice = hydratedModel.FinalPrice;
+            model.CurrentSkyMiles = hydratedModel.CurrentSkyMiles;
+            model.RequiredSkyMiles = hydratedModel.RequiredSkyMiles;
+            model.CanAffordWithSkyMiles = hydratedModel.CanAffordWithSkyMiles;
             model.AvailablePromotions = hydratedModel.AvailablePromotions;
-
-            if (!string.IsNullOrWhiteSpace(model.PromoCode) && model.ClassId.HasValue)
-            {
-                var normalizedPromoCode = PromotionService.NormalizePromoCode(model.PromoCode);
-                var pricing = await _promotionService.CalculateSingleTicketAsync(
-                    model.ScheduleId,
-                    model.ClassId.Value,
-                    normalizedPromoCode);
-
-                model.AppliedPromotionId = pricing.AppliedPromotionId;
-                model.PromoCode = pricing.HasPromotion ? pricing.AppliedPromotionCode : normalizedPromoCode;
-                model.DiscountPercent = pricing.DiscountPercent;
-                model.TaxAmount = pricing.TaxAmount;
-                model.DiscountAmount = pricing.DiscountAmount;
-                model.FinalPrice = pricing.FinalAmount;
-            }
-            else
-            {
-                model.AppliedPromotionId = null;
-            }
+            model.OwnedSkyMilesPromotions = hydratedModel.OwnedSkyMilesPromotions;
 
             return true;
+        }
+
+        private int? TryGetCurrentUserId()
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return int.TryParse(userIdClaim, out var userId) ? userId : null;
+        }
+
+        private async Task RefreshAuthenticatedUserClaimsAsync(User user)
+        {
+            if (User?.Identity?.IsAuthenticated != true)
+            {
+                return;
+            }
+
+            var authResult = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+                new Claim(ClaimTypes.Name, user.Username ?? string.Empty),
+                new Claim("FirstName", user.FirstName ?? string.Empty),
+                new Claim("LastName", user.LastName ?? string.Empty),
+                new Claim("SkyMiles", (user.SkyMiles ?? 0).ToString()),
+                new Claim(ClaimTypes.Role, user.Role ?? string.Empty)
+            };
+
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new ClaimsPrincipal(identity);
+
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                principal,
+                authResult.Properties ?? new AuthenticationProperties());
         }
     }
 }

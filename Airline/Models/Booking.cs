@@ -27,5 +27,7 @@ public partial class Booking
 
     public virtual ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
 
+    public virtual ICollection<UserPromotion> UserPromotionsRedeemed { get; set; } = new List<UserPromotion>();
+
     public virtual User User { get; set; } = null!;
 }

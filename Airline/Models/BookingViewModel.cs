@@ -36,6 +36,16 @@ namespace Airline.Models
 
         public decimal FinalPrice { get; set; }
 
+        public bool UseSkyMilesPayment { get; set; }
+
+        public int CurrentSkyMiles { get; set; }
+
+        public int RequiredSkyMiles { get; set; }
+
+        public bool CanAffordWithSkyMiles { get; set; }
+
         public List<Promotion> AvailablePromotions { get; set; } = new();
+
+        public List<Promotion> OwnedSkyMilesPromotions { get; set; } = new();
     }
 }

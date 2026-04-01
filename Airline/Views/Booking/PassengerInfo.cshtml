@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Passenger Information";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    var usingSkyMiles = Model.UseSkyMilesPayment;
 }
 
 <div class="passenger-info-container">
@@ -32,6 +33,9 @@
                     <input type="hidden" asp-for="TaxAmount" />
                     <input type="hidden" asp-for="DiscountAmount" />
                     <input type="hidden" asp-for="FinalPrice" />
+                    <input type="hidden" asp-for="UseSkyMilesPayment" />
+                    <input type="hidden" asp-for="CurrentSkyMiles" />
+                    <input type="hidden" asp-for="RequiredSkyMiles" />
 
                     <div class="form-header">
                         <i class="fas fa-user-edit"></i>
@@ -72,13 +76,66 @@
                         </div>
                     </div>
 
+                    <div class="payment-mode-panel">
+                        <div class="payment-mode-header">
+                            <div>
+                                <h3>Choose Payment Method</h3>
+                                <p>Use a normal online payment or redeem this booking with SkyMiles.</p>
+                            </div>
+                            <a asp-controller="Miles" asp-action="Index" class="promotion-link">Open SkyMiles Shop</a>
+                        </div>
+
+                        <div class="payment-mode-grid">
+                            <button type="button"
+                                    class="payment-mode-card @(!usingSkyMiles ? "is-active" : "")"
+                                    id="payment-mode-online"
+                                    onclick="switchPaymentMode(false)">
+                                <i class="fas fa-credit-card"></i>
+                                <span>Online Payment</span>
+                                <small>Use public promotion codes and pay later via VNPAY.</small>
+                            </button>
+                            <button type="button"
+                                    class="payment-mode-card @(usingSkyMiles ? "is-active" : "")"
+                                    id="payment-mode-skymiles"
+                                    onclick="switchPaymentMode(true)">
+                                <i class="fas fa-coins"></i>
+                                <span>Pay with SkyMiles</span>
+                                <small>Use reward codes that you have already bought in the SkyMiles Shop.</small>
+                            </button>
+                        </div>
+
+                        <div class="skymiles-balance-panel @(usingSkyMiles ? "is-visible" : "")" id="skymiles-balance-panel">
+                            <div class="balance-stat">
+                                <span>Your balance</span>
+                                <strong id="skymiles-current">@Model.CurrentSkyMiles.ToString("N0") miles</strong>
+                            </div>
+                            <div class="balance-stat">
+                                <span>Needed for this booking</span>
+                                <strong id="skymiles-required">@Model.RequiredSkyMiles.ToString("N0") miles</strong>
+                            </div>
+                            <div class="balance-state @(Model.CanAffordWithSkyMiles ? "is-good" : "is-warning")" id="skymiles-affordability">
+                                @(Model.CanAffordWithSkyMiles
+                                    ? "Your current balance is enough for this reward booking."
+                                    : "You do not have enough SkyMiles for this reward booking yet.")
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="promotion-panel">
                         <div class="promotion-panel-header">
                             <div>
-                                <h3>Promotion Code</h3>
-                                <p>Enter a code from the active offers below.</p>
+                                <h3 id="promotion-title">@(usingSkyMiles ? "SkyMiles Reward Code" : "Promotion Code")</h3>
+                                <p id="promotion-subtitle">@(usingSkyMiles
+                                    ? "Only codes you already bought in the SkyMiles Shop can be applied here."
+                                    : "Enter a code from the active offers below.")</p>
                             </div>
-                            <a asp-action="ApplyPromotion" class="promotion-link">View all offers</a>
+                            <a asp-action="ApplyPromotion"
+                               id="public-promotion-link"
+                               class="promotion-link @(!usingSkyMiles ? "" : "is-hidden")">View all offers</a>
+                            <a asp-controller="Miles"
+                               asp-action="Index"
+                               id="skymiles-shop-link"
+                               class="promotion-link @(usingSkyMiles ? "" : "is-hidden")">Go to SkyMiles Shop</a>
                         </div>
 
                         <div class="promotion-input-row">
@@ -88,7 +145,7 @@
                                        id="promoCodeInput"
                                        value="@Model.PromoCode"
                                        class="form-control"
-                                       placeholder="Example: NEWUSER10"
+                                       placeholder="@(usingSkyMiles ? "Example: MILES12" : "Example: NEWUSER10")"
                                        autocomplete="off" />
                             </div>
                             <button type="button" class="btn-apply-promo" onclick="applyPromotion()">Apply</button>
@@ -103,21 +160,35 @@
                             }
                         </div>
 
-                        @if (Model.AvailablePromotions.Any())
-                        {
-                            <div class="promo-chip-list">
-                                @foreach (var promo in Model.AvailablePromotions)
-                                {
-                                    <button type="button"
-                                            class="promo-chip"
-                                            data-code="@promo.PromoCode"
-                                            onclick="selectPromotion(this.dataset.code)">
-                                        <span class="promo-chip-code">@promo.PromoCode</span>
-                                        <span class="promo-chip-discount">-@(promo.DiscountPercent ?? 0)%</span>
-                                    </button>
-                                }
-                            </div>
-                        }
+                        <div class="promo-chip-list @(!usingSkyMiles ? "" : "is-hidden")" id="public-promo-list">
+                            @foreach (var promo in Model.AvailablePromotions)
+                            {
+                                <button type="button"
+                                        class="promo-chip"
+                                        data-code="@promo.PromoCode"
+                                        onclick="selectPromotion(this.dataset.code)">
+                                    <span class="promo-chip-code">@promo.PromoCode</span>
+                                    <span class="promo-chip-discount">-@(promo.DiscountPercent ?? 0)%</span>
+                                </button>
+                            }
+                        </div>
+
+                        <div class="promo-chip-list @(usingSkyMiles ? "" : "is-hidden")" id="skymiles-promo-list">
+                            @foreach (var promo in Model.OwnedSkyMilesPromotions)
+                            {
+                                <button type="button"
+                                        class="promo-chip"
+                                        data-code="@promo.PromoCode"
+                                        onclick="selectPromotion(this.dataset.code)">
+                                    <span class="promo-chip-code">@promo.PromoCode</span>
+                                    <span class="promo-chip-discount">-@(promo.DiscountPercent ?? 0)%</span>
+                                </button>
+                            }
+                        </div>
+
+                        <div class="promo-empty @(usingSkyMiles && !Model.OwnedSkyMilesPromotions.Any() ? "" : "is-hidden")" id="skymiles-promo-empty">
+                            You have no unused SkyMiles reward codes right now. Open the shop to buy one.
+                        </div>
                     </div>
 
                     <div class="form-notice">
@@ -126,8 +197,8 @@
                     </div>
 
                     <div class="action-buttons">
-                        <button type="submit" class="btn-confirm-final">
-                            Confirm Booking <i class="fas fa-check-circle"></i>
+                        <button type="submit" class="btn-confirm-final" id="confirm-booking-button">
+                            @(usingSkyMiles ? "Confirm & Pay with SkyMiles" : "Confirm Booking") <i class="fas fa-check-circle"></i>
                         </button>
                     </div>
                 </form>
@@ -175,6 +246,10 @@
                     <div class="breakdown-row discount-row @(Model.AppliedPromotionId.HasValue ? "is-visible" : "")" id="discount-row">
                         <span id="summary-discount-label">Promotion @(Model.DiscountPercent > 0 ? $"(-{Model.DiscountPercent}%)" : "")</span>
                         <span id="summary-discount-price">-@Model.DiscountAmount.ToString("N0") VND</span>
+                    </div>
+                    <div class="breakdown-row skymiles-row @(usingSkyMiles ? "is-visible" : "")" id="skymiles-row">
+                        <span>SkyMiles Needed</span>
+                        <span id="summary-skymiles-required">@Model.RequiredSkyMiles.ToString("N0") miles</span>
                     </div>
                     <div class="total-row">
                         <span>Total Payment</span>
@@ -284,6 +359,114 @@
         .form-row { display: flex; gap: 1.5rem; }
         .flex-1 { flex: 1; }
 
+        .payment-mode-panel {
+            margin-bottom: 1.6rem;
+            padding: 1.2rem;
+            border-radius: 18px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .payment-mode-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .payment-mode-header h3 {
+            color: #fff;
+            font-size: 1rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .payment-mode-header p {
+            color: rgba(255,255,255,0.58);
+            font-size: 0.82rem;
+        }
+
+        .payment-mode-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.9rem;
+        }
+
+        .payment-mode-card {
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.04);
+            border-radius: 16px;
+            padding: 1rem;
+            text-align: left;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+            transition: transform 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+        }
+
+        .payment-mode-card i {
+            color: var(--accent-gold);
+            font-size: 1.1rem;
+        }
+
+        .payment-mode-card span {
+            font-weight: 700;
+        }
+
+        .payment-mode-card small {
+            color: rgba(255,255,255,0.56);
+            line-height: 1.45;
+        }
+
+        .payment-mode-card.is-active {
+            border-color: rgba(23,170,184,0.5);
+            background: rgba(23,170,184,0.12);
+            transform: translateY(-2px);
+        }
+
+        .skymiles-balance-panel {
+            display: none;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.8rem;
+            margin-top: 1rem;
+        }
+
+        .skymiles-balance-panel.is-visible {
+            display: grid;
+        }
+
+        .balance-stat,
+        .balance-state {
+            border-radius: 14px;
+            padding: 0.9rem 1rem;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .balance-stat span,
+        .balance-state {
+            color: rgba(255,255,255,0.62);
+            font-size: 0.8rem;
+        }
+
+        .balance-stat strong {
+            display: block;
+            margin-top: 0.25rem;
+            color: #fff;
+            font-size: 1rem;
+        }
+
+        .balance-state.is-good {
+            color: #9df1c8;
+            border-color: rgba(93,232,168,0.25);
+        }
+
+        .balance-state.is-warning {
+            color: #ffd28e;
+            border-color: rgba(240,180,41,0.28);
+        }
+
         .promotion-panel {
             margin-bottom: 1.8rem;
             padding: 1.2rem;
@@ -315,6 +498,10 @@
             color: var(--ocean-foam);
             font-size: 0.82rem;
             font-weight: 700;
+        }
+
+        .promotion-link.is-hidden {
+            display: none;
         }
 
         .promotion-input-row {
@@ -370,6 +557,10 @@
             margin-top: 1rem;
         }
 
+        .promo-chip-list.is-hidden {
+            display: none;
+        }
+
         .promo-chip {
             display: inline-flex;
             align-items: center;
@@ -388,6 +579,19 @@
         .promo-chip-discount {
             color: var(--accent-gold);
             font-size: 0.82rem;
+        }
+
+        .promo-empty {
+            margin-top: 1rem;
+            padding: 0.9rem 1rem;
+            border-radius: 14px;
+            border: 1px dashed rgba(255,255,255,0.16);
+            color: rgba(255,255,255,0.6);
+            font-size: 0.82rem;
+        }
+
+        .promo-empty.is-hidden {
+            display: none;
         }
 
         .form-notice {
@@ -462,6 +666,8 @@
         .breakdown-row { display: flex; justify-content: space-between; font-size: 0.85rem; color: rgba(255,255,255,0.5); }
         .discount-row { display: none; color: #9df1c8; }
         .discount-row.is-visible { display: flex; }
+        .skymiles-row { display: none; color: var(--ocean-foam); }
+        .skymiles-row.is-visible { display: flex; }
         .total-row { display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 1.2rem; font-weight: 700; color: var(--accent-gold); }
 
         .sticky-card { position: sticky; top: 100px; }
@@ -472,6 +678,39 @@
     <script>
         function formatMoney(value) {
             return Number(value || 0).toLocaleString('en-US') + ' VND';
+        }
+
+        function formatMiles(value) {
+            return Number(value || 0).toLocaleString('en-US') + ' miles';
+        }
+
+        function isSkyMilesPaymentSelected() {
+            return String(document.getElementById('UseSkyMilesPayment').value || '').toLowerCase() === 'true';
+        }
+
+        function updateSkyMilesState(requiredMiles) {
+            const parsedRequiredMiles = Number(requiredMiles || 0);
+            const currentMiles = Number(document.getElementById('CurrentSkyMiles').value || 0);
+            const canAfford = currentMiles >= parsedRequiredMiles;
+
+            document.getElementById('RequiredSkyMiles').value = parsedRequiredMiles;
+            document.getElementById('skymiles-current').textContent = formatMiles(currentMiles);
+            document.getElementById('skymiles-required').textContent = formatMiles(parsedRequiredMiles);
+            document.getElementById('summary-skymiles-required').textContent = formatMiles(parsedRequiredMiles);
+
+            const affordability = document.getElementById('skymiles-affordability');
+            affordability.classList.toggle('is-good', canAfford);
+            affordability.classList.toggle('is-warning', !canAfford);
+            affordability.textContent = canAfford
+                ? 'Your current balance is enough for this reward booking.'
+                : 'You do not have enough SkyMiles for this reward booking yet.';
+
+            const confirmButton = document.getElementById('confirm-booking-button');
+            if (isSkyMilesPaymentSelected()) {
+                confirmButton.disabled = !canAfford;
+            } else {
+                confirmButton.disabled = false;
+            }
         }
 
         function setPromotionSummary(data) {
@@ -485,6 +724,7 @@
             document.getElementById('summary-base-price').textContent = formatMoney(data.baseFare);
             document.getElementById('summary-tax-price').textContent = formatMoney(data.taxAmount);
             document.getElementById('summary-final-price').textContent = formatMoney(data.finalAmount);
+            updateSkyMilesState(data.requiredSkyMiles || 0);
 
             const discountRow = document.getElementById('discount-row');
             const discountLabel = document.getElementById('summary-discount-label');
@@ -521,8 +761,38 @@
                 baseFare: document.getElementById('Price').value || 0,
                 taxAmount: document.getElementById('TaxAmount').value || 0,
                 discountAmount: 0,
-                finalAmount: (Number(document.getElementById('Price').value || 0) + Number(document.getElementById('TaxAmount').value || 0))
+                finalAmount: (Number(document.getElementById('Price').value || 0) + Number(document.getElementById('TaxAmount').value || 0)),
+                requiredSkyMiles: Math.ceil((Number(document.getElementById('Price').value || 0) + Number(document.getElementById('TaxAmount').value || 0)) / 1000)
             });
+        }
+
+        function switchPaymentMode(useSkyMiles, preservePromotion) {
+            document.getElementById('UseSkyMilesPayment').value = useSkyMiles ? 'true' : 'false';
+
+            document.getElementById('payment-mode-online').classList.toggle('is-active', !useSkyMiles);
+            document.getElementById('payment-mode-skymiles').classList.toggle('is-active', useSkyMiles);
+            document.getElementById('skymiles-balance-panel').classList.toggle('is-visible', useSkyMiles);
+            document.getElementById('public-promotion-link').classList.toggle('is-hidden', useSkyMiles);
+            document.getElementById('skymiles-shop-link').classList.toggle('is-hidden', !useSkyMiles);
+            document.getElementById('public-promo-list').classList.toggle('is-hidden', useSkyMiles);
+            document.getElementById('skymiles-promo-list').classList.toggle('is-hidden', !useSkyMiles);
+            document.getElementById('skymiles-row').classList.toggle('is-visible', useSkyMiles);
+            document.getElementById('skymiles-promo-empty').classList.toggle(
+                'is-hidden',
+                !useSkyMiles || document.querySelectorAll('#skymiles-promo-list .promo-chip').length > 0);
+
+            document.getElementById('promotion-title').textContent = useSkyMiles ? 'SkyMiles Reward Code' : 'Promotion Code';
+            document.getElementById('promotion-subtitle').textContent = useSkyMiles
+                ? 'Only codes you already bought in the SkyMiles Shop can be applied here.'
+                : 'Enter a code from the active offers below.';
+            document.getElementById('promoCodeInput').placeholder = useSkyMiles ? 'Example: MILES12' : 'Example: NEWUSER10';
+            document.getElementById('confirm-booking-button').innerHTML = (useSkyMiles ? 'Confirm & Pay with SkyMiles' : 'Confirm Booking') + ' <i class="fas fa-check-circle"></i>';
+
+            if (!preservePromotion) {
+                clearPromotion();
+            } else {
+                updateSkyMilesState(document.getElementById('RequiredSkyMiles').value || 0);
+            }
         }
 
         async function applyPromotion() {
@@ -537,7 +807,8 @@
             const params = new URLSearchParams({
                 scheduleId: document.getElementById('ScheduleId').value,
                 seatId: document.getElementById('SeatId').value,
-                code
+                code,
+                useSkyMilesPayment: isSkyMilesPaymentSelected()
             });
 
             try {
@@ -545,12 +816,7 @@
                 const result = await response.json();
 
                 if (!result.success) {
-                    document.getElementById('PromoCode').value = code;
-                    document.getElementById('AppliedPromotionId').value = '';
-                    document.getElementById('DiscountPercent').value = 0;
-                    document.getElementById('DiscountAmount').value = 0;
-                    document.getElementById('FinalPrice').value = Number(document.getElementById('Price').value || 0) + Number(document.getElementById('TaxAmount').value || 0);
-                    document.getElementById('discount-row').classList.remove('is-visible');
+                    resetPromotionValues();
                     setFeedback(result.message || 'Promotion code is invalid.', false);
                     return;
                 }
@@ -565,15 +831,7 @@
 
         function clearPromotion() {
             document.getElementById('promoCodeInput').value = '';
-            document.getElementById('PromoCode').value = '';
-            document.getElementById('AppliedPromotionId').value = '';
-            document.getElementById('DiscountPercent').value = 0;
-            document.getElementById('DiscountAmount').value = 0;
-            document.getElementById('FinalPrice').value = Number(document.getElementById('Price').value || 0) + Number(document.getElementById('TaxAmount').value || 0);
-            document.getElementById('discount-row').classList.remove('is-visible');
-            document.getElementById('summary-discount-label').textContent = 'Promotion';
-            document.getElementById('summary-discount-price').textContent = '-0 VND';
-            document.getElementById('summary-final-price').textContent = formatMoney(Number(document.getElementById('Price').value || 0) + Number(document.getElementById('TaxAmount').value || 0));
+            resetPromotionValues();
             setFeedback('', true);
         }
 
@@ -583,6 +841,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', function () {
+            switchPaymentMode(isSkyMilesPaymentSelected(), true);
             document.querySelector('.passenger-form')?.addEventListener('submit', function () {
                 document.getElementById('PromoCode').value = (document.getElementById('promoCodeInput').value || '').trim().toUpperCase();
             });

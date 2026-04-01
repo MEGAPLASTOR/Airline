@@ -1,0 +1,292 @@
+@model Airline.Models.ManageSkyMilesViewModel
+@{
+    ViewData["Title"] = "Manage SkyMiles Shop";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var successMessage = TempData["SuccessMessage"] as string;
+    var errorMessage = TempData["ErrorMessage"] as string;
+}
+
+<div class="page-header">
+    <div>
+        <div class="page-greeting">Commerce</div>
+        <h1 class="page-title">Manage <span>SkyMiles Shop</span></h1>
+        <p class="page-subtitle">Create reward-booking promo codes that users can buy with SkyMiles, then track purchase and redemption activity.</p>
+    </div>
+    <div class="page-actions">
+        <a asp-action="ManageSkyMiles" class="btn-ghost"><i class="fa-solid fa-rotate"></i> Reset Form</a>
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(successMessage))
+{
+    <div class="admin-banner success">@successMessage</div>
+}
+
+@if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="admin-banner error">@errorMessage</div>
+}
+
+<div asp-validation-summary="All" class="admin-banner error validation-summary"></div>
+
+<div class="skymiles-admin-grid">
+    <section class="admin-card-shell form-shell">
+        <div class="card-top">
+            <div>
+                <h2>@(Model.Form.PromoId.HasValue ? "Edit Shop Code" : "Create Shop Code")</h2>
+                <p>These codes will only work on bookings paid with SkyMiles.</p>
+            </div>
+        </div>
+
+        <form asp-action="SaveSkyMilesPromotion" method="post" class="admin-form">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Form.PromoId" />
+
+            <label>Title</label>
+            <input asp-for="Form.Title" class="field" placeholder="Example: Sky Saver 15" />
+            <span asp-validation-for="Form.Title" class="text-danger"></span>
+
+            <label>Description</label>
+            <textarea asp-for="Form.Description" class="field textarea" placeholder="Short explanation shown in the user shop."></textarea>
+            <span asp-validation-for="Form.Description" class="text-danger"></span>
+
+            <div class="field-grid">
+                <div>
+                    <label>Promo Code</label>
+                    <input asp-for="Form.PromoCode" class="field" placeholder="Example: MILES15" />
+                    <span asp-validation-for="Form.PromoCode" class="text-danger"></span>
+                </div>
+                <div>
+                    <label>Discount Percent</label>
+                    <input asp-for="Form.DiscountPercent" class="field" />
+                    <span asp-validation-for="Form.DiscountPercent" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="field-grid">
+                <div>
+                    <label>SkyMiles Cost</label>
+                    <input asp-for="Form.SkyMilesCost" class="field" />
+                    <span asp-validation-for="Form.SkyMilesCost" class="text-danger"></span>
+                </div>
+                <div>
+                    <label>Start Date</label>
+                    <input asp-for="Form.StartDate" class="field" type="date" />
+                    <span asp-validation-for="Form.StartDate" class="text-danger"></span>
+                </div>
+            </div>
+
+            <label>End Date</label>
+            <input asp-for="Form.EndDate" class="field" type="date" />
+            <span asp-validation-for="Form.EndDate" class="text-danger"></span>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    @(Model.Form.PromoId.HasValue ? "Update SkyMiles Code" : "Create SkyMiles Code")
+                </button>
+            </div>
+        </form>
+    </section>
+
+    <section class="admin-card-shell table-shell">
+        <div class="card-top">
+            <div>
+                <h2>Shop Inventory</h2>
+                <p>@Model.Promotions.Count reward code(s) currently configured.</p>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Offer</th>
+                        <th>Cost</th>
+                        <th>Window</th>
+                        <th>Purchased</th>
+                        <th>Available</th>
+                        <th>Used</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var promo in Model.Promotions)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@promo.PromoCode</strong>
+                                <div class="muted">-@promo.DiscountPercent%</div>
+                            </td>
+                            <td>
+                                <strong>@promo.Title</strong>
+                                <div class="muted">@promo.Description</div>
+                            </td>
+                            <td>@promo.SkyMilesCost.ToString("N0") miles</td>
+                            <td>@(promo.StartDate?.ToString("dd/MM/yyyy")) - @(promo.EndDate?.ToString("dd/MM/yyyy"))</td>
+                            <td>@promo.TotalPurchased</td>
+                            <td>@promo.TotalAvailable</td>
+                            <td>@promo.TotalRedeemed</td>
+                            <td class="actions-cell">
+                                <a asp-action="ManageSkyMiles" asp-route-editId="@promo.PromoId" class="btn-mini edit">Edit</a>
+                                <form asp-action="DeleteSkyMilesPromotion" method="post" onsubmit="return confirm('Delete this SkyMiles shop code?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@promo.PromoId" />
+                                    <button type="submit" class="btn-mini delete">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+@section Styles {
+    <style>
+        .admin-banner {
+            border-radius: 16px;
+            padding: 0.95rem 1rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .admin-banner.success {
+            background: rgba(93,232,168,0.12);
+            border: 1px solid rgba(93,232,168,0.26);
+            color: #abf1c8;
+        }
+
+        .admin-banner.error {
+            background: rgba(255,107,107,0.12);
+            border: 1px solid rgba(255,107,107,0.24);
+            color: #ffb4b4;
+        }
+
+        .validation-summary:empty {
+            display: none;
+        }
+
+        .skymiles-admin-grid {
+            display: grid;
+            grid-template-columns: 360px minmax(0, 1fr);
+            gap: 1.2rem;
+            align-items: start;
+        }
+
+        .admin-card-shell {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 24px;
+            padding: 1.4rem;
+        }
+
+        .card-top h2 {
+            color: #fff;
+            margin-bottom: 0.2rem;
+        }
+
+        .card-top p {
+            color: rgba(255,255,255,0.58);
+            margin-bottom: 1rem;
+        }
+
+        .admin-form {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .admin-form label {
+            color: rgba(255,255,255,0.66);
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .field {
+            width: 100%;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.04);
+            color: #fff;
+            padding: 0.88rem 1rem;
+        }
+
+        .textarea {
+            min-height: 110px;
+            resize: vertical;
+        }
+
+        .field-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.8rem;
+        }
+
+        .form-actions {
+            margin-top: 0.4rem;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .admin-table th,
+        .admin-table td {
+            padding: 0.95rem 0.75rem;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            vertical-align: top;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .admin-table th {
+            text-align: left;
+            font-size: 0.74rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: rgba(255,255,255,0.42);
+        }
+
+        .muted {
+            color: rgba(255,255,255,0.48);
+            font-size: 0.84rem;
+            margin-top: 0.28rem;
+        }
+
+        .actions-cell {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-mini {
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+            border-radius: 999px;
+            padding: 0.45rem 0.8rem;
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+
+        .btn-mini.edit {
+            color: #9df1c8;
+        }
+
+        .btn-mini.delete {
+            color: #ffb4b4;
+        }
+
+        @@media (max-width: 1100px) {
+            .skymiles-admin-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+}

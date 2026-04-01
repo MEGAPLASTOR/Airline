@@ -1,0 +1,380 @@
+@model Airline.Models.SkyMilesShopViewModel
+@{
+    ViewData["Title"] = "SkyMiles Shop";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var successMessage = TempData["SuccessMessage"] as string;
+    var errorMessage = TempData["ErrorMessage"] as string;
+}
+
+<div class="miles-shop-page">
+    <section class="miles-hero">
+        <div>
+            <div class="eyebrow">Reward Booking Center</div>
+            <h1>SkyMiles <span>Shop</span></h1>
+            <p>Buy reward-only promo codes with your miles, then apply them when paying for flights with SkyMiles.</p>
+        </div>
+        <div class="balance-card">
+            <span>Current balance</span>
+            <strong>@Model.CurrentSkyMiles.ToString("N0")</strong>
+            <small>miles available</small>
+        </div>
+    </section>
+
+    @if (!string.IsNullOrWhiteSpace(successMessage))
+    {
+        <div class="banner banner-success">@successMessage</div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <div class="banner banner-error">@errorMessage</div>
+    }
+
+    <section class="section-block">
+        <div class="section-head">
+            <div>
+                <h2>Reward Code Shop</h2>
+                <p>These codes are only valid for bookings paid with SkyMiles.</p>
+            </div>
+            <a asp-controller="Booking" asp-action="BookFlight" class="shop-link">Book a reward flight</a>
+        </div>
+
+        <div class="shop-grid">
+            @foreach (var item in Model.ShopItems)
+            {
+                <article class="shop-card">
+                    <div class="shop-card-top">
+                        <span class="shop-badge">@item.PromoCode</span>
+                        <span class="shop-discount">-@item.DiscountPercent%</span>
+                    </div>
+                    <h3>@item.Title</h3>
+                    <p>@item.Description</p>
+                    <div class="shop-meta">
+                        <span>@item.ValidityText</span>
+                        <strong>@item.SkyMilesCost.ToString("N0") miles</strong>
+                    </div>
+
+                    @if (item.AlreadyOwned)
+                    {
+                        <div class="shop-state owned">You already own an unused copy of this code.</div>
+                    }
+                    else if (!item.CanAfford)
+                    {
+                        <div class="shop-state warning">You need more SkyMiles to unlock this reward.</div>
+                    }
+                    else
+                    {
+                        <form asp-action="PurchasePromotion" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="promoId" value="@item.PromoId" />
+                            <button type="submit" class="buy-button">Buy with SkyMiles</button>
+                        </form>
+                    }
+                </article>
+            }
+        </div>
+    </section>
+
+    <section class="section-block">
+        <div class="section-head">
+            <div>
+                <h2>My Reward Codes</h2>
+                <p>Unused codes can be applied on the passenger information page after choosing “Pay with SkyMiles”.</p>
+            </div>
+        </div>
+
+        @if (Model.OwnedPromotions.Any())
+        {
+            <div class="owned-grid">
+                @foreach (var promo in Model.OwnedPromotions)
+                {
+                    <article class="owned-card @(promo.IsRedeemed ? "used" : promo.IsExpired ? "expired" : "ready")">
+                        <div class="owned-top">
+                            <span class="shop-badge">@promo.PromoCode</span>
+                            <span class="owned-status">@promo.StatusText</span>
+                        </div>
+                        <h3>@promo.Title</h3>
+                        <p>@promo.Description</p>
+                        <div class="owned-meta">
+                            <span>Discount</span>
+                            <strong>-@promo.DiscountPercent%</strong>
+                        </div>
+                        <div class="owned-meta">
+                            <span>Bought with</span>
+                            <strong>@promo.SkyMilesSpent.ToString("N0") miles</strong>
+                        </div>
+                        <div class="owned-meta">
+                            <span>Purchased at</span>
+                            <strong>@promo.PurchasedAt.ToString("dd/MM/yyyy HH:mm")</strong>
+                        </div>
+                        @if (promo.EndDate.HasValue)
+                        {
+                            <div class="owned-meta">
+                                <span>Valid until</span>
+                                <strong>@promo.EndDate.Value.ToString("dd/MM/yyyy")</strong>
+                            </div>
+                        }
+                    </article>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="fas fa-ticket"></i>
+                <p>You have not purchased any reward codes yet.</p>
+            </div>
+        }
+    </section>
+</div>
+
+@section Styles {
+    <style>
+        .miles-shop-page {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding-bottom: 4rem;
+        }
+
+        .miles-hero {
+            display: flex;
+            justify-content: space-between;
+            gap: 1.5rem;
+            align-items: stretch;
+            margin-bottom: 2rem;
+        }
+
+        .eyebrow {
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            font-size: 0.7rem;
+            color: var(--ocean-aqua);
+            margin-bottom: 0.6rem;
+            font-weight: 700;
+        }
+
+        .miles-hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            color: #fff;
+            margin-bottom: 0.6rem;
+        }
+
+        .miles-hero h1 span {
+            color: var(--accent-gold);
+        }
+
+        .miles-hero p {
+            color: rgba(255,255,255,0.68);
+            max-width: 640px;
+            line-height: 1.6;
+        }
+
+        .balance-card {
+            min-width: 260px;
+            border-radius: 28px;
+            padding: 1.4rem;
+            background: linear-gradient(135deg, rgba(23,170,184,0.96), rgba(13,127,143,0.92));
+            color: #fff;
+            box-shadow: 0 20px 40px rgba(13,127,143,0.25);
+        }
+
+        .balance-card span,
+        .balance-card small {
+            display: block;
+            color: rgba(255,255,255,0.78);
+        }
+
+        .balance-card strong {
+            display: block;
+            font-family: 'Playfair Display', serif;
+            font-size: 2.6rem;
+            margin: 0.4rem 0;
+        }
+
+        .banner {
+            padding: 0.95rem 1.1rem;
+            border-radius: 16px;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .banner-success {
+            background: rgba(93,232,168,0.12);
+            border: 1px solid rgba(93,232,168,0.28);
+            color: #aef5ca;
+        }
+
+        .banner-error {
+            background: rgba(255,107,107,0.12);
+            border: 1px solid rgba(255,107,107,0.26);
+            color: #ffb4b4;
+        }
+
+        .section-block {
+            margin-top: 1.6rem;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 28px;
+            padding: 1.5rem;
+        }
+
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.2rem;
+        }
+
+        .section-head h2 {
+            color: #fff;
+            margin-bottom: 0.2rem;
+        }
+
+        .section-head p {
+            color: rgba(255,255,255,0.58);
+        }
+
+        .shop-link {
+            color: var(--ocean-foam);
+            font-weight: 700;
+        }
+
+        .shop-grid,
+        .owned-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1rem;
+        }
+
+        .shop-card,
+        .owned-card {
+            border-radius: 22px;
+            padding: 1.2rem;
+            background: rgba(6,21,37,0.48);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .shop-card-top,
+        .owned-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 0.75rem;
+            align-items: center;
+            margin-bottom: 0.8rem;
+        }
+
+        .shop-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.34rem 0.72rem;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+
+        .shop-discount,
+        .owned-status {
+            color: var(--accent-gold);
+            font-weight: 700;
+        }
+
+        .shop-card h3,
+        .owned-card h3 {
+            color: #fff;
+            margin-bottom: 0.45rem;
+        }
+
+        .shop-card p,
+        .owned-card p {
+            color: rgba(255,255,255,0.62);
+            line-height: 1.55;
+            min-height: 3.2rem;
+        }
+
+        .shop-meta,
+        .owned-meta {
+            display: flex;
+            justify-content: space-between;
+            gap: 0.75rem;
+            align-items: center;
+            padding-top: 0.8rem;
+            margin-top: 0.8rem;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            color: rgba(255,255,255,0.55);
+            font-size: 0.9rem;
+        }
+
+        .shop-meta strong,
+        .owned-meta strong {
+            color: #fff;
+        }
+
+        .shop-state {
+            margin-top: 0.9rem;
+            border-radius: 14px;
+            padding: 0.8rem 0.95rem;
+            font-size: 0.88rem;
+            font-weight: 600;
+        }
+
+        .shop-state.owned {
+            background: rgba(93,232,168,0.12);
+            color: #abf1c8;
+        }
+
+        .shop-state.warning {
+            background: rgba(240,180,41,0.14);
+            color: #ffd590;
+        }
+
+        .buy-button {
+            width: 100%;
+            margin-top: 0.9rem;
+            border: none;
+            border-radius: 16px;
+            padding: 0.95rem 1rem;
+            font-weight: 800;
+            color: #071421;
+            background: linear-gradient(135deg, var(--accent-gold), #ffd56a);
+        }
+
+        .owned-card.ready .owned-status {
+            color: #9df1c8;
+        }
+
+        .owned-card.used .owned-status {
+            color: #ffb4b4;
+        }
+
+        .owned-card.expired .owned-status {
+            color: #ffd590;
+        }
+
+        .empty-state {
+            border-radius: 22px;
+            padding: 2rem;
+            text-align: center;
+            border: 1px dashed rgba(255,255,255,0.12);
+            color: rgba(255,255,255,0.56);
+        }
+
+        .empty-state i {
+            font-size: 2rem;
+            margin-bottom: 0.8rem;
+        }
+
+        @@media (max-width: 860px) {
+            .miles-hero {
+                flex-direction: column;
+            }
+
+            .balance-card {
+                min-width: 0;
+            }
+        }
+    </style>
+}

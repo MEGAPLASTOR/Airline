@@ -34,4 +34,6 @@ public partial class User
     public string? Cccd { get; set; }
 
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+
+    public virtual ICollection<UserPromotion> UserPromotions { get; set; } = new List<UserPromotion>();
 }

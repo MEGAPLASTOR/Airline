@@ -28,6 +28,7 @@ public partial class DataContext : DbContext
     public virtual DbSet<TicketClass> TicketClasses { get; set; }
     public virtual DbSet<TicketPrice> TicketPrices { get; set; }
     public virtual DbSet<User> Users { get; set; }
+    public virtual DbSet<UserPromotion> UserPromotions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -205,12 +206,21 @@ public partial class DataContext : DbContext
             entity.HasIndex(e => e.PromoCode).IsUnique();
 
             entity.Property(e => e.PromoId).HasColumnName("promo_id");
+            entity.Property(e => e.Description)
+                .HasMaxLength(300)
+                .HasColumnName("description");
             entity.Property(e => e.DiscountPercent).HasColumnName("discount_percent");
             entity.Property(e => e.EndDate).HasColumnName("end_date");
+            entity.Property(e => e.IsSkyMilesExclusive).HasColumnName("is_skymiles_exclusive");
+            entity.Property(e => e.OnlyForSkyMilesPayment).HasColumnName("only_for_skymiles_payment");
             entity.Property(e => e.PromoCode)
                 .HasMaxLength(50)
                 .HasColumnName("promo_code");
+            entity.Property(e => e.SkyMilesCost).HasColumnName("sky_miles_cost");
             entity.Property(e => e.StartDate).HasColumnName("start_date");
+            entity.Property(e => e.Title)
+                .HasMaxLength(100)
+                .HasColumnName("title");
         });
 
         modelBuilder.Entity<Route>(entity =>
@@ -369,6 +379,37 @@ public partial class DataContext : DbContext
             entity.Property(e => e.Username)
                 .HasMaxLength(50)
                 .HasColumnName("username");
+        });
+
+        modelBuilder.Entity<UserPromotion>(entity =>
+        {
+            entity.HasKey(e => e.UserPromotionId);
+
+            entity.HasIndex(e => new { e.UserId, e.PromoId }, "IX_UserPromotions_user_promo");
+
+            entity.Property(e => e.UserPromotionId).HasColumnName("user_promotion_id");
+            entity.Property(e => e.IsRedeemed).HasColumnName("is_redeemed");
+            entity.Property(e => e.PromoId).HasColumnName("promo_id");
+            entity.Property(e => e.PurchasedAt)
+                .HasColumnType("datetime")
+                .HasColumnName("purchased_at");
+            entity.Property(e => e.RedeemedAt)
+                .HasColumnType("datetime")
+                .HasColumnName("redeemed_at");
+            entity.Property(e => e.RedeemedBookingId).HasColumnName("redeemed_booking_id");
+            entity.Property(e => e.SkyMilesSpent).HasColumnName("sky_miles_spent");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+
+            entity.HasOne(d => d.Promo).WithMany(p => p.UserPromotions)
+                .HasForeignKey(d => d.PromoId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+
+            entity.HasOne(d => d.RedeemedBooking).WithMany(p => p.UserPromotionsRedeemed)
+                .HasForeignKey(d => d.RedeemedBookingId);
+
+            entity.HasOne(d => d.User).WithMany(p => p.UserPromotions)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
         });
 
         SeedData(modelBuilder);
@@ -595,42 +636,106 @@ public partial class DataContext : DbContext
             new Promotion
             {
                 PromoId = 1,
+                Title = "Welcome Aboard",
+                Description = "Starter discount for new customers paying with regular online methods.",
                 PromoCode = "NEWUSER10",
                 DiscountPercent = 10,
+                IsSkyMilesExclusive = false,
+                OnlyForSkyMilesPayment = false,
+                SkyMilesCost = 0,
                 StartDate = new DateOnly(2026, 04, 01),
                 EndDate = new DateOnly(2026, 04, 30)
             },
             new Promotion
             {
                 PromoId = 2,
+                Title = "Summer Escape",
+                Description = "Seasonal online promotion for summer departures.",
                 PromoCode = "SUMMER15",
                 DiscountPercent = 15,
+                IsSkyMilesExclusive = false,
+                OnlyForSkyMilesPayment = false,
+                SkyMilesCost = 0,
                 StartDate = new DateOnly(2026, 05, 01),
                 EndDate = new DateOnly(2026, 05, 31)
             },
             new Promotion
             {
                 PromoId = 3,
+                Title = "VIP Traveller",
+                Description = "A premium campaign code for high-value online bookings.",
                 PromoCode = "VIP20",
                 DiscountPercent = 20,
+                IsSkyMilesExclusive = false,
+                OnlyForSkyMilesPayment = false,
+                SkyMilesCost = 0,
                 StartDate = new DateOnly(2026, 04, 10),
                 EndDate = new DateOnly(2026, 06, 10)
             },
             new Promotion
             {
                 PromoId = 4,
+                Title = "Holiday Special",
+                Description = "Holiday booking discount for standard payments.",
                 PromoCode = "HOLIDAY12",
                 DiscountPercent = 12,
+                IsSkyMilesExclusive = false,
+                OnlyForSkyMilesPayment = false,
+                SkyMilesCost = 0,
                 StartDate = new DateOnly(2026, 06, 01),
                 EndDate = new DateOnly(2026, 06, 30)
             },
             new Promotion
             {
                 PromoId = 5,
+                Title = "Flash Sale",
+                Description = "Short online flash sale for standard fare purchases.",
                 PromoCode = "FLASH8",
                 DiscountPercent = 8,
+                IsSkyMilesExclusive = false,
+                OnlyForSkyMilesPayment = false,
+                SkyMilesCost = 0,
                 StartDate = new DateOnly(2026, 04, 15),
                 EndDate = new DateOnly(2026, 04, 20)
+            },
+            new Promotion
+            {
+                PromoId = 6,
+                Title = "Sky Saver 12",
+                Description = "Redeem this shop code to reduce the SkyMiles cost of your next reward booking by 12 percent.",
+                PromoCode = "MILES12",
+                DiscountPercent = 12,
+                IsSkyMilesExclusive = true,
+                OnlyForSkyMilesPayment = true,
+                SkyMilesCost = 250,
+                StartDate = new DateOnly(2026, 04, 01),
+                EndDate = new DateOnly(2026, 07, 31)
+            },
+            new Promotion
+            {
+                PromoId = 7,
+                Title = "Sky Saver 18",
+                Description = "Higher-value reward code for customers redeeming SkyMiles on flights.",
+                PromoCode = "MILES18",
+                DiscountPercent = 18,
+                IsSkyMilesExclusive = true,
+                OnlyForSkyMilesPayment = true,
+                SkyMilesCost = 450,
+                StartDate = new DateOnly(2026, 04, 01),
+                EndDate = new DateOnly(2026, 08, 15)
+            },
+            new Promotion
+            {
+                PromoId = 8,
+                Title = "Sky Saver 25",
+                Description = "Premium reward-booking code that cuts the miles needed on your next SkyMiles purchase.",
+                PromoCode = "MILES25",
+                DiscountPercent = 25,
+                IsSkyMilesExclusive = true,
+                OnlyForSkyMilesPayment = true,
+                SkyMilesCost = 700,
+                StartDate = new DateOnly(2026, 04, 05),
+                EndDate = new DateOnly(2026, 09, 01)
             }
         );
 
@@ -801,6 +906,31 @@ public partial class DataContext : DbContext
             new BookingPromotion { Id = 3, BookingId = 3, PromoId = 3 },
             new BookingPromotion { Id = 4, BookingId = 4, PromoId = 4 },
             new BookingPromotion { Id = 5, BookingId = 5, PromoId = 5 }
+        );
+
+        modelBuilder.Entity<UserPromotion>().HasData(
+            new UserPromotion
+            {
+                UserPromotionId = 1,
+                UserId = 1,
+                PromoId = 6,
+                PurchasedAt = new DateTime(2026, 04, 01, 9, 0, 0),
+                SkyMilesSpent = 250,
+                IsRedeemed = false,
+                RedeemedAt = null,
+                RedeemedBookingId = null
+            },
+            new UserPromotion
+            {
+                UserPromotionId = 2,
+                UserId = 4,
+                PromoId = 7,
+                PurchasedAt = new DateTime(2026, 04, 01, 9, 30, 0),
+                SkyMilesSpent = 450,
+                IsRedeemed = false,
+                RedeemedAt = null,
+                RedeemedBookingId = null
+            }
         );
     }
 }

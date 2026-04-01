@@ -12,6 +12,8 @@ public class PromotionPricingResult
 
     public decimal FinalAmount { get; set; }
 
+    public int RequiredSkyMiles { get; set; }
+
     public int? AppliedPromotionId { get; set; }
 
     public string? AppliedPromotionCode { get; set; }

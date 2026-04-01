@@ -326,12 +326,20 @@
         }
 
         .miles-card {
+            display: block;
             background: linear-gradient(135deg, var(--ocean-teal) 0%, var(--ocean-aqua) 100%);
             border-radius: var(--radius-lg);
             padding: 0.85rem 1rem;
             position: relative;
             overflow: hidden;
+            color: inherit;
+            transition: transform var(--transition), box-shadow var(--transition), opacity var(--transition);
         }
+
+            .miles-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 24px rgba(23,170,184,0.28);
+            }
 
             .miles-card::after {
                 content: '';
@@ -1381,10 +1389,10 @@
         <div class="sidebar-footer">
             @if (isLoggedIn)
             {
-                <div class="miles-card">
+                <a asp-controller="Miles" asp-action="Index" class="miles-card">
                     <div class="miles-label">Sky Miles Balance</div>
                     <div class="miles-value">@skyMiles.ToString("N0") <span>miles</span></div>
-                </div>
+                </a>
             }
             else
             {

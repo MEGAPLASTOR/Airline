@@ -9,11 +9,23 @@ public partial class Promotion
 
     public string? PromoCode { get; set; }
 
+    public string? Title { get; set; }
+
+    public string? Description { get; set; }
+
     public int? DiscountPercent { get; set; }
+
+    public bool IsSkyMilesExclusive { get; set; }
+
+    public bool OnlyForSkyMilesPayment { get; set; }
+
+    public int SkyMilesCost { get; set; }
 
     public DateOnly? StartDate { get; set; }
 
     public DateOnly? EndDate { get; set; }
 
     public virtual ICollection<BookingPromotion> BookingPromotions { get; set; } = new List<BookingPromotion>();
+
+    public virtual ICollection<UserPromotion> UserPromotions { get; set; } = new List<UserPromotion>();
 }
