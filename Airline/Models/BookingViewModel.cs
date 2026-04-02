@@ -34,15 +34,15 @@ namespace Airline.Models
 
         public decimal DiscountAmount { get; set; }
 
+        public int SkyMilesToRedeem { get; set; }
+
+        public int SkyMilesDiscountPercent { get; set; }
+
+        public decimal SkyMilesDiscountAmount { get; set; }
+
         public decimal FinalPrice { get; set; }
 
-        public bool UseSkyMilesPayment { get; set; }
-
         public int CurrentSkyMiles { get; set; }
-
-        public int RequiredSkyMiles { get; set; }
-
-        public bool CanAffordWithSkyMiles { get; set; }
 
         public List<Promotion> AvailablePromotions { get; set; } = new();
 

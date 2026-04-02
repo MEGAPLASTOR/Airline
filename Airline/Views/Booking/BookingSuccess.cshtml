@@ -25,41 +25,38 @@
                 </div>
             </div>
             <div class="info-item">
-                <i class="fas @(Model.WasPaidWithSkyMiles ? "fa-coins" : "fa-credit-card")"></i>
+                <i class="fas fa-credit-card"></i>
                 <div class="text">
                     <strong>Payment Status</strong>
-                    @if (Model.WasPaidWithSkyMiles)
-                    {
-                        <span>
-                            Paid with <strong>@Model.SkyMilesSpent.ToString("N0") SkyMiles</strong>.
-                            Remaining balance: <strong>@Model.CurrentSkyMiles.ToString("N0") miles</strong>.
-                            @if (!string.IsNullOrWhiteSpace(Model.PromoCode))
-                            {
-                                <text> Code <strong>@Model.PromoCode</strong> was applied to this reward booking.</text>
-                            }
-                        </span>
-                    }
-                    else
-                    {
-                        <span>Pending payment (Please pay within 24 hours).</span>
-                    }
+                    <span>Pending payment (Please pay within 24 hours).</span>
+                </div>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-tags"></i>
+                <div class="text">
+                    <strong>Discount Summary</strong>
+                    <span>
+                        @if (Model.HasSkyMilesDiscount)
+                        {
+                            <text>Reserved <strong>@Model.SkyMilesRedeemed.ToString("N0") SkyMiles</strong> for <strong>@Model.SkyMilesDiscountPercent}% off</strong>. Remaining balance: <strong>@Model.CurrentSkyMiles.ToString("N0") miles</strong>. </text>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Model.PromoCode))
+                        {
+                            <text>Promotion code <strong>@Model.PromoCode</strong> is attached to this booking.</text>
+                        }
+                        @if (!Model.HasSkyMilesDiscount && string.IsNullOrWhiteSpace(Model.PromoCode))
+                        {
+                            <text>No extra discount was applied to this booking.</text>
+                        }
+                    </span>
                 </div>
             </div>
         </div>
 
         <div class="action-buttons">
-            @if (!Model.WasPaidWithSkyMiles)
-            {
-                <a asp-controller="Payment" asp-action="CreatePayment" asp-route-id="@Model.BookingId" class="btn-pay-now">
-                    Pay Now <i class="fas fa-credit-card"></i>
-                </a>
-            }
-            else
-            {
-                <a asp-controller="Miles" asp-action="Index" class="btn-pay-now">
-                    Open SkyMiles Shop <i class="fas fa-bag-shopping"></i>
-                </a>
-            }
+            <a asp-controller="Payment" asp-action="CreatePayment" asp-route-id="@Model.BookingId" class="btn-pay-now">
+                Pay Now <i class="fas fa-credit-card"></i>
+            </a>
             <a asp-controller="Ticket" asp-action="ViewConfirmation" class="btn-view-tickets">
                 View My Tickets <i class="fas fa-ticket-alt"></i>
             </a>

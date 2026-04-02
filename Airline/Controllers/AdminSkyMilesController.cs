@@ -61,7 +61,7 @@ namespace Airline.Controllers
             promotion.DiscountPercent = form.DiscountPercent;
             promotion.SkyMilesCost = form.SkyMilesCost;
             promotion.IsSkyMilesExclusive = true;
-            promotion.OnlyForSkyMilesPayment = true;
+            promotion.OnlyForSkyMilesPayment = false;
             promotion.StartDate = form.StartDate;
             promotion.EndDate = form.EndDate;
 

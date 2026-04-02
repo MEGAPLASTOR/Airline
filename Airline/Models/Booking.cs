@@ -15,6 +15,8 @@ public partial class Booking
 
     public DateTime? BookingDate { get; set; }
 
+    public int SkyMilesRedeemed { get; set; }
+
     public string? Status { get; set; }
 
     public virtual ICollection<BookingPromotion> BookingPromotions { get; set; } = new List<BookingPromotion>();

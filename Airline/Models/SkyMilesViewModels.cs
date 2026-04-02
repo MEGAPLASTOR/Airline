@@ -7,15 +7,17 @@ public class BookingSuccessViewModel
 {
     public int BookingId { get; set; }
 
-    public bool WasPaidWithSkyMiles { get; set; }
+    public int SkyMilesRedeemed { get; set; }
 
-    public int SkyMilesSpent { get; set; }
+    public int SkyMilesDiscountPercent { get; set; }
 
     public int CurrentSkyMiles { get; set; }
 
     public decimal FinalAmount { get; set; }
 
     public string? PromoCode { get; set; }
+
+    public bool HasSkyMilesDiscount => SkyMilesRedeemed > 0;
 }
 
 public class SkyMilesShopViewModel

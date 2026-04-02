@@ -44,7 +44,7 @@ namespace Airline.Controllers
 
             var user = await _context.Users.FindAsync(userId.Value);
             var promotion = await _context.Promotions
-                .FirstOrDefaultAsync(p => p.PromoId == promoId && p.IsSkyMilesExclusive && p.OnlyForSkyMilesPayment);
+                .FirstOrDefaultAsync(p => p.PromoId == promoId && p.IsSkyMilesExclusive);
 
             if (user == null || promotion == null)
             {

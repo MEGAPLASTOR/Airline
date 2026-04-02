@@ -11,7 +11,7 @@
         <div>
             <div class="eyebrow">Reward Booking Center</div>
             <h1>SkyMiles <span>Shop</span></h1>
-            <p>Buy reward-only promo codes with your miles, then apply them when paying for flights with SkyMiles.</p>
+            <p>Buy reward promo codes with SkyMiles, then apply them as ticket discounts during online checkout. You can also combine them with the SkyMiles booking discount.</p>
         </div>
         <div class="balance-card">
             <span>Current balance</span>
@@ -34,9 +34,9 @@
         <div class="section-head">
             <div>
                 <h2>Reward Code Shop</h2>
-                <p>These codes are only valid for bookings paid with SkyMiles.</p>
+                <p>These codes can be applied like promotion codes when buying tickets online.</p>
             </div>
-            <a asp-controller="Booking" asp-action="BookFlight" class="shop-link">Book a reward flight</a>
+            <a asp-controller="Booking" asp-action="BookFlight" class="shop-link">Book a flight</a>
         </div>
 
         <div class="shop-grid">
@@ -76,12 +76,12 @@
     </section>
 
     <section class="section-block">
-        <div class="section-head">
-            <div>
-                <h2>My Reward Codes</h2>
-                <p>Unused codes can be applied on the passenger information page after choosing “Pay with SkyMiles”.</p>
+            <div class="section-head">
+                <div>
+                    <h2>My Reward Codes</h2>
+                    <p>Unused codes can be applied on the passenger information page together with the SkyMiles ticket discount.</p>
+                </div>
             </div>
-        </div>
 
         @if (Model.OwnedPromotions.Any())
         {

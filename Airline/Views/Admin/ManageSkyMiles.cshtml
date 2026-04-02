@@ -10,7 +10,7 @@
     <div>
         <div class="page-greeting">Commerce</div>
         <h1 class="page-title">Manage <span>SkyMiles Shop</span></h1>
-        <p class="page-subtitle">Create reward-booking promo codes that users can buy with SkyMiles, then track purchase and redemption activity.</p>
+        <p class="page-subtitle">Create reward promo codes that users can buy with SkyMiles, then track purchase and redemption activity.</p>
     </div>
     <div class="page-actions">
         <a asp-action="ManageSkyMiles" class="btn-ghost"><i class="fa-solid fa-rotate"></i> Reset Form</a>
@@ -34,7 +34,7 @@
         <div class="card-top">
             <div>
                 <h2>@(Model.Form.PromoId.HasValue ? "Edit Shop Code" : "Create Shop Code")</h2>
-                <p>These codes will only work on bookings paid with SkyMiles.</p>
+                <p>These codes can be used as ticket discounts after users buy them in the SkyMiles Shop.</p>
             </div>
         </div>
 

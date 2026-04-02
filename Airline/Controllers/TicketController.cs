@@ -150,6 +150,33 @@ namespace Airline.Controllers
                 authResult.Properties ?? new AuthenticationProperties());
         }
 
+        private async Task RefreshAuthenticatedUserClaimsAsync(User user)
+        {
+            if (User?.Identity?.IsAuthenticated != true)
+            {
+                return;
+            }
+
+            var authResult = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+                new Claim(ClaimTypes.Name, user.Username ?? string.Empty),
+                new Claim("FirstName", user.FirstName ?? string.Empty),
+                new Claim("LastName", user.LastName ?? string.Empty),
+                new Claim("SkyMiles", (user.SkyMiles ?? 0).ToString()),
+                new Claim(ClaimTypes.Role, user.Role ?? string.Empty)
+            };
+
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new ClaimsPrincipal(identity);
+
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                principal,
+                authResult.Properties ?? new AuthenticationProperties());
+        }
+
         // ==============================================================
         // GET /Ticket/ChangeSeat/{id}
         // ==============================================================
@@ -256,6 +283,10 @@ namespace Airline.Controllers
                     .ThenInclude(b => b.Schedule)
                 .Include(t => t.Booking)
                     .ThenInclude(b => b.Tickets)
+                .Include(t => t.Booking)
+                    .ThenInclude(b => b.User)
+                .Include(t => t.Booking)
+                    .ThenInclude(b => b.UserPromotionsRedeemed)
                 .Include(t => t.Seat)
                 .Include(t => t.Baggages)
                 .FirstOrDefaultAsync(t => t.TicketId == ticketId && t.Booking.UserId == userId);
@@ -312,6 +343,10 @@ namespace Airline.Controllers
             await using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
+                var bookingWasPaid = string.Equals(ticket.Booking?.Status, "PAID", StringComparison.OrdinalIgnoreCase);
+                var restoredSkyMiles = false;
+                var restoredRewardCode = false;
+
                 if (ticket.Baggages.Count > 0)
                 {
                     _context.Baggages.RemoveRange(ticket.Baggages);
@@ -335,15 +370,54 @@ namespace Airline.Controllers
 
                 if (!hasOtherActiveTickets && ticket.Booking != null)
                 {
+                    if (!bookingWasPaid)
+                    {
+                        if (ticket.Booking.SkyMilesRedeemed > 0 && ticket.Booking.User != null)
+                        {
+                            ticket.Booking.User.SkyMiles = (ticket.Booking.User.SkyMiles ?? 0) + ticket.Booking.SkyMilesRedeemed;
+                            ticket.Booking.SkyMilesRedeemed = 0;
+                            restoredSkyMiles = true;
+                        }
+
+                        foreach (var userPromotion in ticket.Booking.UserPromotionsRedeemed)
+                        {
+                            userPromotion.IsRedeemed = false;
+                            userPromotion.RedeemedAt = null;
+                            userPromotion.RedeemedBookingId = null;
+                            restoredRewardCode = true;
+                        }
+                    }
+
                     ticket.Booking.Status = "CANCELLED";
                 }
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
+                if (restoredSkyMiles && ticket.Booking?.User != null)
+                {
+                    await RefreshAuthenticatedUserClaimsAsync(ticket.Booking.User);
+                }
+
                 var message = baggageIds.Count > 0
                     ? "Ticket cancelled successfully. Any unpaid baggage registrations were removed."
                     : "Ticket cancelled successfully.";
+
+                if (!bookingWasPaid)
+                {
+                    if (restoredSkyMiles && restoredRewardCode)
+                    {
+                        message += " Reserved SkyMiles and the applied SkyMiles reward code are available again.";
+                    }
+                    else if (restoredSkyMiles)
+                    {
+                        message += " Reserved SkyMiles were returned to your account.";
+                    }
+                    else if (restoredRewardCode)
+                    {
+                        message += " The applied SkyMiles reward code is available again.";
+                    }
+                }
 
                 return Json(new { success = true, message });
             }

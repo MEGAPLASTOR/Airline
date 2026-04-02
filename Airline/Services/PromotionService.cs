@@ -6,7 +6,10 @@ namespace Airline.Services
     public class PromotionService
     {
         private const decimal TaxRate = 0.10m;
-        public const decimal SkyMilesValuePerPoint = 1000m;
+        public const int SkyMilesRedemptionStep = 1000;
+        public const int SkyMilesDiscountPercentPerStep = 5;
+        public const int MaxSkyMilesDiscountPercent = 10;
+        public const int MaxSkyMilesRedeemable = (MaxSkyMilesDiscountPercent / SkyMilesDiscountPercentPerStep) * SkyMilesRedemptionStep;
         private readonly DataContext _context;
 
         public PromotionService(DataContext context)
@@ -37,7 +40,6 @@ namespace Airline.Services
                 .AsNoTracking()
                 .Where(p =>
                     p.IsSkyMilesExclusive &&
-                    p.OnlyForSkyMilesPayment &&
                     p.SkyMilesCost > 0 &&
                     (!p.StartDate.HasValue || p.StartDate.Value <= targetDate) &&
                     (!p.EndDate.HasValue || p.EndDate.Value >= targetDate))
@@ -56,7 +58,6 @@ namespace Airline.Services
                     up.UserId == userId &&
                     !up.IsRedeemed &&
                     up.Promo.IsSkyMilesExclusive &&
-                    up.Promo.OnlyForSkyMilesPayment &&
                     (!up.Promo.StartDate.HasValue || up.Promo.StartDate.Value <= targetDate) &&
                     (!up.Promo.EndDate.HasValue || up.Promo.EndDate.Value >= targetDate))
                 .OrderByDescending(up => up.Promo.DiscountPercent ?? 0)
@@ -103,7 +104,6 @@ namespace Airline.Services
                     !up.IsRedeemed &&
                     up.Promo.PromoCode == normalizedCode &&
                     up.Promo.IsSkyMilesExclusive &&
-                    up.Promo.OnlyForSkyMilesPayment &&
                     (!up.Promo.StartDate.HasValue || up.Promo.StartDate.Value <= targetDate) &&
                     (!up.Promo.EndDate.HasValue || up.Promo.EndDate.Value >= targetDate));
         }
@@ -111,7 +111,6 @@ namespace Airline.Services
         public async Task<Promotion?> ResolvePromotionAsync(
             string? promoCode,
             int? userId = null,
-            bool useSkyMilesPayment = false,
             DateOnly? onDate = null)
         {
             if (string.IsNullOrWhiteSpace(promoCode))
@@ -119,17 +118,16 @@ namespace Airline.Services
                 return null;
             }
 
-            if (!useSkyMilesPayment)
+            if (userId.HasValue)
             {
-                return await GetPromotionByCodeAsync(promoCode, onDate, includeSkyMilesExclusive: false);
+                var ownedPromotion = await GetOwnedPromotionAsync(userId.Value, promoCode, onDate);
+                if (ownedPromotion != null)
+                {
+                    return ownedPromotion.Promo;
+                }
             }
 
-            if (!userId.HasValue)
-            {
-                return null;
-            }
-
-            return (await GetOwnedPromotionAsync(userId.Value, promoCode, onDate))?.Promo;
+            return await GetPromotionByCodeAsync(promoCode, onDate, includeSkyMilesExclusive: false);
         }
 
         public async Task<PromotionPricingResult> CalculateSingleTicketAsync(
@@ -138,7 +136,7 @@ namespace Airline.Services
             string? promoCode = null,
             DateOnly? onDate = null,
             int? userId = null,
-            bool useSkyMilesPayment = false)
+            int skyMilesToRedeem = 0)
         {
             var baseFare = await _context.TicketPrices
                 .AsNoTracking()
@@ -151,7 +149,7 @@ namespace Airline.Services
                 baseFare = 1500000m;
             }
 
-            return await BuildPricingAsync(baseFare, promoCode, onDate, userId, useSkyMilesPayment);
+            return await BuildPricingAsync(baseFare, promoCode, onDate, userId, skyMilesToRedeem);
         }
 
         public async Task<PromotionPricingResult> CalculateBookingAsync(Booking booking, DateOnly? onDate = null)
@@ -192,7 +190,7 @@ namespace Airline.Services
                 }
             }
 
-            return BuildPricing(baseFare, promotion);
+            return BuildPricing(baseFare, promotion, booking.SkyMilesRedeemed);
         }
 
         public static string NormalizePromoCode(string promoCode)
@@ -200,14 +198,34 @@ namespace Airline.Services
             return promoCode.Trim().ToUpperInvariant();
         }
 
-        public static int CalculateRequiredSkyMiles(decimal finalAmount)
+        public static int NormalizeSkyMilesToRedeem(int skyMilesToRedeem)
         {
-            if (finalAmount <= 0)
+            if (skyMilesToRedeem <= 0)
             {
                 return 0;
             }
 
-            return (int)Math.Ceiling(finalAmount / SkyMilesValuePerPoint);
+            var cappedMiles = Math.Min(skyMilesToRedeem, MaxSkyMilesRedeemable);
+            return (cappedMiles / SkyMilesRedemptionStep) * SkyMilesRedemptionStep;
+        }
+
+        public static int CalculateSkyMilesDiscountPercent(int skyMilesToRedeem)
+        {
+            var normalizedMiles = NormalizeSkyMilesToRedeem(skyMilesToRedeem);
+            return Math.Min(
+                MaxSkyMilesDiscountPercent,
+                (normalizedMiles / SkyMilesRedemptionStep) * SkyMilesDiscountPercentPerStep);
+        }
+
+        public static int GetMaxRedeemableSkyMiles(int currentSkyMiles)
+        {
+            return NormalizeSkyMilesToRedeem(currentSkyMiles);
+        }
+
+        public static bool CanRedeemSkyMiles(int currentSkyMiles, int skyMilesToRedeem)
+        {
+            var normalizedMiles = NormalizeSkyMilesToRedeem(skyMilesToRedeem);
+            return normalizedMiles == skyMilesToRedeem && normalizedMiles <= GetMaxRedeemableSkyMiles(currentSkyMiles);
         }
 
         private async Task<PromotionPricingResult> BuildPricingAsync(
@@ -215,18 +233,22 @@ namespace Airline.Services
             string? promoCode,
             DateOnly? onDate,
             int? userId,
-            bool useSkyMilesPayment)
+            int skyMilesToRedeem)
         {
-            var promotion = await ResolvePromotionAsync(promoCode, userId, useSkyMilesPayment, onDate);
-            return BuildPricing(baseFare, promotion);
+            var promotion = await ResolvePromotionAsync(promoCode, userId, onDate);
+            return BuildPricing(baseFare, promotion, skyMilesToRedeem);
         }
 
-        private static PromotionPricingResult BuildPricing(decimal baseFare, Promotion? promotion)
+        private static PromotionPricingResult BuildPricing(decimal baseFare, Promotion? promotion, int skyMilesToRedeem)
         {
             var discountPercent = promotion?.DiscountPercent ?? 0;
+            var normalizedSkyMiles = NormalizeSkyMilesToRedeem(skyMilesToRedeem);
+            var skyMilesDiscountPercent = CalculateSkyMilesDiscountPercent(normalizedSkyMiles);
             var taxAmount = RoundVnd(baseFare * TaxRate);
             var discountAmount = RoundVnd(baseFare * discountPercent / 100m);
-            var finalAmount = Math.Max(0m, RoundVnd(baseFare + taxAmount - discountAmount));
+            var skyMilesDiscountAmount = RoundVnd(baseFare * skyMilesDiscountPercent / 100m);
+            var totalDiscountAmount = discountAmount + skyMilesDiscountAmount;
+            var finalAmount = Math.Max(0m, RoundVnd(baseFare + taxAmount - totalDiscountAmount));
 
             return new PromotionPricingResult
             {
@@ -234,8 +256,11 @@ namespace Airline.Services
                 TaxAmount = taxAmount,
                 DiscountPercent = discountPercent,
                 DiscountAmount = discountAmount,
+                SkyMilesDiscountPercent = skyMilesDiscountPercent,
+                SkyMilesRedeemed = normalizedSkyMiles,
+                SkyMilesDiscountAmount = skyMilesDiscountAmount,
+                TotalDiscountAmount = totalDiscountAmount,
                 FinalAmount = finalAmount,
-                RequiredSkyMiles = CalculateRequiredSkyMiles(finalAmount),
                 AppliedPromotionId = promotion?.PromoId,
                 AppliedPromotionCode = promotion?.PromoCode
             };

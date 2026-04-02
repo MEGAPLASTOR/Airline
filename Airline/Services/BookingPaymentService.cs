@@ -7,7 +7,6 @@ namespace Airline.Services
     public sealed class BookingPaymentService
     {
         private const string BaggagePaymentMethod = "VNPAY_BAGGAGE";
-        private const string SkyMilesRedemptionPaymentMethod = "SKYMILES_REDEEM";
         private const string SkyMilesAwardedMarker = "|SKYMILES_AWARDED";
         private const decimal SkyMilesSpendPerPoint = 1000m;
         private readonly DataContext _context;
@@ -62,9 +61,7 @@ namespace Airline.Services
                     .ThenByDescending(p => p.PaymentId)
                     .ToList();
 
-                var alreadyAwardedSkyMiles =
-                    successfulBookingPayments.Any(HasSkyMilesAwardMarker) ||
-                    successfulBookingPayments.Any(IsSkyMilesRedemptionPayment);
+                var alreadyAwardedSkyMiles = successfulBookingPayments.Any(HasSkyMilesAwardMarker);
                 var awardedSkyMiles = 0;
 
                 if (!alreadyAwardedSkyMiles)
@@ -191,11 +188,6 @@ namespace Airline.Services
         private static bool HasSkyMilesAwardMarker(Payment payment)
         {
             return payment.PaymentMethod?.Contains(SkyMilesAwardedMarker, StringComparison.OrdinalIgnoreCase) == true;
-        }
-
-        private static bool IsSkyMilesRedemptionPayment(Payment payment)
-        {
-            return payment.PaymentMethod?.Contains(SkyMilesRedemptionPaymentMethod, StringComparison.OrdinalIgnoreCase) == true;
         }
 
         private static string MarkSkyMilesAwarded(string paymentMethod)

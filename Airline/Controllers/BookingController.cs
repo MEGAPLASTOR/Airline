@@ -10,7 +10,6 @@ namespace Airline.Controllers
 {
     public class BookingController : Controller
     {
-        private const string SkyMilesPaymentMethod = "SKYMILES_REDEEM";
         private readonly DataContext _context;
         private readonly SeatService _seatService;
         private readonly PromotionService _promotionService;
@@ -85,7 +84,7 @@ namespace Airline.Controllers
                 scheduleId,
                 seatId,
                 promoCode: null,
-                useSkyMilesPayment: false,
+                skyMilesToRedeem: 0,
                 userId: TryGetCurrentUserId());
 
             if (model == null) return NotFound();
@@ -102,7 +101,7 @@ namespace Airline.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> ValidatePromotion(int scheduleId, int seatId, string code, bool useSkyMilesPayment = false)
+        public async Task<IActionResult> ValidatePromotion(int scheduleId, int seatId, string code, int skyMilesToRedeem = 0)
         {
             var seat = await _context.Seats
                 .AsNoTracking()
@@ -114,15 +113,20 @@ namespace Airline.Controllers
             }
 
             var userId = TryGetCurrentUserId();
-            var promotion = await _promotionService.ResolvePromotionAsync(code, userId, useSkyMilesPayment);
+            var currentSkyMiles = await LoadCurrentSkyMilesAsync(userId);
+
+            if (!PromotionService.CanRedeemSkyMiles(currentSkyMiles, skyMilesToRedeem))
+            {
+                return Json(new { success = false, message = "Selected SkyMiles discount is not available for your current balance." });
+            }
+
+            var promotion = await _promotionService.ResolvePromotionAsync(code, userId);
             if (promotion == null)
             {
                 return Json(new
                 {
                     success = false,
-                    message = useSkyMilesPayment
-                        ? "This SkyMiles code is invalid, expired, or not owned by your account."
-                        : "Promotion code is invalid or expired."
+                    message = "Promotion code is invalid, expired, or not owned by your account."
                 });
             }
 
@@ -131,17 +135,7 @@ namespace Airline.Controllers
                 seat.ClassId,
                 code,
                 userId: userId,
-                useSkyMilesPayment: useSkyMilesPayment);
-
-            var currentSkyMiles = 0;
-            if (userId.HasValue)
-            {
-                currentSkyMiles = await _context.Users
-                    .AsNoTracking()
-                    .Where(u => u.UserId == userId.Value)
-                    .Select(u => u.SkyMiles ?? 0)
-                    .FirstOrDefaultAsync();
-            }
+                skyMilesToRedeem: skyMilesToRedeem);
 
             return Json(new
             {
@@ -152,10 +146,12 @@ namespace Airline.Controllers
                 baseFare = pricing.BaseFare,
                 taxAmount = pricing.TaxAmount,
                 discountAmount = pricing.DiscountAmount,
+                skyMilesRedeemed = pricing.SkyMilesRedeemed,
+                skyMilesDiscountPercent = pricing.SkyMilesDiscountPercent,
+                skyMilesDiscountAmount = pricing.SkyMilesDiscountAmount,
                 finalAmount = pricing.FinalAmount,
-                requiredSkyMiles = pricing.RequiredSkyMiles,
                 currentSkyMiles,
-                canAffordWithSkyMiles = currentSkyMiles >= pricing.RequiredSkyMiles
+                maxRedeemableSkyMiles = PromotionService.GetMaxRedeemableSkyMiles(currentSkyMiles)
             });
         }
 
@@ -192,33 +188,27 @@ namespace Airline.Controllers
                 model.ClassId ?? 0,
                 model.PromoCode,
                 userId: userId,
-                useSkyMilesPayment: model.UseSkyMilesPayment);
+                skyMilesToRedeem: model.SkyMilesToRedeem);
 
             model.AppliedPromotionId = pricing.AppliedPromotionId;
             model.PromoCode = pricing.HasPromotion ? pricing.AppliedPromotionCode : model.PromoCode;
             model.DiscountPercent = pricing.DiscountPercent;
             model.TaxAmount = pricing.TaxAmount;
             model.DiscountAmount = pricing.DiscountAmount;
+            model.SkyMilesToRedeem = pricing.SkyMilesRedeemed;
+            model.SkyMilesDiscountPercent = pricing.SkyMilesDiscountPercent;
+            model.SkyMilesDiscountAmount = pricing.SkyMilesDiscountAmount;
             model.FinalPrice = pricing.FinalAmount;
-            model.RequiredSkyMiles = pricing.RequiredSkyMiles;
             model.CurrentSkyMiles = user.SkyMiles ?? 0;
-            model.CanAffordWithSkyMiles = model.CurrentSkyMiles >= model.RequiredSkyMiles;
 
             Promotion? appliedPromotion = null;
             UserPromotion? ownedPromotion = null;
             if (!string.IsNullOrWhiteSpace(model.PromoCode))
             {
-                if (model.UseSkyMilesPayment)
+                ownedPromotion = await _promotionService.GetOwnedPromotionAsync(userId.Value, model.PromoCode);
+                if (ownedPromotion != null)
                 {
-                    ownedPromotion = await _promotionService.GetOwnedPromotionAsync(userId.Value, model.PromoCode);
-                    if (ownedPromotion == null)
-                    {
-                        ModelState.AddModelError(nameof(model.PromoCode), "Please buy this code from the SkyMiles Shop before using it.");
-                    }
-                    else
-                    {
-                        appliedPromotion = ownedPromotion.Promo;
-                    }
+                    appliedPromotion = ownedPromotion.Promo;
                 }
                 else
                 {
@@ -233,9 +223,9 @@ namespace Airline.Controllers
                 }
             }
 
-            if (model.UseSkyMilesPayment && !model.CanAffordWithSkyMiles)
+            if (!PromotionService.CanRedeemSkyMiles(model.CurrentSkyMiles, model.SkyMilesToRedeem))
             {
-                ModelState.AddModelError(string.Empty, $"You need {model.RequiredSkyMiles:N0} SkyMiles, but your balance is only {model.CurrentSkyMiles:N0}.");
+                ModelState.AddModelError(nameof(model.SkyMilesToRedeem), "Selected SkyMiles discount is not available for your current balance.");
             }
 
             if (!ModelState.IsValid)
@@ -267,8 +257,9 @@ namespace Airline.Controllers
                         UserId = userId.Value,
                         ScheduleId = model.ScheduleId,
                         BookingDate = DateTime.Now,
-                        BookingType = model.UseSkyMilesPayment ? "SKYMILES" : "ONLINE",
-                        Status = model.UseSkyMilesPayment ? "PAID" : "PENDING_PAYMENT"
+                        BookingType = "ONLINE",
+                        Status = "PENDING_PAYMENT",
+                        SkyMilesRedeemed = model.SkyMilesToRedeem
                     };
                     _context.Bookings.Add(booking);
                     await _context.SaveChangesAsync();
@@ -300,7 +291,7 @@ namespace Airline.Controllers
                         PassengerId = passenger.PassengerId,
                         ClassId = seat.ClassId,
                         SeatId = seat.SeatId,
-                        Status = model.UseSkyMilesPayment ? "PAID" : "BOOKED"
+                        Status = "BOOKED"
                     };
                     _context.Tickets.Add(ticket);
 
@@ -308,32 +299,22 @@ namespace Airline.Controllers
                     seat.SeatStatus = "BOOKED";
                     schedule.AvailableSeats = Math.Max(0, (schedule.AvailableSeats ?? 0) - 1);
 
-                    if (model.UseSkyMilesPayment)
+                    if (model.SkyMilesToRedeem > 0)
                     {
-                        user.SkyMiles = Math.Max(0, (user.SkyMiles ?? 0) - model.RequiredSkyMiles);
-
-                        _context.Payments.Add(new Payment
-                        {
-                            BookingId = booking.BookingId,
-                            Amount = 0m,
-                            PaymentDate = DateTime.Now,
-                            PaymentMethod = SkyMilesPaymentMethod,
-                            PaymentStatus = "SUCCESS",
-                            TransactionNo = $"{SkyMilesPaymentMethod}_{booking.BookingId}_{model.RequiredSkyMiles}"
-                        });
-
-                        if (ownedPromotion != null)
-                        {
-                            ownedPromotion.IsRedeemed = true;
-                            ownedPromotion.RedeemedAt = DateTime.Now;
-                            ownedPromotion.RedeemedBookingId = booking.BookingId;
-                        }
+                        user.SkyMiles = Math.Max(0, (user.SkyMiles ?? 0) - model.SkyMilesToRedeem);
                     }
-                    
+
+                    if (ownedPromotion != null)
+                    {
+                        ownedPromotion.IsRedeemed = true;
+                        ownedPromotion.RedeemedAt = DateTime.Now;
+                        ownedPromotion.RedeemedBookingId = booking.BookingId;
+                    }
+                     
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
 
-                    if (model.UseSkyMilesPayment)
+                    if (model.SkyMilesToRedeem > 0)
                     {
                         await RefreshAuthenticatedUserClaimsAsync(user);
                     }
@@ -341,8 +322,8 @@ namespace Airline.Controllers
                     return View("BookingSuccess", new BookingSuccessViewModel
                     {
                         BookingId = booking.BookingId,
-                        WasPaidWithSkyMiles = model.UseSkyMilesPayment,
-                        SkyMilesSpent = model.UseSkyMilesPayment ? model.RequiredSkyMiles : 0,
+                        SkyMilesRedeemed = model.SkyMilesToRedeem,
+                        SkyMilesDiscountPercent = model.SkyMilesDiscountPercent,
                         CurrentSkyMiles = user.SkyMiles ?? 0,
                         FinalAmount = model.FinalPrice,
                         PromoCode = appliedPromotion?.PromoCode
@@ -362,7 +343,7 @@ namespace Airline.Controllers
             int scheduleId,
             int seatId,
             string? promoCode,
-            bool useSkyMilesPayment,
+            int skyMilesToRedeem,
             int? userId)
         {
             var schedule = await _context.FlightSchedules
@@ -383,22 +364,17 @@ namespace Airline.Controllers
                 return null;
             }
 
-            var currentSkyMiles = 0;
-            if (userId.HasValue)
-            {
-                currentSkyMiles = await _context.Users
-                    .AsNoTracking()
-                    .Where(u => u.UserId == userId.Value)
-                    .Select(u => u.SkyMiles ?? 0)
-                    .FirstOrDefaultAsync();
-            }
+            var currentSkyMiles = await LoadCurrentSkyMilesAsync(userId);
+            var normalizedSkyMilesToRedeem = PromotionService.CanRedeemSkyMiles(currentSkyMiles, skyMilesToRedeem)
+                ? skyMilesToRedeem
+                : 0;
 
             var pricing = await _promotionService.CalculateSingleTicketAsync(
                 scheduleId,
                 seat.ClassId,
                 promoCode,
                 userId: userId,
-                useSkyMilesPayment: useSkyMilesPayment);
+                skyMilesToRedeem: normalizedSkyMilesToRedeem);
 
             var promotions = await _promotionService.GetPublicPromotionsAsync();
             var ownedPromotions = userId.HasValue
@@ -423,11 +399,11 @@ namespace Airline.Controllers
                 TaxAmount = pricing.TaxAmount,
                 DiscountAmount = pricing.DiscountAmount,
                 DiscountPercent = pricing.DiscountPercent,
+                SkyMilesToRedeem = pricing.SkyMilesRedeemed,
+                SkyMilesDiscountPercent = pricing.SkyMilesDiscountPercent,
+                SkyMilesDiscountAmount = pricing.SkyMilesDiscountAmount,
                 FinalPrice = pricing.FinalAmount,
-                UseSkyMilesPayment = useSkyMilesPayment,
                 CurrentSkyMiles = currentSkyMiles,
-                RequiredSkyMiles = pricing.RequiredSkyMiles,
-                CanAffordWithSkyMiles = currentSkyMiles >= pricing.RequiredSkyMiles,
                 AvailablePromotions = promotions,
                 OwnedSkyMilesPromotions = ownedPromotions
             };
@@ -444,7 +420,7 @@ namespace Airline.Controllers
                 model.ScheduleId,
                 model.SeatId.Value,
                 model.PromoCode,
-                model.UseSkyMilesPayment,
+                model.SkyMilesToRedeem,
                 TryGetCurrentUserId());
             if (hydratedModel == null)
             {
@@ -463,14 +439,29 @@ namespace Airline.Controllers
             model.TaxAmount = hydratedModel.TaxAmount;
             model.DiscountAmount = hydratedModel.DiscountAmount;
             model.DiscountPercent = hydratedModel.DiscountPercent;
+            model.SkyMilesToRedeem = hydratedModel.SkyMilesToRedeem;
+            model.SkyMilesDiscountPercent = hydratedModel.SkyMilesDiscountPercent;
+            model.SkyMilesDiscountAmount = hydratedModel.SkyMilesDiscountAmount;
             model.FinalPrice = hydratedModel.FinalPrice;
             model.CurrentSkyMiles = hydratedModel.CurrentSkyMiles;
-            model.RequiredSkyMiles = hydratedModel.RequiredSkyMiles;
-            model.CanAffordWithSkyMiles = hydratedModel.CanAffordWithSkyMiles;
             model.AvailablePromotions = hydratedModel.AvailablePromotions;
             model.OwnedSkyMilesPromotions = hydratedModel.OwnedSkyMilesPromotions;
 
             return true;
+        }
+
+        private async Task<int> LoadCurrentSkyMilesAsync(int? userId)
+        {
+            if (!userId.HasValue)
+            {
+                return 0;
+            }
+
+            return await _context.Users
+                .AsNoTracking()
+                .Where(u => u.UserId == userId.Value)
+                .Select(u => u.SkyMiles ?? 0)
+                .FirstOrDefaultAsync();
         }
 
         private int? TryGetCurrentUserId()

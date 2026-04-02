@@ -66,6 +66,7 @@ public partial class DataContext : DbContext
                 .HasMaxLength(20)
                 .HasColumnName("booking_type");
             entity.Property(e => e.ScheduleId).HasColumnName("schedule_id");
+            entity.Property(e => e.SkyMilesRedeemed).HasColumnName("sky_miles_redeemed");
             entity.Property(e => e.Status)
                 .HasMaxLength(20)
                 .HasColumnName("status");
@@ -702,11 +703,11 @@ public partial class DataContext : DbContext
             {
                 PromoId = 1001,
                 Title = "Sky Saver 12",
-                Description = "Redeem this shop code to reduce the SkyMiles cost of your next reward booking by 12 percent.",
+                Description = "Use this reward code to reduce the ticket price of your next booking by 12 percent.",
                 PromoCode = "MILES12",
                 DiscountPercent = 12,
                 IsSkyMilesExclusive = true,
-                OnlyForSkyMilesPayment = true,
+                OnlyForSkyMilesPayment = false,
                 SkyMilesCost = 250,
                 StartDate = new DateOnly(2026, 04, 01),
                 EndDate = new DateOnly(2026, 07, 31)
@@ -715,11 +716,11 @@ public partial class DataContext : DbContext
             {
                 PromoId = 1002,
                 Title = "Sky Saver 18",
-                Description = "Higher-value reward code for customers redeeming SkyMiles on flights.",
+                Description = "Higher-value reward code for customers who want a stronger ticket discount.",
                 PromoCode = "MILES18",
                 DiscountPercent = 18,
                 IsSkyMilesExclusive = true,
-                OnlyForSkyMilesPayment = true,
+                OnlyForSkyMilesPayment = false,
                 SkyMilesCost = 450,
                 StartDate = new DateOnly(2026, 04, 01),
                 EndDate = new DateOnly(2026, 08, 15)
@@ -728,11 +729,11 @@ public partial class DataContext : DbContext
             {
                 PromoId = 1003,
                 Title = "Sky Saver 25",
-                Description = "Premium reward-booking code that cuts the miles needed on your next SkyMiles purchase.",
+                Description = "Premium reward code that delivers the biggest ticket discount in the SkyMiles Shop.",
                 PromoCode = "MILES25",
                 DiscountPercent = 25,
                 IsSkyMilesExclusive = true,
-                OnlyForSkyMilesPayment = true,
+                OnlyForSkyMilesPayment = false,
                 SkyMilesCost = 700,
                 StartDate = new DateOnly(2026, 04, 05),
                 EndDate = new DateOnly(2026, 09, 01)
